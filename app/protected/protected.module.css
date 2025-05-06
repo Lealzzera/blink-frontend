@@ -1,0 +1,13 @@
+.container{
+    display: flex;
+    flex-direction: column;
+    height: 100svh; /* altura total da viewport segura (considera notch em mobile) */
+    width: 100%;
+    align-items: center; /* alinha verticalmente */
+    justify-content: center; /* alinha horizontalmente */
+    gap: 0.8rem; /* espaço entre os filhos (2 * 0.25rem padrão do Tailwind) */
+}
+.title{
+    font-weight: bold;
+    font-size: 28px;
+}
