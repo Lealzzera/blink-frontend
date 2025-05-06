@@ -1,6 +1,6 @@
-'use client';
-import { RealtimeChat } from '@/components/realtime-chat'
- 
+"use client";
+import { RealtimeChat } from "@/components/realtime-chat";
+
 export default function ChatPage() {
-  return <RealtimeChat roomName="my-chat-room" username="john_doe" />
+  return <RealtimeChat roomName="my-chat-room" username="jane_doe" />;
 }
