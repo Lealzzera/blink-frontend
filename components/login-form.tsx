@@ -61,7 +61,7 @@ export function LoginForm({
           />
           <CardTitle className={styles.title}>Login</CardTitle>
           <CardDescription className={styles.description}>
-            Digite seu LOGIN FORM
+            Digite seu email e senha abaixo
           </CardDescription>
         </CardHeader>
         <CardContent>
