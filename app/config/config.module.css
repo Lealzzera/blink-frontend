@@ -9,9 +9,11 @@
 
   .item{
     display: flex;
-    gap: 15px;
+    flex-direction: row-reverse;
     align-items: center;
-    margin-top: 20px;
+    justify-content: start;
+    gap: 15px;
+    margin-top: 20px;    
   }
   
   .select {
@@ -80,4 +82,10 @@
   .button:hover{
     background-color: #e7e7e7;
     border: 1px solid #ccc;
+  }
+
+  @media (max-width: 768px){
+    .container{
+      margin-top: 5vh;
+    }
   }

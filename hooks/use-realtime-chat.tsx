@@ -55,7 +55,7 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
       //TODO: AJUSTAR ESSE TEXT COM 'STRING' POIS FOI FEITO UMA MEDIDA PALEATIVA
       const message: ChatMessage = {
         id: crypto.randomUUID(),
-        text: "string",
+        text: "text",
         content,
         user: {
           name: username,

@@ -4,8 +4,8 @@ import { ThemeProvider } from "@/components/theme-provider";
 import Sidebar from './Sidebar';
 
 export const metadata: Metadata = {
-  title: 'Blink',
-  description: 'Sistema Blink',
+  title: 'blink',
+  description: 'Sistema blink',
 };
 
 export default function RootLayout({
