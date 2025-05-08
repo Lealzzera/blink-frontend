@@ -82,12 +82,35 @@ export const RealtimeChat = ({
     [newMessage, isConnected, sendMessage]
   )
 
+  {/* Menu Hamburguer Logic */}
+
+  const [showContacts, setShowContacts] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+  
+    handleResize(); // verifica ao carregar
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  
+  const toggleMenu = () => {
+    setShowContacts((prev) => !prev);
+  };
+  
   return (
     <div className={styles.container}>
 
-  <div className={styles.contacts}>
+  <div className={styles.contacts}   
+    style={{
+    display: isMobile ? (showContacts ? 'block' : 'none') : 'block',
+    }}>
+
     <div className={styles.contactHeader}>
-      <h3>Contatos</h3>
+      <h3 className={styles.contactTitle}>Contatos</h3>
       <input type="text" placeholder='Pesquisar por contato'/> 
       <hr /> 
     </div>
@@ -198,6 +221,13 @@ export const RealtimeChat = ({
 
 
     <div className={styles.chatHeader}>
+      
+      <div className={styles.spanContainer} onClick={toggleMenu}>
+        <span className={styles.span1}></span>
+        <span className={styles.span2}></span>
+        <span className={styles.span3}></span>
+      </div>
+
       <h3 className={styles.headerTitle}>Ricardo</h3>
       <Switch className={styles.switch} defaultChecked />
     </div>

@@ -7,12 +7,38 @@
     width: 7vw;
     height: 100vh;
     border-right: 1px solid #ccc;
-    position: absolute;
+    position: fixed;
     left: 0;
+}
+.image{
+    position: fixed;
+    top: 4vh;
+    left: 3.5vw; /* metade de 7vw */
+    transform: translateX(-50%);
+}
+@media(max-width: 1024px){
+    .container{
+        flex-direction: row;
+        width: 100%;
+        height: 7vh;
+        top: 0;
+        background-color: transparent;
+        border: none;
+    }
+    .image{
+        display: none;
+    }
 }
 @media(max-width: 768px){
     .container{
-        width: 9vw;
-        background-color: rgb(255, 255, 255);
+        flex-direction: row;
+        width: 100%;
+        height: 7vh;
+        top: 0;
+        background-color: transparent;
+        border: none;
+    }
+    .image{
+        display: none;
     }
 }

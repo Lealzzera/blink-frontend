@@ -13,5 +13,5 @@ export function LogoutButton() {
     router.push('/auth/login')
   }
 
-  return <Button onClick={logout} className='border rounded'>Encerrar sessão</Button>
+  return <Button onClick={logout} className='text-red-500 p-0 m-0'>Sair</Button>
 }
