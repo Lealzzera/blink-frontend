@@ -1,0 +1,5 @@
+.pageContainer {
+    min-height: 100vh;
+    padding: 2rem; /* 8 * 0.25rem = 2rem */
+    background-color: #f3f4f6; /* equivalente a bg-gray-100 do Tailwind */
+  }

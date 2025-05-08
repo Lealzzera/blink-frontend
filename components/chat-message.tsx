@@ -11,7 +11,7 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
   return (
     <div className={`flex mt-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
       <div
-        className={cn('max-w-[75%] w-fit flex flex-col gap-1', {
+        className={cn('max-w-[100%] w-fit flex flex-col gap-1', {
           'items-end': isOwnMessage,
         })}
       >
@@ -23,7 +23,7 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
           >
             <span className={'font-medium'}>{message.user.name}</span>
             <span className="text-foreground/50 text-xs">
-              {new Date(message.createdAt).toLocaleTimeString('en-US', {
+              {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
                 hour12: true,
