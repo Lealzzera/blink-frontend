@@ -5,12 +5,14 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import styles from "./styles/calendario.module.css";
+import ptBrLocale from "@fullcalendar/core/locales/pt-br";
 
 export default function Calendario() {
   return (
     <div className={styles.container}>
       <div className={styles.customCalendar}>
         <FullCalendar
+          locale={ptBrLocale}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
           headerToolbar={{

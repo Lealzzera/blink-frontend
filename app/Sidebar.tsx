@@ -23,35 +23,36 @@ export default function Sidebar() {
       className={styles.image}
     />
       <div className={styles.container}>
+
       <Link href="/">
-      <FaComments className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
+        <FaComments className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
       </Link>
       <Link href="/dashboard">
-        <FaChartBar className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
+        <FaChartBar className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
       </Link>
       <Link href="/calendar">
-        <FaCalendarAlt className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
+        <FaCalendarAlt className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
       </Link>
-            <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button>
-                <FaUser className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-48 border border-white bg-white text-black rounded ms-2">
-              <DropdownMenuItem>
-                <Link href="/update-password">Redefinir senha</Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <LogoutButton />
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          
       <Link href="/config">
-        <FaCog className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
+        <FaCog className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
       </Link>
-
+      
+      <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button>
+          <FaUser className="text-[#0f172a] text-[24px] transition-transform duration-200 hover:scale-105" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-48 border border-white bg-slate-200 text-black rounded ms-2">
+        <DropdownMenuItem>
+          <Link href="/update-password">Redefinir senha</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <LogoutButton />
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+        
       </div>
     </div>
   );
