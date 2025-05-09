@@ -17,12 +17,15 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
       >
         {showHeader && (
           <div
-            className={cn('flex items-center gap-2 text-xs px-3', {
+          className={cn(
+            'flex items-center gap-2 text-lg px-3 text-customCyan min-[1441px]:text-xl',
+            {
               'justify-end flex-row-reverse': isOwnMessage,
-            })}
+            }
+          )}
           >
             <span className={'font-medium'}>{message.user.name}</span>
-            <span className="text-foreground/50 text-xs">
+            <span className="text-foreground/50 text-lg min-[1441px]:text-xl">
               {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
                 hour: '2-digit',
                 minute: '2-digit',
@@ -33,7 +36,7 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
         )}
         <div
           className={cn(
-            'py-2 px-3 rounded-xl text-sm w-fit',
+            'mx-4 py-2 px-3 border border-gray-500 rounded-xl text-lg w-fit max-w-md min-[1441px]:text-xl',
             isOwnMessage ? 'bg-primary text-primary-foreground' : 'bg-muted text-foreground'
           )}
         >
