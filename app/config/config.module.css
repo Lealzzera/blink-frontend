@@ -9,11 +9,12 @@
 
   .item{
     display: flex;
-    flex-direction: row-reverse;
     align-items: center;
-    justify-content: start;
+    justify-content: space-between;
     gap: 15px;
-    margin-top: 20px;    
+    margin-top: 20px;
+    width: 32%;
+
   }
   
   .select {
@@ -83,9 +84,121 @@
     background-color: #e7e7e7;
     border: 1px solid #ccc;
   }
+  .subtitle {
+    font-weight: bold;
+    font-size: 1.2rem;
+    margin-top: 40px;
+    margin-bottom: 20px;
+  }
+  
+  .availability {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 1000px;
+  }
+  
+  .availabilityRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .day {
+    width: 100px;
+    font-weight: bold;
+    color: #0f172a;
+  }
+  
+  .labelSmall {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+  }
+  
+  .checkbox {
+    transform: scale(1.2);
+    cursor: pointer;
+  }
+  
+  .timeInput {
+    padding: 6px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #0f172a;
+    background-color: #f8fafc;
+    width: 120px;
+  }
+
+  .availabilityHeader {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding-bottom: 8px;
+    font-weight: 500;
+    color: #475569;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .timeLabel {
+    width: 120px;
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  @media (min-width: 768px) and (max-width: 1024px){
+    .timeInput{
+      width: 110px;
+    }
+  }
 
   @media (max-width: 768px){
     .container{
-      margin-top: 5vh;
+      margin: 5vh 3vw;
+    }
+    .title{
+      margin-left: 2.5vw;
+    }
+    .item{
+      width: 90%;
+      margin-left: 2.5vw;
+    }
+    .button{
+      margin-left: 2.5vw;
+    }
+    .day {
+      width: auto;
+    }
+    .availabilityHeader {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      margin-top: 3vh;
+    }
+    .availability {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+  
+    .availabilityRow {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background-color: #f8fafc;
+    }
+  
+    .availabilityRow input[type="time"] {
+      width: 100%;
+    }
+    .subtitle{
+      text-align: center;
     }
   }

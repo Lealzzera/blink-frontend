@@ -113,12 +113,6 @@
   margin-bottom: 10px;
 }
 
-
-
-
-
-
-
 /*---------------------------------*/
 /* Chat */
 .chat {
@@ -136,6 +130,7 @@
   overflow-y: auto;
   flex: 1;
   padding-right: 10px;
+  background-color: rgb(241, 241, 241);
 }
 
 .noMessages {
@@ -236,7 +231,32 @@
   border-radius: 2px;
   transition: all 0.3s ease;
 }
-
+.py-2{
+  font-size: 50px;
+}
+@media(min-width: 1441px){
+  .headerTitle{
+    font-size: 2.2rem;
+  }
+  .contactTitle{
+    font-style: 1.45rem;
+  }
+  .contact{
+    font-size: 1.3rem;
+  }
+  .inputContainer{
+    height: 10vh;
+  }
+  .inputContainer input{
+    height: 6vh;
+    font-size: 1.25rem;
+    margin-top: 2vh;
+  }
+   .inputContainer button{
+    margin-top: 2vh;
+    padding: 1.50rem;
+   }
+}
 
 @media (min-width: 769px) and (max-width: 1024px){
   .chatHeader{
@@ -255,6 +275,7 @@
     margin-left: 50px;
   }
 }
+
 @media(max-width: 768px){
   .container{
     margin-top: 3vh;
@@ -276,10 +297,15 @@
   }
   .spanContainer {
     display: flex;
-    top: 30px;
+    top: 7.5vh;
     z-index: 101;
   }
   .headerTitle{
     margin-left: 50px;
   }
+  .switch > span{
+    top: 2px;
+  }
 }
+
+
