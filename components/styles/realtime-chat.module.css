@@ -113,12 +113,6 @@
   margin-bottom: 10px;
 }
 
-
-
-
-
-
-
 /*---------------------------------*/
 /* Chat */
 .chat {
@@ -136,6 +130,7 @@
   overflow-y: auto;
   flex: 1;
   padding-right: 10px;
+  background-color: rgb(241, 241, 241);
 }
 
 .noMessages {
@@ -147,10 +142,6 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.messageItem {
-  display: flex;
   flex-direction: column;
 }
 
@@ -217,12 +208,104 @@
   width: 16px;
   height: 16px;
 }
+.spanContainer {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+  width: 30px;
+  height: 22px;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  z-index: 1000;
+  cursor: pointer;
+}
 
-@media(max-width: 768px){
+.span1,
+.span2,
+.span3 {
+  height: 4px;
+  width: 100%;
+  background-color: #000;
+  border-radius: 2px;
+  transition: all 0.3s ease;
+}
+.py-2{
+  font-size: 50px;
+}
+@media(min-width: 1441px){
+  .headerTitle{
+    font-size: 2.2rem;
+  }
+  .contactTitle{
+    font-style: 1.45rem;
+  }
+  .contact{
+    font-size: 1.3rem;
+  }
+  .inputContainer{
+    height: 10vh;
+  }
+  .inputContainer input{
+    height: 6vh;
+    font-size: 1.25rem;
+    margin-top: 2vh;
+  }
+   .inputContainer button{
+    margin-top: 2vh;
+    padding: 1.50rem;
+   }
+}
+
+@media (min-width: 769px) and (max-width: 1024px){
+  .chatHeader{
+    margin-top: 4vh;
+  }
   .chat{
-    margin-left: 7%;
+    margin-left: 0%;
+    max-height: 97%;
   }
   .contacts{
-    display: none;
+    position: static;
+    display: block;
+    width: 30%;
+  }
+  .headerTitle{
+    margin-left: 50px;
   }
 }
+
+@media(max-width: 768px){
+  .container{
+    margin-top: 3vh;
+  }
+  .chat{
+    margin-left: 0%;
+    max-height: 97%;
+  }
+  .contacts{
+    top: -10px;
+    left: 10px;
+    display: block;
+    width: 100%;
+    z-index: 100;
+  }
+  .contactTitle{
+    text-align: center;
+    margin-top: 10px;
+  }
+  .spanContainer {
+    display: flex;
+    top: 7.5vh;
+    z-index: 101;
+  }
+  .headerTitle{
+    margin-left: 50px;
+  }
+  .switch > span{
+    top: 2px;
+  }
+}
+
+
