@@ -1,5 +1,5 @@
 import { UpdatePasswordForm } from '@/components/update-password-form'
-import Link from 'next/link'
+
 
 export default function UpdatePasswordPage() {
   return (

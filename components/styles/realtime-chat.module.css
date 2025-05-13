@@ -45,6 +45,8 @@
   display: flex;
   justify-content: space-between;
   cursor: pointer;
+  border-bottom: 1px solid #ccc;
+  padding: 15px 0;
 }
 .name{
   font-weight: bold;
@@ -100,7 +102,8 @@
 .headerTitle{
   font-weight: bold;
   font-size: 30px;
-  margin-left: 15px;
+  padding-left: 15px;
+  border-left: 3px solid #e2e1e1;
 }
 /* Header do Contato*/
 .contactHeader{
@@ -130,7 +133,6 @@
   overflow-y: auto;
   flex: 1;
   padding-right: 10px;
-  background-color: rgb(241, 241, 241);
 }
 
 .noMessages {
@@ -274,6 +276,9 @@
   .headerTitle{
     margin-left: 50px;
   }
+  .contactTitle{
+    text-align: center;
+  }
 }
 
 @media(max-width: 768px){
@@ -293,7 +298,7 @@
   }
   .contactTitle{
     text-align: center;
-    margin-top: 10px;
+    margin-top: 5vh;
   }
   .spanContainer {
     display: flex;

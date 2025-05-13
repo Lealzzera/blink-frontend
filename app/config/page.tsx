@@ -1,17 +1,36 @@
 "use client";
 import styles from "./config.module.css";
 import { Switch } from "@/components/ui/switch";
+import { useState } from "react";
+import { useCalendarConfig } from '@/context/CalendarConfigContext'
 
 export default function Config() {
+    const [saved, setSaved] = useState(false);
+    const { defaultDuration, setDefaultDuration } = useCalendarConfig()
+    const { allowDoubleBooking, setAllowDoubleBooking } = useCalendarConfig();
+
+      const handleSave = () => {
+        setSaved(true);
+
+        setTimeout(() => {
+          setSaved(false);
+        }, 3000);
+      };
+
   return (
     <div className={styles.container}>
       <h1 className={styles.title}>Configurações da Clínica</h1>
 
       <div className={styles.item}>
         <h3 className={styles.label}>Duração padrão da consulta</h3>
-        <select name="select" id="select" className={styles.select}>
+              <select
+                id="select"
+                className={styles.select}
+                value={defaultDuration}
+                onChange={(e) => setDefaultDuration(Number(e.target.value))}
+              >
           <option value="30">30min</option>
-          <option value="60">1h</option>
+          <option value="60" selected>1h</option>
           <option value="90">1h30min</option>
           <option value="120">2h</option>
         </select>
@@ -19,7 +38,11 @@ export default function Config() {
 
       <div className={styles.item}>
         <h3>Permitir agendar 2 pacientes no mesmo horário?</h3>
-        <Switch className={styles.switch} defaultChecked />
+        <Switch
+          className={styles.switch}
+          checked={allowDoubleBooking}
+          onCheckedChange={setAllowDoubleBooking}
+        />
       </div>
 
       <div className={styles.item}>
@@ -27,10 +50,15 @@ export default function Config() {
         <p className={styles.number}>+55 (11) 98340-1004</p>
       </div>
 
-      <button className={styles.button}>QR Code WhatsApp</button>
+      <button className={styles.buttonWpp}>QR Code WhatsApp</button>
 
 
-      <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
+      <div className={styles.topAvailability}>
+        <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
+            <button className={styles.saveButton} onClick={handleSave}>
+              {saved ? "Alterações salvas!" : "Salvar Alterações"}
+            </button>
+      </div>
 
         <div className={styles.availability}>
 
