@@ -1,225 +1,304 @@
-   .container{
-    margin-left: 9%;
-    padding-top: 3%;
-   }
+.container {
+  margin-left: 9%;
+  padding-top: 3%;
+}
 
-   .title{
-    font-weight: bold;
-   }
+.title {
+  font-weight: bold;
+}
 
-  .item{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 15px;
-    margin-top: 20px;
-    width: 32%;
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-top: 20px;
+  width: 32%;
+}
 
-  }
-  
-  .select {
-    padding: 6px 8px;
-    border: 1px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 16px;
-    color: #0f172a;
-    background-color: #f8fafc;
-    transition: all 0.2s ease-in-out;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg fill='%230f172a' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 12px center;
-    background-size: 16px;
-  }
-  
-  .custom-select:focus {
-    outline: none;
-    border-color: #0f172a;
-    box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.2);
-  }
+.select {
+  padding: 6px 8px;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #0f172a;
+  background-color: #f8fafc;
+  transition: all 0.2s ease-in-out;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg fill='%230f172a' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 16px;
+}
 
-  .switch {
-    position: relative;
-    width: 34px;
-    height: 18px;
-    background-color: #ccc;
-    border-radius: 9999px;
-    transition: background-color 0.2s ease;
-  
-  }
-  
-  .switch[data-state="checked"] {
-    background-color: #22c55e; 
-  }
-  
-  .switch > span {
-    position: absolute;
-    top: 1px;
-    left: -2px;
-    width: 12px;
-    height: 12px;
-    border-radius: 9999px;
-    background-color: white;
-    transition: transform 0.2s ease;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-    border: 1px solid #ccc;
-  }
-  
-  .switch[data-state="checked"] > span {
-    transform: translateX(18px);
-  }
+.custom-select:focus {
+  outline: none;
+  border-color: #0f172a;
+  box-shadow: 0 0 0 3px rgba(15, 23, 42, 0.2);
+}
 
-  .number{
-    color: #afafaf;
-  }
+.switch {
+  position: relative;
+  width: 34px;
+  height: 18px;
+  background-color: #ccc;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
+}
 
-  .buttonWpp{
-    border: 2px solid #22c55e;
-    background-color: #51ca7e;
-    color: white;
-    border-radius: 6px;
-    padding: 5px 7px;
-    margin-top: 20px;
-    transition: .5s;
-  }
-  .buttonWpp:hover{
-    background-color: #17e764;
-  }
-  .subtitle {
-    font-weight: bold;
-    font-size: 1.2rem;
-  }
-  
-  .availability {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    width: 100%;
-    max-width: 1000px;
-  }
-  
-  .availabilityRow {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 0;
-    border-bottom: 1px solid #e2e8f0;
-  }
-  
-  .day {
-    width: 100px;
-    font-weight: bold;
-    color: #0f172a;
-  }
-  
-  .labelSmall {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 0.9rem;
-  }
-  
-  .checkbox {
-    transform: scale(1.2);
-    cursor: pointer;
-  }
-  
+.switch[data-state="checked"] {
+  background-color: #22c55e;
+}
+
+.switch > span {
+  position: absolute;
+  top: 1px;
+  left: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  background-color: white;
+  transition: transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  border: 1px solid #ccc;
+}
+
+.switch[data-state="checked"] > span {
+  transform: translateX(18px);
+}
+
+.number {
+  color: #afafaf;
+}
+
+.buttonWpp {
+  border: 2px solid #22c55e;
+  background-color: #51ca7e;
+  color: white;
+  border-radius: 6px;
+  padding: 5px 7px;
+  margin-top: 20px;
+  transition: 0.5s;
+}
+
+.buttonWpp:hover {
+  background-color: #22c55e;
+}
+
+.subtitle,
+.subheading {
+  font-weight: bold;
+  font-size: 1.2rem;
+  margin-top: 30px;
+}
+
+.availability {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.availabilityRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.day {
+  width: 100px;
+  font-weight: bold;
+  color: #0f172a;
+}
+
+.labelSmall {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.checkbox {
+  transform: scale(1.2);
+  cursor: pointer;
+}
+
+.timeInput {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #0f172a;
+  background-color: #f8fafc;
+  width: 120px;
+}
+
+.availabilityHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  font-weight: 500;
+  color: #475569;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.saveButton {
+  background-color: #01ddf5;
+  border: 1px solid #01bfd4;
+  font-weight: 500;
+  color: white;
+  padding: 3px 10px;
+  border-radius: 6px;
+  transition: 0.5s;
+}
+
+.saveButton:hover {
+  background-color: #31eaff;
+}
+
+.timeLabel {
+  width: 120px;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+/* === Estilo para seção de exceções === */
+.exceptionsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 30px;
+  max-width: 1000px;
+}
+
+.exceptionRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+
+.dateInput {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #0f172a;
+  background-color: #ffffff;
+  width: 160px;
+}
+
+.reasonInput {
+  padding: 6px 10px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+  width: 200px;
+  background-color: #ffffff;
+}
+
+.removeButton {
+  background-color: #ef4444;
+  border: none;
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.removeButton:hover {
+  background-color: #dc2626;
+}
+
+.addButton {
+  background-color: #01ddf5;
+  color: white;
+  border: 2px solid #01bfd4;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background-color 0.5s;
+}
+
+.addButton:hover {
+  background-color: #01bfd4;
+}
+
+/* === Responsivo === */
+@media (min-width: 768px) and (max-width: 1024px) {
   .timeInput {
-    padding: 6px 10px;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-size: 14px;
-    color: #0f172a;
-    background-color: #f8fafc;
-    width: 120px;
+    width: 110px;
   }
+  .dateInput {
+    width: 140px;
+  }
+  .reasonInput {
+    width: 180px;
+  }
+}
 
+@media (max-width: 768px) {
+  .container {
+    margin: 5vh 3vw;
+  }
+  .title {
+    margin-left: 2.5vw;
+  }
+  .item {
+    width: 90%;
+    margin-left: 2.5vw;
+  }
+  .button {
+    margin-left: 2.5vw;
+  }
+  .day {
+    width: auto;
+  }
   .availabilityHeader {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 8px;
-    font-weight: 500;
-    color: #475569;
-    border-bottom: 2px solid #e2e8f0;
+    flex-direction: column;
+    gap: 25px;
+    margin-top: 3vh;
   }
-
-  .topAvailability {
-    display: flex;
-    gap: 20px;
-    align-items: center;
-    margin-top: 40px;
-    margin-bottom: 20px;
+  .availability {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
   }
-
-  .saveButton{
-    background-color: #01ddf5;
-    border: 1px solid #01bfd4;
-    font-weight: 500;
-    color: white;
-    padding: 3px 10px;
-    border-radius: 6px;
-    transition: .5s;
+  .availabilityRow {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #f8fafc;
   }
-
-  .saveButton:hover{
-    background-color: #31eaff;
-  }  
-
-  .timeLabel {
-    width: 120px;
-    font-size: 0.85rem;
+  .availabilityRow input[type="time"] {
+    width: 100%;
+  }
+  .subtitle {
     text-align: center;
   }
-  @media (min-width: 768px) and (max-width: 1024px){
-    .timeInput{
-      width: 110px;
-    }
+  .exceptionRow {
+    flex-direction: column;
+    align-items: stretch;
   }
-
-  @media (max-width: 768px){
-    .container{
-      margin: 5vh 3vw;
-    }
-    .title{
-      margin-left: 2.5vw;
-    }
-    .item{
-      width: 90%;
-      margin-left: 2.5vw;
-    }
-    .button{
-      margin-left: 2.5vw;
-    }
-    .day {
-      width: auto;
-    }
-    .availabilityHeader {
-      display: flex;
-      flex-direction: column;
-      gap: 25px;
-      margin-top: 3vh;
-    }
-    .availability {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-  
-    .availabilityRow {
-      flex-direction: column;
-      align-items: flex-start;
-      padding: 12px;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      background-color: #f8fafc;
-    }
-  
-    .availabilityRow input[type="time"] {
-      width: 100%;
-    }
-    .subtitle{
-      text-align: center;
-    }
+  .dateInput,
+  .reasonInput {
+    width: 100%;
   }
+  .addButton {
+    align-self: center;
+  }
+}

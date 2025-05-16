@@ -13,6 +13,7 @@
 
 .modal {
   background: white;
+  color: black;
   padding: 2rem;
   border-radius: 12px;
   max-width: 400px;
@@ -44,6 +45,7 @@
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 6px;
+  background-color: white;
 }
 
 .containerBtn{

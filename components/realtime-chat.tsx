@@ -9,7 +9,7 @@ import {
 } from '@/hooks/use-realtime-chat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Send } from 'lucide-react'
+import { Send, Users, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from "@/components/ui/switch"
@@ -123,13 +123,22 @@ export const RealtimeChat = ({
         }}>
 
         <div className={styles.contactHeader}>
+
+        <div className={styles.contact_icon}>
+          <Users className={styles.iconContact} />
           <h3 className={styles.contactTitle}>Contatos</h3>
-          <input 
+        </div>
+
+        <div className={styles.search_container}>
+            <Search className={styles.searchIcon} size={16} />
+            <input 
             type="text" 
             placeholder="Pesquisar por contato"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+
           <hr />
         </div>
 

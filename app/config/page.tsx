@@ -5,17 +5,26 @@ import { useState } from "react";
 import { useCalendarConfig } from '@/context/CalendarConfigContext'
 
 export default function Config() {
-    const [saved, setSaved] = useState(false);
-    const { defaultDuration, setDefaultDuration } = useCalendarConfig()
-    const { allowDoubleBooking, setAllowDoubleBooking } = useCalendarConfig();
+  const { defaultDuration, setDefaultDuration } = useCalendarConfig()
+  const { allowDoubleBooking, setAllowDoubleBooking } = useCalendarConfig();
 
-      const handleSave = () => {
-        setSaved(true);
+  const [excecoes, setExcecoes] = useState([{ id: Date.now(), date: "" }]);
 
-        setTimeout(() => {
-          setSaved(false);
-        }, 3000);
-      };
+  const adicionarExcecao = () => {
+    setExcecoes([...excecoes, { id: Date.now(), date: "" }]);
+  };
+
+  const removerExcecao = (id: number) => {
+    setExcecoes(excecoes.filter((excecao) => excecao.id !== id));
+  };
+
+  const atualizarData = (id: number, novaData: string) => {
+    setExcecoes(
+      excecoes.map((excecao) =>
+        excecao.id === id ? { ...excecao, date: novaData } : excecao
+      )
+    );
+  };
 
   return (
     <div className={styles.container}>
@@ -23,14 +32,14 @@ export default function Config() {
 
       <div className={styles.item}>
         <h3 className={styles.label}>Duração padrão da consulta</h3>
-              <select
-                id="select"
-                className={styles.select}
-                value={defaultDuration}
-                onChange={(e) => setDefaultDuration(Number(e.target.value))}
-              >
+        <select
+          id="select"
+          className={styles.select} 
+          value={defaultDuration}
+          onChange={(e) => setDefaultDuration(Number(e.target.value))}
+        >
           <option value="30">30min</option>
-          <option value="60" selected>1h</option>
+          <option value="60">1h</option>
           <option value="90">1h30min</option>
           <option value="120">2h</option>
         </select>
@@ -52,40 +61,62 @@ export default function Config() {
 
       <button className={styles.buttonWpp}>QR Code WhatsApp</button>
 
+      <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
 
-      <div className={styles.topAvailability}>
-        <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
-            <button className={styles.saveButton} onClick={handleSave}>
-              {saved ? "Alterações salvas!" : "Salvar Alterações"}
-            </button>
-      </div>
-
-        <div className={styles.availability}>
-
+      <div className={styles.availability}>
         <div className={styles.availabilityHeader}>
-            <span className={styles.day}></span>
-            <span className={styles.day}></span>
-            <span className={styles.labelSmall}></span>
-            <span className={styles.timeLabel}>Início</span>
-            <span className={styles.timeLabel}>Fim</span>
-            <span className={styles.timeLabel}>Início almoço</span>
-            <span className={styles.timeLabel}>Fim almoço</span>
+          <span className={styles.day}></span>
+          <span className={styles.day}></span>
+          <span className={styles.labelSmall}></span>
+          <span className={styles.timeLabel}>Início</span>
+          <span className={styles.timeLabel}>Fim</span>
+          <span className={styles.timeLabel}>Início almoço</span>
+          <span className={styles.timeLabel}>Fim almoço</span>
         </div>
 
         {["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"].map((dia, index) => (
-            <div key={index} className={styles.availabilityRow}>
+          <div key={index} className={styles.availabilityRow}>
             <span className={styles.day}>{dia}</span>
             <label className={styles.labelSmall}>
-                Dia de trabalho
-                <input type="checkbox" className={styles.checkbox} />
+              Dia de trabalho
+              <input type="checkbox" className={styles.checkbox} />
             </label>
             <input type="time" className={styles.timeInput} />
             <input type="time" className={styles.timeInput} />
             <input type="time" className={styles.timeInput} />
             <input type="time" className={styles.timeInput} />
-            </div>
+          </div>
         ))}
-        </div>
+      </div> {/* Availability */}
+
+      <h3 className={styles.subheading}>Adicionar Exceções de Funcionamento</h3>
+      <div className={styles.exceptionsSection}>
+        {excecoes.map((excecao) => (
+          <div className={styles.exceptionRow} key={excecao.id}>
+            <input
+              type="date"
+              className={styles.dateInput}
+              value={excecao.date}
+              onChange={(e) => atualizarData(excecao.id, e.target.value)}
+            />
+            <label className={styles.labelSmall}></label>
+            <button
+              type="button"
+              className={styles.removeButton}
+              onClick={() => removerExcecao(excecao.id)}
+            >
+              Remover
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          className={styles.addButton}
+          onClick={adicionarExcecao}
+        >
+          Adicionar nova exceção
+        </button>
+      </div>
     </div>
   );
 }
