@@ -28,8 +28,14 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
-      - name: Export static files (se for Next.js)
-        run: npx next export || echo "Não é Next.js ou não suporta exportação estática"
+      - name: List build directories
+        run: |
+          echo "Listing directories to find build output:"
+          ls -la
+          if [ -d "out" ]; then echo "out directory exists"; fi
+          if [ -d "dist" ]; then echo "dist directory exists"; fi
+          if [ -d "build" ]; then echo "build directory exists"; fi
+          if [ -d ".next" ]; then echo ".next directory exists"; fi
         
       - name: Deploy to server
         uses: appleboy/scp-action@master
@@ -37,9 +43,9 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "out/,dist/,build/"
+          source: ".next/,out/,dist/,build/,public/,index.html"
           target: "/opt/frontend-dev"
-          strip_components: 1
+          strip_components: 0
           rm: true
           
       - name: Set permissions
