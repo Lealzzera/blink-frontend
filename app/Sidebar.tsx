@@ -23,19 +23,26 @@ export default function Sidebar() {
       className={styles.image}
     />
       <div className={styles.container}>
-
-      <Link href="/">
-        <FaComments className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
-      </Link>
-      <Link href="/dashboard">
-        <FaChartBar className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
-      </Link>
-      <Link href="/calendar">
-        <FaCalendarAlt className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
-      </Link>
-      <Link href="/config">
-        <FaCog className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
-      </Link>
+      <div className={styles.iconWrapper}>
+        <Link href="/">
+          <FaComments className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
+        </Link>
+      </div>
+      <div className={styles.iconWrapper}>
+        <Link href="/dashboard">
+          <FaChartBar className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
+        </Link>
+      </div>
+      <div className={styles.iconWrapper}>
+        <Link href="/calendar">
+          <FaCalendarAlt className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
+        </Link>
+      </div>
+      <div className={styles.iconWrapper}>
+        <Link href="/config">
+          <FaCog className="text-[#0f172a] text-[24px] 2xl:text-[32px] transition-transform duration-200 hover:scale-105" />
+        </Link>
+      </div>      
       
       <DropdownMenu>
       <DropdownMenuTrigger asChild>

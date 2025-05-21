@@ -9,7 +9,7 @@ import {
 } from '@/hooks/use-realtime-chat'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Send } from 'lucide-react'
+import { Send, Users, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from "@/components/ui/switch"
@@ -21,14 +21,21 @@ interface RealtimeChatProps {
   messages?: ChatMessage[]
 }
 
-/**
- * Realtime chat component
- * @param roomName - The name of the room to join. Each room is a unique chat.
- * @param username - The username of the user
- * @param onMessage - The callback function to handle the messages. Useful if you want to store the messages in a database.
- * @param messages - The messages to display in the chat. Useful if you want to display messages from a database.
- * @returns The chat component
- */
+// Simulação de resposta de uma API
+const mockContacts = [
+  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true },
+  { id: 2, name: 'Lucas', number: '(11)999999999', scheduled: true },
+  { id: 3, name: 'Ricardo', number: '(11)999999999', scheduled: true },
+  { id: 4, name: 'Guilherme', number: '(11)999999999', scheduled: true },
+  { id: 5, name: 'Paula', number: '(11)999999999', scheduled: true },
+  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true },
+  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true },
+  { id: 8, name: 'Melissa', number: '(11)999999999', scheduled: true },
+  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
+  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
+  { id: 11, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
+]
+
 export const RealtimeChat = ({
   roomName,
   username,
@@ -45,18 +52,29 @@ export const RealtimeChat = ({
     roomName,
     username,
   })
-  const [newMessage, setNewMessage] = useState('')
 
-  // Merge realtime messages with initial messages
+  const [newMessage, setNewMessage] = useState('')
+  const [contacts, setContacts] = useState<typeof mockContacts>([])
+  const [searchTerm, setSearchTerm] = useState('')
+  const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null)
+
+  // Carrega os contatos como se fossem de uma API
+  useEffect(() => {
+    // Simula delay de API
+    const fetchContacts = async () => {
+      setContacts(mockContacts)
+      setSelectedContact(mockContacts[0]) // Primeiro Nome como Padrao
+    }
+
+    fetchContacts()
+  }, [])
+
   const allMessages = useMemo(() => {
     const mergedMessages = [...initialMessages, ...realtimeMessages]
-    // Remove duplicates based on message id
     const uniqueMessages = mergedMessages.filter(
       (message, index, self) => index === self.findIndex((m) => m.id === message.id)
     )
-    // Sort by creation date
     const sortedMessages = uniqueMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-
     return sortedMessages
   }, [initialMessages, realtimeMessages])
 
@@ -67,7 +85,6 @@ export const RealtimeChat = ({
   }, [allMessages, onMessage])
 
   useEffect(() => {
-    // Scroll to bottom whenever messages change
     scrollToBottom()
   }, [allMessages, scrollToBottom])
 
@@ -75,216 +92,141 @@ export const RealtimeChat = ({
     (e: React.FormEvent) => {
       e.preventDefault()
       if (!newMessage.trim() || !isConnected) return
-
       sendMessage(newMessage)
       setNewMessage('')
     },
     [newMessage, isConnected, sendMessage]
   )
 
-  {/* Menu Hamburguer Logic */}
-
   const [showContacts, setShowContacts] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
     };
-  
-    handleResize(); // verifica ao carregar
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  
+
   const toggleMenu = () => {
     setShowContacts((prev) => !prev);
   };
-  
+
   return (
     <div className={styles.container}>
 
-  <div className={styles.contacts}   
-    style={{
-    display: isMobile ? (showContacts ? 'block' : 'none') : 'block',
-    }}>
+      <div className={styles.contacts}
+        style={{
+          display: isMobile ? (showContacts ? 'block' : 'none') : 'block',
+        }}>
 
-    <div className={styles.contactHeader}>
-      <h3 className={styles.contactTitle}>Contatos</h3>
-      <input type="text" placeholder='Pesquisar por contato'/> 
-      <hr /> 
-    </div>
+        <div className={styles.contactHeader}>
 
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Fabiana</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Lucas</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Ricardo</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Guilherme</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Paula</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Rafael</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Miguel</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Melissa</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Nome do Contato</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Nome do Contato</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-    <div className={styles.contact}>
-      <div className={styles.insideContact}>
-        <h3 className={styles.name}>Nome do Contato</h3>
-        <p className={styles.number}>(11)999999999</p>
-      </div>{/* Fechamento da insideContact */}
-      <Switch className={styles.switch} defaultChecked />
-    </div> {/* Fechamento da Contact */}
-    <hr className={styles.line}/>
-
-  </div>{/* Fechamento da Contacts */}
-
-  <div className={styles.chat}>
-
-
-
-    <div className={styles.chatHeader}>
-      
-      <div className={styles.spanContainer} onClick={toggleMenu}>
-        <span className={styles.span1}></span>
-        <span className={styles.span2}></span>
-        <span className={styles.span3}></span>
-      </div>
-
-      <h3 className={styles.headerTitle}>Ricardo</h3>
-      <Switch className={styles.switch} defaultChecked />
-    </div>
-
-    {/* Messages */}
-
-    <div ref={containerRef} className={styles.messages}>
-      {allMessages.length === 0 ? (
-        <div className={styles.noMessages}>
-          Sem mensagens por enquanto.
+        <div className={styles.contact_icon}>
+          <Users className={styles.iconContact} />
+          <h3 className={styles.contactTitle}>Contatos</h3>
         </div>
-      ) : null}
 
-      <div className={styles.messageList}>
-        {allMessages.map((message, index) => {
-          const prevMessage = index > 0 ? allMessages[index - 1] : null;
-          const showHeader = !prevMessage || prevMessage.user.name !== message.user.name;
+        <div className={styles.search_container}>
+            <Search className={styles.searchIcon} size={16} />
+            <input 
+            type="text" 
+            placeholder="Pesquisar por contato"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
 
-          return (
+          <hr />
+        </div>
+
+        {contacts
+          .filter((contact) =>
+            contact.name.toLowerCase().includes(searchTerm.toLowerCase())
+          )
+          .map((contact) => (
             <div
-              key={message.id}
-              className={styles.messageItem}
+              key={contact.id}
+              className={styles.contact}
+              onClick={() => {
+                setSelectedContact(contact)
+                if (isMobile) toggleMenu()
+              }}
             >
-              <ChatMessageItem
-                message={message}
-                isOwnMessage={message.user.name === username}
-                showHeader={showHeader}
-              />
+              <div className={styles.insideContact}>
+                <h3 className={styles.name}>{contact.name}</h3>
+                <p className={styles.number}>{contact.number}</p>
+              </div>
+              <Switch className={styles.switch} defaultChecked />
             </div>
-          );
-        })}
+        ))}
+
+      </div>
+
+      <div className={styles.chat}>
+        <div className={styles.chatHeader}>
+          <div className={styles.spanContainer} onClick={toggleMenu}>
+            <span className={styles.span1}></span>
+            <span className={styles.span2}></span>
+            <span className={styles.span3}></span>
+          </div>
+          <h3 className={styles.headerTitle}>{selectedContact?.name ?? 'Carregando...'}</h3>
+          <Switch className={styles.switch} defaultChecked />
+        </div>
+
+        <div ref={containerRef} className={styles.messages}>
+          {allMessages.length === 0 ? (
+            <div className={styles.noMessages}>
+              Sem mensagens por enquanto.
+            </div>
+          ) : null}
+
+          <div className={styles.messageList}>
+            {allMessages.map((message, index) => {
+              const prevMessage = index > 0 ? allMessages[index - 1] : null;
+              const showHeader = !prevMessage || prevMessage.user.name !== message.user.name;
+
+              return (
+                <div
+                  key={message.id}
+                  className={styles.messageItem}
+                >
+                  <ChatMessageItem
+                    message={message}
+                    isOwnMessage={message.user.name === username}
+                    showHeader={showHeader}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <form onSubmit={handleSendMessage} className={styles.inputContainer}>
+          <Input
+            className={cn(
+              styles.inputMessage,
+              isConnected && newMessage.trim() ? styles.inputMessageActive : ''
+            )}
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Digite a mensagem..."
+            disabled={!isConnected}
+          />
+          {isConnected && newMessage.trim() && (
+            <Button
+              className={styles.sendButton}
+              type="submit"
+              disabled={!isConnected}
+            >
+              <Send className={styles.sendIcon} />
+            </Button>
+          )}
+        </form>
       </div>
     </div>
-
-    <form onSubmit={handleSendMessage} className={styles.inputContainer}>
-      <Input
-        className={cn(
-          styles.inputMessage,
-          isConnected && newMessage.trim() ? styles.inputMessageActive : ''
-        )}
-        type="text"
-        value={newMessage}
-        onChange={(e) => setNewMessage(e.target.value)}
-        placeholder="Digite a mensagem..."
-        disabled={!isConnected}
-      />
-      {isConnected && newMessage.trim() && (
-        <Button
-          className={styles.sendButton}
-          type="submit"
-          disabled={!isConnected}
-        >
-          <Send className={styles.sendIcon} />
-        </Button>
-      )}
-    </form>
-  </div>
-</div>
   )
 }
