@@ -23,6 +23,9 @@ jobs:
         run: npm ci
         
       - name: Build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
       - name: Deploy to server
@@ -31,17 +34,21 @@ jobs:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: "dist/"
+          source: ".next/,public/,package.json,package-lock.json,next.config.js"
           target: "/opt/frontend-dev"
-          strip_components: 1
+          strip_components: 0
           rm: true
           
-      - name: Set permissions
+      - name: Setup and restart application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            cd /opt/frontend-dev
+            npm ci --production
+            pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
+            pm2 save
             sudo chown -R www-data:www-data /opt/frontend-dev
             sudo chmod -R 755 /opt/frontend-dev
