@@ -28,27 +28,26 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
+      - name: Export static files (se for Next.js)
+        run: npx next export || echo "Não é Next.js ou não suporta exportação estática"
+        
       - name: Deploy to server
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".next/,public/,package.json,package-lock.json,next.config.js"
+          source: "out/,dist/,build/"
           target: "/opt/frontend-dev"
-          strip_components: 0
+          strip_components: 1
           rm: true
           
-      - name: Setup and restart application
+      - name: Set permissions
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/frontend-dev
-            npm ci --production
-            pm2 restart ecosystem.config.js || pm2 start ecosystem.config.js
-            pm2 save
             sudo chown -R www-data:www-data /opt/frontend-dev
             sudo chmod -R 755 /opt/frontend-dev
