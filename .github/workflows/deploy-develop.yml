@@ -28,32 +28,47 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
-      - name: List build directories
-        run: |
-          echo "Listing directories to find build output:"
-          ls -la
-          if [ -d "out" ]; then echo "out directory exists"; fi
-          if [ -d "dist" ]; then echo "dist directory exists"; fi
-          if [ -d "build" ]; then echo "build directory exists"; fi
-          if [ -d ".next" ]; then echo ".next directory exists"; fi
-        
       - name: Deploy to server
-        uses: appleboy/scp-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          source: ".next/,out/,dist/,build/,public/,index.html"
-          target: "/opt/frontend-dev"
-          strip_components: 0
-          rm: true
-          
-      - name: Set permissions
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.HOST }}
           username: ${{ secrets.USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Limpar diretório de destino
+            rm -rf /opt/frontend-dev/*
+            mkdir -p /tmp/frontend-build
+            
+      # Tentar cada pasta de build possível
+      - name: Deploy build files
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: ".next/**,out/**,dist/**,build/**,public/**,index.html"
+          target: "/tmp/frontend-build"
+          strip_components: 0
+          rm: false
+          
+      - name: Finalize deployment
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Mover arquivos para o diretório final
+            cp -r /tmp/frontend-build/* /opt/frontend-dev/ || echo "No files to copy"
+            
+            # Limpar diretório temporário
+            rm -rf /tmp/frontend-build
+            
+            # Ajustar permissões
             sudo chown -R www-data:www-data /opt/frontend-dev
             sudo chmod -R 755 /opt/frontend-dev
+            
+            # Listar arquivos para verificar
+            echo "Conteúdo do diretório /opt/frontend-dev:"
+            ls -la /opt/frontend-dev
+
