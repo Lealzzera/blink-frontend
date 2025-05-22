@@ -22,35 +22,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Create next.config.js for static export
-        run: |
-          echo 'module.exports = { 
-            output: "export",
-            distDir: "out"
-          };' > next.config.js
-        
-      - name: Modify dynamic routes to be static
-        run: |
-          # Criar arquivo temporário para substituir rotas dinâmicas
-          mkdir -p app/auth/confirm
-          echo 'export default function ConfirmPage() { return <div>Esta página requer funcionalidades dinâmicas e não está disponível no ambiente de teste.</div>; }' > app/auth/confirm/page.js
-          
-          # Substituir página de erro que usa searchParams
-          mkdir -p app/auth/error
-          echo 'export default function ErrorPage() { return <div>Esta página requer funcionalidades dinâmicas e não está disponível no ambiente de teste.</div>; }' > app/auth/error/page.js
-        
-      - name: Build static site
+      - name: Build
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
+      - name: Prepare for deployment
+        run: |
+          mkdir -p deploy
+          cp -r .next deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp next.config.js deploy/ || echo "No next.config.js file"
+          
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.HOST }}
           username: blink
           password: Blink10@
-          local_path: ./out/*
-          remote_path: /opt/frontend-dev/out/
+          local_path: ./deploy/*
+          remote_path: /opt/frontend-dev/
           sftpArgs: '-o StrictHostKeyChecking=no'
