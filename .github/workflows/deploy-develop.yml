@@ -22,13 +22,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
         
-      - name: Build and Export
+      - name: Create next.config.js for static export
+        run: |
+          echo 'module.exports = { output: "export" };' > next.config.js
+        
+      - name: Build static site
         env:
           NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-        run: |
-          npm run build
-          npx next export
+        run: npm run build
         
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
