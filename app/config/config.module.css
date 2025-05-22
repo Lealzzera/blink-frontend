@@ -207,9 +207,8 @@
 }
 
 .removeButton {
-  background-color: #ef4444;
+  background-color: #e9e9e9;
   border: none;
-  color: white;
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
@@ -217,22 +216,23 @@
 }
 
 .removeButton:hover {
-  background-color: #dc2626;
+  background-color: #f3f4f6;
 }
 
 .addButton {
-  background-color: #01ddf5;
+  background-color: #2563eb;
   color: white;
-  border: 2px solid #01bfd4;
+  border: 2px solid #2563eb;
   padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
   align-self: flex-start;
   transition: background-color 0.5s;
+  margin-bottom: 20px;
 }
 
 .addButton:hover {
-  background-color: #01bfd4;
+  background-color: #074bdd;
 }
 
 /* === Responsivo === */

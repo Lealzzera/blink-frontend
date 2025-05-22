@@ -9,8 +9,36 @@
     justify-content: space-between;
     gap: 0.5rem;
   }
+
+.fab {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 9999px;
+  width: 56px;
+  height: 56px;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+  transition: background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding-bottom: 5px;
+}
+
+
+
+.fab:hover {
+  background-color: #1e40af;
+}
   
-  /* Aplica a margem lateral esquerda apenas em telas maiores */
   @media (min-width: 1024px) {
     .container {
       margin-left: 7%;

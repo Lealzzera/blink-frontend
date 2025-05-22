@@ -67,8 +67,8 @@
   position: absolute;
   top: 1rem;
   right: 1rem;
-  background: red !important;
-  color: white;
+  background: #f3f4f6;
+  color: black;
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -78,21 +78,21 @@
 }
 
 .confirm {
-    background-color: #01ddf5;
+    background-color: #2563eb;
     color: white;
     border-radius: 6px;
     padding: 0.5rem;
 }
 
 .iconButton {
-  background-color: #01ddf5;
+  background-color: #2563eb;
   color: white;
 }
 
 .cancelar {
-  background-color: #f0473a;
-  border: 2px solid red;
-  color: white;
+  background-color: #f3f4f6;
+  border: 2px solid #f3f4f6;
+  color: black;
 }
 
 
