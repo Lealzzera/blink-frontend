@@ -28,6 +28,11 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
+      - name: Prepare for deployment
+        run: |
+          cp package.json .next/
+          cp package-lock.json .next/
+          
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
@@ -37,3 +42,15 @@ jobs:
           local_path: ./.next/*
           remote_path: /opt/frontend-dev/
           sftpArgs: '-o StrictHostKeyChecking=no'
+          
+      - name: Install dependencies and restart
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/frontend-dev
+            npm install --production
+            pm2 restart frontend-dev
+            pm2 save
