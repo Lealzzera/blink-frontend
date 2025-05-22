@@ -28,13 +28,21 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
+      - name: Prepare deployment files
+        run: |
+          mkdir -p deploy
+          cp -r .next deploy/
+          cp package.json deploy/
+          cp package-lock.json deploy/
+          cp next.config.js deploy/ || echo "No next.config.js file"
+          
       - name: Deploy via SFTP
         uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.HOST }}
           username: blink
           password: Blink10@
-          local_path: ./.next/*
+          local_path: ./deploy/*
           remote_path: /opt/frontend-dev/
           sftpArgs: '-o StrictHostKeyChecking=no'
           
@@ -49,3 +57,4 @@ jobs:
             npm install --production
             pm2 restart frontend-dev
             pm2 save
+            chown -R www-data:www-data /opt/frontend-dev
