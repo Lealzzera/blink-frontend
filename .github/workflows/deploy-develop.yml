@@ -28,11 +28,12 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
         run: npm run build
         
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      - name: Deploy via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
         with:
           server: ${{ secrets.HOST }}
           username: blink
           password: Blink10@
-          local-dir: .next/
-          server-dir: /
+          local_path: ./.next/*
+          remote_path: /opt/frontend-dev/
+          sftpArgs: '-o StrictHostKeyChecking=no'
