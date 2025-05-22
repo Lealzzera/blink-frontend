@@ -26,23 +26,18 @@ jobs:
         run: |
           echo 'module.exports = { 
             output: "export",
-            distDir: "out",
-            // Excluir rotas dinâmicas da exportação estática
-            exportPathMap: async function() {
-              return {
-                "/": { page: "/" },
-                "/dashboard": { page: "/dashboard" },
-                "/calendar": { page: "/calendar" },
-                "/config": { page: "/config" },
-                "/auth/login": { page: "/auth/login" },
-                "/auth/forgot-password": { page: "/auth/forgot-password" },
-                "/auth/sign-up": { page: "/auth/sign-up" },
-                "/auth/sign-up-success": { page: "/auth/sign-up-success" },
-                "/auth/update-password": { page: "/auth/update-password" },
-                "/update-password": { page: "/update-password" }
-              };
-            }
+            distDir: "out"
           };' > next.config.js
+        
+      - name: Modify dynamic routes to be static
+        run: |
+          # Criar arquivo temporário para substituir rotas dinâmicas
+          mkdir -p app/auth/confirm
+          echo 'export default function ConfirmPage() { return <div>Esta página requer funcionalidades dinâmicas e não está disponível no ambiente de teste.</div>; }' > app/auth/confirm/page.js
+          
+          # Substituir página de erro que usa searchParams
+          mkdir -p app/auth/error
+          echo 'export default function ErrorPage() { return <div>Esta página requer funcionalidades dinâmicas e não está disponível no ambiente de teste.</div>; }' > app/auth/error/page.js
         
       - name: Build static site
         env:
