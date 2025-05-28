@@ -12,7 +12,7 @@ type CalendarConfigContextType = {
 const CalendarConfigContext = createContext<CalendarConfigContextType | undefined>(undefined);
 
 export function CalendarConfigProvider({ children }: { children: React.ReactNode }) {
-  const [defaultDuration, setDefaultDuration] = useState(60); // valor padrão de 1h
+  const [defaultDuration, setDefaultDuration] = useState(30); // valor padrão de 1h
   const [allowDoubleBooking, setAllowDoubleBooking] = useState(false); // valor padrão: não permitir duplo agendamento
 
   return (

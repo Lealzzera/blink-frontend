@@ -57,11 +57,11 @@ export default function Dashboard() {
             <h2>{selectedData.agendamentos}</h2>
         </div>
         <div className={styles.card}>
-            <h3 className={styles.title}>Taxa de Comparecimento</h3>
-            <h2>{selectedData.taxaComparecimento} <span className={styles.preText}>%</span></h2>
+            <h3 className={styles.title}>Comparecimento</h3>
+            <h2>{selectedData.taxaComparecimento}</h2>
         </div>
         <div className={styles.card}>
-            <h3 className={styles.title}>Vendas (Quantidade)</h3>
+            <h3 className={styles.title}>Vendas</h3>
             <h2>{selectedData.vendasQuantidade}</h2>
         </div>
         <div className={styles.card}>

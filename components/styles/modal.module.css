@@ -77,22 +77,15 @@
   justify-content: center;
 }
 
-.confirm {
-    background-color: #2563eb;
-    color: white;
-    border-radius: 6px;
-    padding: 0.5rem;
-}
-
 .iconButton {
   background-color: #2563eb;
   color: white;
 }
 
 .cancelar {
-  background-color: #f3f4f6;
-  border: 2px solid #f3f4f6;
-  color: black;
+  background-color: rgb(250, 124, 124) !important;
+  border: 2px solid red !important;
+  color: white;font-weight: bold;
 }
 
 

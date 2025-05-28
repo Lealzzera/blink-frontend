@@ -17,18 +17,20 @@
 }
 
 .select {
-  padding: 6px 8px;
+  padding: 4px 6px;
   border: 1px solid #cbd5e1;
   border-radius: 8px;
-  font-size: 16px;
+  font-size: 14px;
   color: #0f172a;
   background-color: #f8fafc;
   transition: all 0.2s ease-in-out;
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg fill='%230f172a' height='20' viewBox='0 0 24 24' width='20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 16px;
+  background-position: right 10px center;
+  background-size: 14px;
+  width: 100%;
+  max-width: 130px;
 }
 
 .custom-select:focus {
@@ -44,6 +46,7 @@
   background-color: #ccc;
   border-radius: 9999px;
   transition: background-color 0.2s ease;
+  border: 1px solid #ccc;
 }
 
 .switch[data-state="checked"] {
@@ -53,9 +56,9 @@
 .switch > span {
   position: absolute;
   top: 1px;
-  left: -2px;
-  width: 12px;
-  height: 12px;
+  left: 0px;
+  width: 14px;
+  height: 14px;
   border-radius: 9999px;
   background-color: white;
   transition: transform 0.2s ease;
@@ -76,15 +79,21 @@
   background-color: #51ca7e;
   color: white;
   border-radius: 6px;
-  padding: 5px 7px;
+  padding: 6px 8px;
   margin-top: 20px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   transition: 0.5s;
 }
 
 .buttonWpp:hover {
   background-color: #22c55e;
 }
-
+.subtitle{
+  margin-bottom: 20px;
+}
 .subtitle,
 .subheading {
   font-weight: bold;
@@ -128,19 +137,20 @@
 }
 
 .timeInput {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
-  font-size: 14px;
+  font-size: 13px;
   color: #0f172a;
   background-color: #f8fafc;
-  width: 120px;
+  width: 100%;
+  max-width: 100px;
 }
 
 .availabilityHeader {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 3px;
   padding-bottom: 8px;
   font-weight: 500;
   color: #475569;
@@ -167,7 +177,6 @@
   text-align: center;
 }
 
-/* === Estilo para seção de exceções === */
 .exceptionsSection {
   display: flex;
   flex-direction: column;
@@ -194,7 +203,8 @@
   font-size: 14px;
   color: #0f172a;
   background-color: #ffffff;
-  width: 160px;
+  width: 100%;
+  max-width: 160px;
 }
 
 .reasonInput {
@@ -202,7 +212,8 @@
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   font-size: 14px;
-  width: 200px;
+  width: 100%;
+  max-width: 200px;
   background-color: #ffffff;
 }
 
@@ -235,16 +246,56 @@
   background-color: #074bdd;
 }
 
-/* === Responsivo === */
+/* NOVO ESTILO PARA timeInputs */
+.timeInputs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  max-width: 400px;
+}
+
+@media (min-width: 1025px) {
+  .timeInputs {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}
+
+@media (max-width: 1024px) {
+  .timeInputs {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .timeInputs > * {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Responsivo */
+@media (min-width: 1441px){
+  .timeInputs{
+    width: 400px;
+  }
+}
+
 @media (min-width: 768px) and (max-width: 1024px) {
   .timeInput {
-    width: 110px;
+    max-width: 90px;
+  }
+  .select {
+    max-width: 120px;
   }
   .dateInput {
-    width: 140px;
+    max-width: 140px;
   }
   .reasonInput {
-    width: 180px;
+    max-width: 180px;
   }
 }
 
@@ -269,7 +320,7 @@
     display: flex;
     flex-direction: column;
     gap: 25px;
-    margin-top: 3vh;
+    margin-top: 1vh;
   }
   .availability {
     display: grid;
@@ -289,6 +340,7 @@
   }
   .subtitle {
     text-align: center;
+    margin-bottom: 20px;
   }
   .exceptionRow {
     flex-direction: column;
@@ -300,5 +352,22 @@
   }
   .addButton {
     align-self: center;
+  }
+  .timeInputs {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin: 1rem 0;
+  }
+  .subheading {
+    text-align: center;
+  }
+  .timeInput {
+    max-width: 90px;
+  }
+  .select {
+    max-width: 120px;
   }
 }

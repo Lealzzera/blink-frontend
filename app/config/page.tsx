@@ -2,28 +2,39 @@
 import styles from "./config.module.css";
 import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
-import { useCalendarConfig } from '@/context/CalendarConfigContext'
+import { useCalendarConfig } from '@/context/CalendarConfigContext';
 
 export default function Config() {
-  const { defaultDuration, setDefaultDuration } = useCalendarConfig()
+  const { defaultDuration, setDefaultDuration } = useCalendarConfig();
   const { allowDoubleBooking, setAllowDoubleBooking } = useCalendarConfig();
 
-  const [excecoes, setExcecoes] = useState([{ id: Date.now(), date: "" }]);
+  const diasDaSemana = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+  const [diasTrabalho, setDiasTrabalho] = useState<{ [key: number]: boolean }>(
+    Object.fromEntries(diasDaSemana.map((_, i) => [i, false]))
+  );
+
+  const [excecoes, setExcecoes] = useState([
+    { id: Date.now(), date: "", isOpen: false, start: "", end: "", lunchStart: "", lunchEnd: "" }
+  ]);
 
   const adicionarExcecao = () => {
-    setExcecoes([...excecoes, { id: Date.now(), date: "" }]);
+    setExcecoes([
+      ...excecoes,
+      { id: Date.now(), date: "", isOpen: false, start: "", end: "", lunchStart: "", lunchEnd: "" }
+    ]);
+  };
+
+  const atualizarCampo = (id: number, campo: string, valor: string | boolean) => {
+    setExcecoes(
+      excecoes.map((excecao) =>
+        excecao.id === id ? { ...excecao, [campo]: valor } : excecao
+      )
+    );
   };
 
   const removerExcecao = (id: number) => {
     setExcecoes(excecoes.filter((excecao) => excecao.id !== id));
-  };
-
-  const atualizarData = (id: number, novaData: string) => {
-    setExcecoes(
-      excecoes.map((excecao) =>
-        excecao.id === id ? { ...excecao, date: novaData } : excecao
-      )
-    );
   };
 
   return (
@@ -34,7 +45,7 @@ export default function Config() {
         <h3 className={styles.label}>Duração padrão da consulta</h3>
         <select
           id="select"
-          className={styles.select} 
+          className={styles.select}
           value={defaultDuration}
           onChange={(e) => setDefaultDuration(Number(e.target.value))}
         >
@@ -64,30 +75,51 @@ export default function Config() {
       <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
 
       <div className={styles.availability}>
-        <div className={styles.availabilityHeader}>
-          <span className={styles.day}></span>
-          <span className={styles.day}></span>
-          <span className={styles.labelSmall}></span>
-          <span className={styles.timeLabel}>Início</span>
-          <span className={styles.timeLabel}>Fim</span>
-          <span className={styles.timeLabel}>Início almoço</span>
-          <span className={styles.timeLabel}>Fim almoço</span>
-        </div>
-
-        {["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"].map((dia, index) => (
+        {diasDaSemana.map((dia, index) => (
           <div key={index} className={styles.availabilityRow}>
             <span className={styles.day}>{dia}</span>
+
             <label className={styles.labelSmall}>
               Dia de trabalho
-              <input type="checkbox" className={styles.checkbox} />
+              <input
+                type="checkbox"
+                className={styles.checkbox}
+                checked={diasTrabalho[index]}
+                onChange={() =>
+                  setDiasTrabalho((prev) => ({
+                    ...prev,
+                    [index]: !prev[index],
+                  }))
+                }
+              />
             </label>
-            <input type="time" className={styles.timeInput} />
-            <input type="time" className={styles.timeInput} />
-            <input type="time" className={styles.timeInput} />
-            <input type="time" className={styles.timeInput} />
+
+            {diasTrabalho[index] && (
+              <>
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Abertura</label>
+                  <input type="time" className={styles.timeInput} />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Início almoço</label>
+                  <input type="time" className={styles.timeInput} />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Fim almoço</label>
+                  <input type="time" className={styles.timeInput} />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Fechamento</label>
+                  <input type="time" className={styles.timeInput} />
+                </div>
+              </>
+            )}
           </div>
         ))}
-      </div> {/* Availability */}
+      </div>
 
       <h3 className={styles.subheading}>Adicionar Exceções de Funcionamento</h3>
       <div className={styles.exceptionsSection}>
@@ -97,9 +129,73 @@ export default function Config() {
               type="date"
               className={styles.dateInput}
               value={excecao.date}
-              onChange={(e) => atualizarData(excecao.id, e.target.value)}
+              onChange={(e) => atualizarCampo(excecao.id, "date", e.target.value)}
             />
-            <label className={styles.labelSmall}></label>
+
+            <label className={styles.labelSmall}>
+              Clínica abrirá neste dia?
+              <input
+                type="checkbox"
+                checked={excecao.isOpen}
+                onChange={(e) =>
+                  atualizarCampo(excecao.id, "isOpen", e.target.checked)
+                }
+                className={styles.checkbox}
+              />
+            </label>
+
+            {excecao.isOpen && (
+              <div className={styles.timeInputs}>
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Abertura</label>
+                  <input
+                    type="time"
+                    className={styles.timeInput}
+                    value={excecao.start}
+                    onChange={(e) =>
+                      atualizarCampo(excecao.id, "start", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Fechamento</label>
+                  <input
+                    type="time"
+                    className={styles.timeInput}
+                    value={excecao.end}
+                    onChange={(e) =>
+                      atualizarCampo(excecao.id, "end", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Início almoço</label>
+                  <input
+                    type="time"
+                    className={styles.timeInput}
+                    value={excecao.lunchStart}
+                    onChange={(e) =>
+                      atualizarCampo(excecao.id, "lunchStart", e.target.value)
+                    }
+                  />
+                </div>
+
+                <div className={styles.timeInputGroup}>
+                  <label className={styles.timeLabel}>Fim almoço</label>
+                  <input
+                    type="time"
+                    className={styles.timeInput}
+                    value={excecao.lunchEnd}
+                    onChange={(e) =>
+                      atualizarCampo(excecao.id, "lunchEnd", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
             <button
               type="button"
               className={styles.removeButton}
@@ -109,6 +205,7 @@ export default function Config() {
             </button>
           </div>
         ))}
+
         <button
           type="button"
           className={styles.addButton}

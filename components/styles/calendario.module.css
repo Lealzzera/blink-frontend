@@ -1,14 +1,14 @@
 .container {
-    min-height: 100vh;
-    background-color: #f3f4f6;
-  }
-  
-  .customCalendar :global(.fc-toolbar) {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    gap: 0.5rem;
-  }
+  min-height: 100vh;
+  background-color: #f3f4f6;
+}
+
+.customCalendar :global(.fc-toolbar) {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
 
 .fab {
   position: fixed;
@@ -33,45 +33,83 @@
   padding-bottom: 5px;
 }
 
-
-
 .fab:hover {
   background-color: #1e40af;
 }
-  
-  @media (min-width: 1024px) {
-    .container {
-      margin-left: 7%;
-    }
+
+.checkButton {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border: 2px solid #4caf50;
+  border-radius: 50%;
+  background-color: transparent;
+  color: white;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+  line-height: 1;
+}
+
+.checked {
+  background-color: #4caf50;
+  color: white;
+}
+
+.unchecked {
+  background-color: #e8f5e9; 
+  color: transparent; 
+}
+
+.checkedEvent {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+}
+
+.uncheckedEvent {
+  background-color: #6e99f5;
+  color: #2563eb;
+  border: 2px solid #2563eb;
+}
+
+@media (min-width: 1024px) {
+  .container {
+    margin-left: 7%;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    height: 100vh;
+  }
+  .customCalendar :global(.fc-toolbar) {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-top: 2vh;
   }
 
-
-  @media (max-width: 768px) {
-    .container{
-        height: 100vh;
-    }
-    .customCalendar :global(.fc-toolbar) {
-      flex-direction: column;
-      align-items: flex-start;
-      margin-top: 2vh;
-    }
-  
-    .customCalendar :global(.fc-toolbar .fc-toolbar-chunk) {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-    }
-  
-    .customCalendar :global(.fc-toolbar-title) {
-      font-size: 1.1rem;
-    }
-  
-    .customCalendar :global(.fc-button) {
-      font-size: 0.8rem;
-      padding: 0.25rem 0.5rem;
-    }
-    .customCalendar :global(.fc) {
-        height: 100vh;
-      }
+  .customCalendar :global(.fc-toolbar .fc-toolbar-chunk) {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
   }
-  
+
+  .customCalendar :global(.fc-toolbar-title) {
+    font-size: 1.1rem;
+  }
+
+  .customCalendar :global(.fc-button) {
+    font-size: 0.8rem;
+    padding: 0.25rem 0.5rem;
+  }
+  .customCalendar :global(.fc) {
+    height: 100vh;
+  }
+}
