@@ -14,7 +14,7 @@
   position: fixed;
   bottom: 24px;
   right: 24px;
-  background-color: #2563eb;
+  background-color: #2563eb !important;
   color: white;
   border: none;
   border-radius: 9999px;
@@ -34,13 +34,10 @@
 }
 
 .fab:hover {
-  background-color: #1e40af;
+  background-color: #1b53cc !important;
 }
 
 .checkButton {
-  position: absolute;
-  top: 2px;
-  right: 2px;
   width: 18px;
   height: 18px;
   border: 2px solid #4caf50;
@@ -57,14 +54,9 @@
   line-height: 1;
 }
 
-.checked {
+.checkButton.checked {
   background-color: #4caf50;
   color: white;
-}
-
-.unchecked {
-  background-color: #e8f5e9; 
-  color: transparent; 
 }
 
 .checkedEvent {
@@ -77,6 +69,39 @@
   background-color: #6e99f5;
   color: #2563eb;
   border: 2px solid #2563eb;
+}
+
+/* Estilos para eventos agrupados */
+.customCalendar :global(.fc-timegrid-event.event-group-0) {
+  left: 0% !important;
+  width: 50% !important;
+  box-sizing: border-box;
+}
+
+.customCalendar :global(.fc-timegrid-event.event-group-1) {
+  left: 50% !important;
+  width: 50% !important;
+  box-sizing: border-box;
+}
+
+.customCalendar :global(.fc-timegrid-event) {
+  overflow: hidden !important;
+  margin: 0 !important;
+}
+
+.customCalendar :global(.fc-timegrid-event-harness) {
+  overflow: hidden !important;
+}
+
+.customCalendar :global(.fc-event-main) {
+  padding: 2px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.customCalendar :global(.fc-short-event .fc-event-main) {
+  padding: 0 2px;
 }
 
 @media (min-width: 1024px) {
@@ -112,4 +137,163 @@
   .customCalendar :global(.fc) {
     height: 100vh;
   }
+}
+
+
+
+
+
+.container {
+  padding: 20px;
+  position: relative;
+  height: 100%;
+}
+
+.fab {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background-color: #3f51b5;
+  color: white;
+  font-size: 24px;
+  border: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fab:hover {
+  background-color: #303f9f;
+}
+
+.checkButton {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  background-color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.checkButton.checked {
+  background-color: #4caf50;
+  color: white;
+  border-color: #4caf50;
+}
+
+/* Event status styles */
+.eventAgendado {
+  background-color: #bbdefb; /* Light blue */
+  border-color: #2196f3;
+  color: #0d47a1;
+}
+
+.eventConfirmado {
+  background-color: #1976d2; /* Dark blue */
+  border-color: #0d47a1;
+  color: white;
+}
+
+.eventCompareceu {
+  background-color: #f3a144; /* Light blue */
+  border: 2px solid #ff5e00; /* Green border */
+  color: #0d47a1;
+}
+
+.eventVenda {
+  background-color: #bbdefb; /* Light blue */
+  border: 2px solid #4caf50; /* Green border */
+  color: #0d47a1;
+  font-weight: bold;
+}
+
+/* FullCalendar overrides */
+.fc .fc-daygrid-event, 
+.fc .fc-timegrid-event {
+  border-radius: 4px;
+  padding: 2px;
+}
+
+.fc .fc-daygrid-event-dot {
+  display: none;
+}
+
+.fc .fc-event-title {
+  font-weight: normal;
+}
+
+.fc .fc-timegrid-event-harness {
+  cursor: pointer;
+}
+
+/* Estilos do Modal de Venda */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modalContent {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  width: 300px;
+  max-width: 90%;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.modalContent h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #333;
+}
+
+.modalContent input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.modalButtons {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.modalButtons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.modalButtons button:first-child {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.modalButtons button:last-child {
+  background-color: #1976d2;
+  color: white;
 }

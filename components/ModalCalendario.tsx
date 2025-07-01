@@ -4,13 +4,18 @@ import { Check, X } from "lucide-react";
 
 interface ModalProps {
   event: any;
+  eventDetails?: any; // nova prop para os detalhes do evento
   onClose: () => void;
   onEventRemoved: (eventId: string) => void; // Função para remover o evento do calendário
 }
 
-export default function ModalDetalhes({ event, onClose, onEventRemoved }: ModalProps) {
+export default function ModalDetalhes({ event, eventDetails, onClose, onEventRemoved }: ModalProps) {
   const { start, end, extendedProps } = event;
-  const [venda, setVenda] = useState("");
+
+  // Use os detalhes específicos do GET se disponíveis, senão usa extendedProps
+  const paciente = eventDetails?.paciente ?? extendedProps?.paciente ?? "Desconhecido";
+  const telefone = eventDetails?.phone ?? extendedProps?.phone ?? "Desconhecido";
+  const tipo = eventDetails?.tipo ?? extendedProps?.tipo ?? "Desconhecido";
 
   const handleDelete = async () => {
     if (!extendedProps || !extendedProps.id) {
@@ -49,26 +54,13 @@ export default function ModalDetalhes({ event, onClose, onEventRemoved }: ModalP
     <div className={styles.backdrop}>
       <div className={styles.modal}>
         <h2>Detalhes do Agendamento</h2>
-        <p><strong>Paciente:</strong> {extendedProps?.paciente ?? "Desconhecido"}</p>
-        <p><strong>Telefone:</strong> {extendedProps?.phone ?? "Desconhecido"}</p>
-        <p><strong>Tipo:</strong> {extendedProps?.tipo ?? "Desconhecido"}</p>
+        <p><strong>Paciente:</strong> {paciente}</p>
+        <p><strong>Telefone:</strong> {telefone}</p>
+        <p><strong>Tipo:</strong> {tipo}</p>
         <p><strong>Data:</strong> {start ? start.toLocaleDateString() : "Data inválida"}</p>
         <p><strong>Hora:</strong> {start ? start.toLocaleTimeString() : ""} - {end ? end.toLocaleTimeString() : ""}</p>
 
         <div className={styles.actions}>
-          <div className={styles.vendaSection}>
-            <input
-              type="number"
-              placeholder="Valor da venda"
-              value={venda}
-              onChange={(e) => setVenda(e.target.value)}
-              className={styles.input}
-            />
-            <button className={styles.iconButton}>
-              <Check size={20} />
-            </button>
-          </div>
-
           <div className={styles.containerBtn}>
             <button className={styles.cancelar} onClick={handleDelete}>
               Cancelar agendamento

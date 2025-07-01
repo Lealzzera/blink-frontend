@@ -83,7 +83,7 @@
 }
 
 .cancelar {
-  background-color: rgb(250, 124, 124) !important;
+  background-color: rgb(255, 75, 75) !important;
   border: 2px solid red !important;
   color: white;font-weight: bold;
 }

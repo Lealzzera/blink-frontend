@@ -13,6 +13,7 @@ import { Send, Users, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from "@/components/ui/switch"
+import Image from 'next/image'
 
 interface RealtimeChatProps {
   roomName: string
@@ -23,17 +24,17 @@ interface RealtimeChatProps {
 
 // Simulação de resposta de uma API
 const mockContacts = [
-  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true },
-  { id: 2, name: 'Lucas', number: '(11)999999999', scheduled: true },
-  { id: 3, name: 'Ricardo', number: '(11)999999999', scheduled: true },
-  { id: 4, name: 'Guilherme', number: '(11)999999999', scheduled: true },
-  { id: 5, name: 'Paula', number: '(11)999999999', scheduled: true },
-  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true },
-  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true },
-  { id: 8, name: 'Melissa', number: '(11)999999999', scheduled: true },
-  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
-  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
-  { id: 11, name: 'Nome do Contato', number: '(11)999999999', scheduled: true },
+  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/fabiana.jpg' },
+  { id: 2, name: 'Lucas', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/lucas.jpg' },
+  { id: 3, name: 'Ricardo', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 4, name: 'Guilherme', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/guilherme.jpg' },
+  { id: 5, name: 'Paula', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/rafael.jpg' },
+  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/miguel.jpg' },
+  { id: 8, name: 'Melissa', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/contato9.jpg' },
+  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/contato10.jpg' },
+  { id: 11, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
 ]
 
 export const RealtimeChat = ({
@@ -155,10 +156,24 @@ export const RealtimeChat = ({
                 if (isMobile) toggleMenu()
               }}
             >
-              <div className={styles.insideContact}>
-                <h3 className={styles.name}>{contact.name}</h3>
-                <p className={styles.number}>{contact.number}</p>
+              <div className={styles.contactPhoto}>
+                <Image
+                  src={contact.photo || `https://dummyimage.com/100x100/bbb/ffffff.png&text=${contact.name.charAt(0)}`}
+                  alt={contact.name}
+                  width={45}
+                  height={45}
+                  className={styles.photo}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://dummyimage.com/100x100/bbb/ffffff.png&text=${contact.name.charAt(0)}`;
+                  }}
+                />
+                <div className={styles.insideContact}>
+                  <h3 className={styles.name}>{contact.name}</h3>
+                  <p className={styles.number}>{contact.number}</p>
+                </div>
               </div>
+
               <Switch className={styles.switch} defaultChecked />
             </div>
         ))}
@@ -172,7 +187,22 @@ export const RealtimeChat = ({
             <span className={styles.span2}></span>
             <span className={styles.span3}></span>
           </div>
-          <h3 className={styles.headerTitle}>{selectedContact?.name ?? 'Carregando...'}</h3>
+          {selectedContact && (
+            <div className={styles.chatHeaderContact}>
+              <Image
+                src={selectedContact.photo || `https://dummyimage.com/100x100/bbb/ffffff.png&text=${selectedContact.name.charAt(0)}`}
+                alt={selectedContact.name}
+                width={44}
+                height={40}
+                className={styles.chatPhoto}
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src = `https://dummyimage.com/100x100/bbb/ffffff.png&text=${selectedContact.name.charAt(0)}`;
+                }}
+              />
+              <h3 className={styles.headerTitle}>{selectedContact.name}</h3>
+            </div>
+          )}
           <Switch className={styles.switch} defaultChecked />
         </div>
 

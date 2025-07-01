@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'blink',
   description: 'Sistema blink',
   icons: {
-    icon: '/apenas-img-blink.png', // Alterar
+    icon: '/apenas-img-blink.png',
   },
 };
 
