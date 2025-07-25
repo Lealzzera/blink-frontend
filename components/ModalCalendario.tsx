@@ -1,21 +1,20 @@
 import styles from "./styles/modal.module.css";
-import { useState } from "react";
-import { Check, X } from "lucide-react";
+import { X } from "lucide-react";
 
 interface ModalProps {
   event: any;
-  eventDetails?: any; // nova prop para os detalhes do evento
+  eventDetails?: any; // detalhes do GET /appointments/{id}/details
   onClose: () => void;
-  onEventRemoved: (eventId: string) => void; // Função para remover o evento do calendário
+  onEventRemoved: (eventId: string) => void; // para atualizar calendário
 }
 
 export default function ModalDetalhes({ event, eventDetails, onClose, onEventRemoved }: ModalProps) {
   const { start, end, extendedProps } = event;
 
-  // Use os detalhes específicos do GET se disponíveis, senão usa extendedProps
-  const paciente = eventDetails?.paciente ?? extendedProps?.paciente ?? "Desconhecido";
-  const telefone = eventDetails?.phone ?? extendedProps?.phone ?? "Desconhecido";
-  const tipo = eventDetails?.tipo ?? extendedProps?.tipo ?? "Desconhecido";
+  // Usa os detalhes específicos se disponíveis, senão extendedProps do evento
+  const paciente = eventDetails?.patient?.name ?? eventDetails?.paciente ?? extendedProps?.paciente ?? "Desconhecido";
+  const telefone = eventDetails?.patient?.phone_number ?? eventDetails?.phone ?? extendedProps?.phone ?? "Desconhecido";
+  const tipo = eventDetails?.service_type ?? eventDetails?.tipo ?? extendedProps?.tipo ?? "Desconhecido";
 
   const handleDelete = async () => {
     if (!extendedProps || !extendedProps.id) {
@@ -23,7 +22,7 @@ export default function ModalDetalhes({ event, eventDetails, onClose, onEventRem
       return;
     }
 
-    const url = `http://localhost:51234/appointments/status`;
+    const url = `https://be.blinkdentalmarketing.com.br/appointments/status`;
 
     try {
       const res = await fetch(url, {
@@ -38,8 +37,8 @@ export default function ModalDetalhes({ event, eventDetails, onClose, onEventRem
       });
 
       if (res.ok) {
-        event.remove(); // Remove o evento do calendário
-        onEventRemoved(extendedProps.id); // Atualiza o estado no componente pai
+        event.remove();
+        onEventRemoved(extendedProps.id);
         onClose();
       } else {
         const errorText = await res.text();
@@ -54,11 +53,21 @@ export default function ModalDetalhes({ event, eventDetails, onClose, onEventRem
     <div className={styles.backdrop}>
       <div className={styles.modal}>
         <h2>Detalhes do Agendamento</h2>
-        <p><strong>Paciente:</strong> {paciente}</p>
-        <p><strong>Telefone:</strong> {telefone}</p>
-        <p><strong>Tipo:</strong> {tipo}</p>
-        <p><strong>Data:</strong> {start ? start.toLocaleDateString() : "Data inválida"}</p>
-        <p><strong>Hora:</strong> {start ? start.toLocaleTimeString() : ""} - {end ? end.toLocaleTimeString() : ""}</p>
+        <p>
+          <strong>Paciente:</strong> {paciente}
+        </p>
+        <p>
+          <strong>Telefone:</strong> {telefone}
+        </p>
+        <p>
+          <strong>Tipo:</strong> {tipo}
+        </p>
+        <p>
+          <strong>Data:</strong> {start ? start.toLocaleDateString() : "Data inválida"}
+        </p>
+        <p>
+          <strong>Hora:</strong> {start ? start.toLocaleTimeString() : ""} - {end ? end.toLocaleTimeString() : ""}
+        </p>
 
         <div className={styles.actions}>
           <div className={styles.containerBtn}>

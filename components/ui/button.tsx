@@ -25,7 +25,7 @@ const buttonVariants = cva(
         sm: "h-[29px] rounded-md px-3",
         lg: "h-[37px] rounded-md px-8 min-[1441px]:h-[calc(6vh-7px)]",
         icon:
-          "h-[38px] w-[38px] [&_svg]:w-[25px] [&_svg]:h-[25px]",
+          "h-[50px] w-[50px] [&_svg]:w-[25px] [&_svg]:h-[25px]", //Existem estilos no realtime-chat.module.css (sendButton).
       },
     },
     defaultVariants: {

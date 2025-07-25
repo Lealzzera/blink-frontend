@@ -11,8 +11,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send, Users, Search } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import styles from './styles/realtime-chat.module.css';
-import { Switch } from "@/components/ui/switch"
+import styles from './styles/realtime-chat.module.css'
+import { Switch } from '@/components/ui/switch'
 import Image from 'next/image'
 
 interface RealtimeChatProps {
@@ -22,18 +22,17 @@ interface RealtimeChatProps {
   messages?: ChatMessage[]
 }
 
-// Simulação de resposta de uma API
 const mockContacts = [
-  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/fabiana.jpg' },
-  { id: 2, name: 'Lucas', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/lucas.jpg' },
+  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 2, name: 'Lucas', number: '(11)983401004', scheduled: true, photo: '' },
   { id: 3, name: 'Ricardo', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 4, name: 'Guilherme', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/guilherme.jpg' },
+  { id: 4, name: 'Guilherme', number: '(11)982006666', scheduled: true, photo: '' },
   { id: 5, name: 'Paula', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/rafael.jpg' },
-  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/miguel.jpg' },
+  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true, photo: '' },
   { id: 8, name: 'Melissa', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/contato9.jpg' },
-  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: 'https://whatsapp.com/profile/contato10.jpg' },
+  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
+  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
   { id: 11, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
 ]
 
@@ -58,15 +57,16 @@ export const RealtimeChat = ({
   const [contacts, setContacts] = useState<typeof mockContacts>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null)
+  const [showContacts, setShowContacts] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
+  const [isSending, setIsSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  // Carrega os contatos como se fossem de uma API
   useEffect(() => {
-    // Simula delay de API
     const fetchContacts = async () => {
       setContacts(mockContacts)
-      setSelectedContact(mockContacts[0]) // Primeiro Nome como Padrao
+      setSelectedContact(mockContacts[0])
     }
-
     fetchContacts()
   }, [])
 
@@ -75,79 +75,106 @@ export const RealtimeChat = ({
     const uniqueMessages = mergedMessages.filter(
       (message, index, self) => index === self.findIndex((m) => m.id === message.id)
     )
-    const sortedMessages = uniqueMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    return sortedMessages
+    return uniqueMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
   }, [initialMessages, realtimeMessages])
 
   useEffect(() => {
-    if (onMessage) {
-      onMessage(allMessages)
-    }
+    if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
   useEffect(() => {
     scrollToBottom()
   }, [allMessages, scrollToBottom])
 
-  const handleSendMessage = useCallback(
-    (e: React.FormEvent) => {
-      e.preventDefault()
-      if (!newMessage.trim() || !isConnected) return
-      sendMessage(newMessage)
-      setNewMessage('')
-    },
-    [newMessage, isConnected, sendMessage]
-  )
-
-  const [showContacts, setShowContacts] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768)
+    handleResize()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
-  const toggleMenu = () => {
-    setShowContacts((prev) => !prev);
-  };
+  const toggleMenu = () => setShowContacts(prev => !prev)
+
+  const handleSendMessage = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault()
+      if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return
+
+      try {
+        setIsSending(true)
+        setError(null)
+
+        // Envia para o Supabase Chat
+        sendMessage(newMessage)
+
+        // Formata o número de telefone
+        const phoneNumber = selectedContact.number.replace(/\D/g, '')
+        const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`
+
+        // Verifica se o número está completo
+        if (formattedNumber.length < 12) {
+          throw new Error('Número de telefone inválido. Deve incluir DDD e 9 dígitos.')
+        }
+
+        // Envia para o WhatsApp via backend
+        const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/send-message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            // Adicione se necessário:
+            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+          },
+          body: JSON.stringify({
+            clinic_id: 1, // Verifique se este ID é válido
+            message: newMessage,
+            phone_number: formattedNumber
+          }),
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || `Erro HTTP: ${response.status}`)
+        }
+
+        // Limpa a mensagem
+        setNewMessage('')
+      } catch (err) {
+        console.error('Erro ao enviar mensagem:', err)
+        setError(err instanceof Error ? err.message : 'Erro desconhecido ao enviar mensagem')
+      } finally {
+        setIsSending(false)
+      }
+    },
+    [newMessage, isConnected, selectedContact, sendMessage, isSending]
+  )
 
   return (
     <div className={styles.container}>
-
-      <div className={styles.contacts}
-        style={{
-          display: isMobile ? (showContacts ? 'block' : 'none') : 'block',
-        }}>
-
+      <div
+        className={styles.contacts}
+        style={isMobile ? {
+          transform: showContacts ? 'translateX(0)' : 'translateX(-100%)'
+        } : {}}
+      >
         <div className={styles.contactHeader}>
-
-        <div className={styles.contact_icon}>
-          <Users className={styles.iconContact} />
-          <h3 className={styles.contactTitle}>Contatos</h3>
-        </div>
-
-        <div className={styles.search_container}>
+          <div className={styles.contact_icon}>
+            <Users className={styles.iconContact} />
+            <h3 className={styles.contactTitle}>Contatos</h3>
+          </div>
+          <div className={styles.search_container}>
             <Search className={styles.searchIcon} size={16} />
-            <input 
-            type="text" 
-            placeholder="Pesquisar por contato"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-
+            <input
+              type="text"
+              placeholder="Pesquisar por contato"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
           <hr />
         </div>
-
         {contacts
-          .filter((contact) =>
-            contact.name.toLowerCase().includes(searchTerm.toLowerCase())
-          )
-          .map((contact) => (
+          .filter(contact => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map(contact => (
             <div
               key={contact.id}
               className={styles.contact}
@@ -158,28 +185,21 @@ export const RealtimeChat = ({
             >
               <div className={styles.contactPhoto}>
                 <Image
-                  src={contact.photo || `https://dummyimage.com/100x100/bbb/ffffff.png&text=${contact.name.charAt(0)}`}
+                  src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
                   alt={contact.name}
                   width={45}
                   height={45}
                   className={styles.photo}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = `https://dummyimage.com/100x100/bbb/ffffff.png&text=${contact.name.charAt(0)}`;
-                  }}
                 />
                 <div className={styles.insideContact}>
                   <h3 className={styles.name}>{contact.name}</h3>
                   <p className={styles.number}>{contact.number}</p>
                 </div>
               </div>
-
               <Switch className={styles.switch} defaultChecked />
             </div>
         ))}
-
       </div>
-
       <div className={styles.chat}>
         <div className={styles.chatHeader}>
           <div className={styles.spanContainer} onClick={toggleMenu}>
@@ -190,50 +210,42 @@ export const RealtimeChat = ({
           {selectedContact && (
             <div className={styles.chatHeaderContact}>
               <Image
-                src={selectedContact.photo || `https://dummyimage.com/100x100/bbb/ffffff.png&text=${selectedContact.name.charAt(0)}`}
+                src={selectedContact.photo || `https://dummyimage.com/100x100/eee/.png&text=${selectedContact.name.charAt(0)}`}
                 alt={selectedContact.name}
                 width={44}
                 height={40}
                 className={styles.chatPhoto}
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = `https://dummyimage.com/100x100/bbb/ffffff.png&text=${selectedContact.name.charAt(0)}`;
-                }}
               />
               <h3 className={styles.headerTitle}>{selectedContact.name}</h3>
             </div>
           )}
           <Switch className={styles.switch} defaultChecked />
         </div>
-
         <div ref={containerRef} className={styles.messages}>
-          {allMessages.length === 0 ? (
-            <div className={styles.noMessages}>
-              Sem mensagens por enquanto.
+          {allMessages.length === 0 && (
+            <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
+          )}
+          {error && (
+            <div className={styles.errorMessage}>
+              {error}
             </div>
-          ) : null}
-
+          )}
           <div className={styles.messageList}>
             {allMessages.map((message, index) => {
-              const prevMessage = index > 0 ? allMessages[index - 1] : null;
-              const showHeader = !prevMessage || prevMessage.user.name !== message.user.name;
-
+              const prevMessage = index > 0 ? allMessages[index - 1] : null
+              const showHeader = !prevMessage || prevMessage.user.name !== message.user.name
               return (
-                <div
-                  key={message.id}
-                  className={styles.messageItem}
-                >
+                <div key={message.id} className={styles.messageItem}>
                   <ChatMessageItem
                     message={message}
                     isOwnMessage={message.user.name === username}
                     showHeader={showHeader}
                   />
                 </div>
-              );
+              )
             })}
           </div>
         </div>
-
         <form onSubmit={handleSendMessage} className={styles.inputContainer}>
           <Input
             className={cn(
@@ -244,15 +256,15 @@ export const RealtimeChat = ({
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
             placeholder="Digite a mensagem..."
-            disabled={!isConnected}
+            disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
-            <Button
-              className={styles.sendButton}
-              type="submit"
-              disabled={!isConnected}
+            <Button 
+              className={styles.sendButton} 
+              type="submit" 
+              disabled={!isConnected || isSending}
             >
-              <Send className={styles.sendIcon} />
+              {isSending ? 'Enviando...' : <Send className={styles.sendIcon} />}
             </Button>
           )}
         </form>

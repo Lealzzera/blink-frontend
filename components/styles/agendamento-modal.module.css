@@ -16,8 +16,10 @@
   border-radius: 8px;
   padding: 24px 32px;
   max-width: 420px;
+  height: 98vh;
   width: 90%;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  overflow: auto;
 }
 
 .title {

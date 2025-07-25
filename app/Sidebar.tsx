@@ -79,7 +79,7 @@ export default function Sidebar() {
         </motion.div>
         
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="#">
+          <Link href="/messageShot">
             <FaPaperPlane className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
           </Link>
         </motion.div>

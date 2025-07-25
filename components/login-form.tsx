@@ -16,7 +16,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
-import styles from "./styles/login-form.module.css"; // novo CSS module
+import styles from "./styles/login-form.module.css";
 
 export function LoginForm({
   className,

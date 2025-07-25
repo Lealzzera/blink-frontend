@@ -13,16 +13,18 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
   const [valor, setValor] = useState("");
 
   const formatDate = (date: Date) => {
-    const pad = (num: number) => num.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    const pad = (num: number) => num.toString().padStart(2, "0");
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
+      date.getHours()
+    )}:${pad(date.getMinutes())}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (valor) {
       try {
-        const res = await fetch("http://localhost:51234/sales", {
+        const res = await fetch("https://be.blinkdentalmarketing.com.br/sales", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -30,11 +32,14 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
           body: JSON.stringify({
             appointment_id: appointmentId,
             value: parseFloat(valor),
-            service_type: 1,
-            registered_by_user: 1,
-            registered_at: formatDate(new Date())
+            service_type: 1, // fixo por enquanto (ajustar se quiser)
+            registered_by_user: 1, // fixo, ajustar conforme auth ou contexto
+            registered_at: formatDate(new Date()),
           }),
         });
+        
+        const data = await res.json()
+        console.log(data)
 
         if (!res.ok) throw new Error("Erro ao registrar venda");
       } catch (error) {

@@ -2,12 +2,30 @@
 import styles from "./config.module.css";
 import { Switch } from "@/components/ui/switch";
 import { useState, useEffect } from "react";
-import { useCalendarConfig } from "@/context/CalendarConfigContext";
 import Notification from "@/components/Notification";
 
 export default function Config() {
-  const { defaultDuration, setDefaultDuration } = useCalendarConfig();
-  const { allowDoubleBooking, setAllowDoubleBooking } = useCalendarConfig();
+const [defaultDuration, setDefaultDuration] = useState(30); 
+const [allowDoubleBooking, setAllowDoubleBooking] = useState(false);
+const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+const [qrCodeError, setQrCodeError] = useState<string | null>(null);
+const [showQrCode, setShowQrCode] = useState(false);
+const [conectado, setConectado] = useState()
+const [numero, setNumero] = useState()
+
+  useEffect(() => {
+      async function status(){
+        const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/1/status')
+        const data = await response.json()
+        setConectado(data.status)
+        setNumero(data.connected_phone_number)
+        console.log(numero)
+        console.log(conectado)
+    }
+    status()
+  }, [conectado, numero])
+
+
 
   const diasDaSemana = [
     "SEGUNDA",
@@ -77,21 +95,25 @@ export default function Config() {
     type: "success" | "warning" | "error";
   } | null>(null);
 
-  useEffect(() => {
-    const carregarConfiguracoes = async () => {
+useEffect(() => {
+  const carregarConfiguracoes = async () => {
+    try {
+      setInitialLoad(true);
+
+      // Carregar dias de trabalho
       try {
-        setInitialLoad(true);
-        
-        const availabilityResponse = await fetch("http://localhost:51234/configurations/availability/1");
+        const availabilityResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/1");
+        console.log('Status disponibilidade:', availabilityResponse.status);
+
         if (!availabilityResponse.ok) {
           throw new Error(`Erro ao carregar disponibilidade: ${availabilityResponse.status}`);
         }
+
         const availabilityData = await availabilityResponse.json();
-        
         const novosDiasTrabalho = { ...initialWorkDaysState };
-        
-        if (availabilityData && Array.isArray(availabilityData)) {
-          availabilityData.forEach((dia: any) => {
+
+        if (Array.isArray(availabilityData)) {
+          availabilityData.forEach((dia) => {
             const index = diasDaSemana.indexOf(dia.week_day);
             if (index !== -1) {
               novosDiasTrabalho[index] = {
@@ -104,54 +126,73 @@ export default function Config() {
             }
           });
         }
-        
-        setDiasTrabalho(novosDiasTrabalho);
 
-        const appointmentsResponse = await fetch("http://localhost:51234/configurations/appointments/1");
+        setDiasTrabalho(novosDiasTrabalho);
+      } catch (error) {
+        console.error("Erro ao carregar disponibilidade:", error);
+        setNotification({ message: "Erro ao carregar dias de trabalho.", type: "error" });
+      }
+
+      // Carregar configurações de agendamento
+      try {
+        const appointmentsResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/appointments/1");
+        console.log('Status appointments:', appointmentsResponse.status);
+
         if (!appointmentsResponse.ok) {
           throw new Error(`Erro ao carregar configurações de agendamento: ${appointmentsResponse.status}`);
         }
+
         const appointmentsData = await appointmentsResponse.json();
-        
         if (appointmentsData) {
           setDefaultDuration(appointmentsData.duration || 30);
           setAllowDoubleBooking(appointmentsData.overbooking || false);
         }
+      } catch (error) {
+        console.error("Erro ao carregar configurações de agendamento:", error);
+        setNotification({ message: "Erro ao carregar configurações de agendamento.", type: "error" });
+      }
 
-        const exceptionsResponse = await fetch("http://localhost:51234/configurations/availability/exception/{id}?id=5");
+      // Carregar exceções
+      try {
+        const exceptionsResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/1/exception");
+        console.log('Status exceptions:', exceptionsResponse.status);
+
         if (!exceptionsResponse.ok) {
           console.warn(`Aviso ao carregar exceções: ${exceptionsResponse.status}`);
         } else {
           const exceptionsData = await exceptionsResponse.json();
-          
-          if (exceptionsData && exceptionsData.length > 0) {
-            const formattedExceptions = exceptionsData.map((ex: any) => ({
+          if (Array.isArray(exceptionsData) && exceptionsData.length > 0) {
+            const formattedExceptions = exceptionsData.map((ex) => ({
               id: Date.now() + Math.random(),
               date: ex.exception_day || "",
               isOpen: ex.is_working_day || false,
-              start: ex.open_time || "",
-              end: ex.close_time || "",
+              start: ex.open || "",
+              end: ex.close || "",
               lunchStart: ex.lunch_start_time || "",
               lunchEnd: ex.lunch_end_time || "",
             }));
-            
             setExcecoesCadastradas(formattedExceptions);
           }
         }
-
-      } catch (err) {
-        console.error("Erro ao carregar configurações:", err);
-        setNotification({
-          message: "Erro ao carregar configurações. Algumas configurações podem não ter sido carregadas corretamente.",
-          type: "error"
-        });
-      } finally {
-        setInitialLoad(false);
+      } catch (error) {
+        console.error("Erro ao carregar exceções:", error);
+        setNotification({ message: "Erro ao carregar exceções.", type: "warning" });
       }
-    };
-    
-    carregarConfiguracoes();
-  }, []);
+
+    } catch (err) {
+      console.error("Erro inesperado ao carregar configurações:", err);
+      setNotification({
+        message: "Erro inesperado ao carregar configurações.",
+        type: "error"
+      });
+    } finally {
+      setInitialLoad(false);
+    }
+  };
+
+  carregarConfiguracoes();
+}, []);
+
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -219,13 +260,13 @@ export default function Config() {
         clinic_id: 1,
         exception_day: formatDate(novaExcecao.date),
         is_working_day: novaExcecao.isOpen,
-        open_time: novaExcecao.isOpen ? formatTime(novaExcecao.start) : null,
-        close_time: novaExcecao.isOpen ? formatTime(novaExcecao.end) : null,
-        lunch_start_time: novaExcecao.isOpen && novaExcecao.lunchStart ? formatTime(novaExcecao.lunchStart) : null,
-        lunch_end_time: novaExcecao.isOpen && novaExcecao.lunchEnd ? formatTime(novaExcecao.lunchEnd) : null,
+        open: novaExcecao.isOpen ? formatTime(novaExcecao.start) : null,
+        close: novaExcecao.isOpen ? formatTime(novaExcecao.end) : null,
+        break_start: novaExcecao.isOpen && novaExcecao.lunchStart ? formatTime(novaExcecao.lunchStart) : null,
+        break_end: novaExcecao.isOpen && novaExcecao.lunchEnd ? formatTime(novaExcecao.lunchEnd) : null,
       };
 
-      const response = await fetch("http://localhost:51234/configurations/availability/exception", {
+      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/exception", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -417,7 +458,7 @@ export default function Config() {
     }
 
     try {
-      const response = await fetch("http://localhost:51234/configurations/availability", {
+      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -457,7 +498,7 @@ export default function Config() {
       
       setAppointmentConfigError(null);
 
-      const response = await fetch("http://localhost:51234/configurations/appointments", {
+      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/appointments", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -494,6 +535,30 @@ export default function Config() {
       if (newAllowDoubleBooking !== undefined) {
         setLoadingAppointmentConfig(prev => ({...prev, doubleBooking: false}));
       }
+    }
+  };
+
+  const handleShowQrCode = async () => {
+    setShowQrCode(true);
+    setQrCodeError(null);
+    
+    try {
+      const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/1/qr-code', {
+        headers: {
+          'Accept': 'image/png'
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`Erro ao buscar o QR Code: ${response.status}`);
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      setQrCodeUrl(url);
+    } catch (err) {
+      console.error(err);
+      setQrCodeError('Erro ao carregar o QR Code.');
     }
   };
 
@@ -557,10 +622,36 @@ export default function Config() {
 
       <div className={styles.item}>
         <h3>Número conectado</h3>
-        <p className={styles.number}>+55 (11) 98340-1004</p>
+        <p className={styles.number}>
+          {conectado === 'DISCONNECTED' ? (
+            <>
+              Desconectado <span className={styles.disconnected}></span>
+            </>
+          ) : (
+            numero
+          )}
+        </p>
       </div>
 
-      <button className={styles.buttonWpp}>QR Code WhatsApp</button>
+      <button className={styles.buttonWpp} onClick={handleShowQrCode}>
+        QR Code WhatsApp
+      </button>
+      
+      {showQrCode && (
+        <div className={styles.qrCodeContainer}>
+          {qrCodeUrl ? (
+            <img
+              src={qrCodeUrl}
+              alt="QR Code WhatsApp"
+              className={styles.qrCodeImage}
+            />
+          ) : qrCodeError ? (
+            <p className={styles.errorMessage}>{qrCodeError}</p>
+          ) : (
+            <p>Carregando QR Code...</p>
+          )}
+        </div>
+      )}
 
       <hr className={styles.line}/>
 
@@ -756,18 +847,18 @@ export default function Config() {
               {excecao.isOpen && (
                 <div className={styles.exceptionTimes}>
                   <div className={styles.timeGroup}>
-                    <span className={styles.timeLabel}>Abertura:</span>
-                    <span>{excecao.start}</span>
+                    <b className={styles.timeLabel}>Abertura:</b>
+                    <span> {excecao.start}</span>
                   </div>
                   <div className={styles.timeGroup}>
-                    <span className={styles.timeLabel}>Fechamento:</span>
-                    <span>{excecao.end}</span>
+                    <b className={styles.timeLabel}>Fechamento:</b>
+                    <span> {excecao.end}</span>
                   </div>
                   {excecao.lunchStart && excecao.lunchEnd && (
                     <>
                       <div className={styles.timeGroup}>
-                        <span className={styles.timeLabel}>Almoço:</span>
-                        <span>{excecao.lunchStart} - {excecao.lunchEnd}</span>
+                        <b className={styles.timeLabel}>Almoço:</b>
+                        <span> {excecao.lunchStart} - {excecao.lunchEnd}</span>
                       </div>
                     </>
                   )}

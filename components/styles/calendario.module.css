@@ -3,6 +3,7 @@
   background-color: #f3f4f6;
 }
 
+
 .customCalendar :global(.fc-toolbar) {
   display: flex;
   flex-wrap: wrap;
@@ -193,26 +194,26 @@
 
 /* Event status styles */
 .eventAgendado {
-  background-color: #bbdefb; /* Light blue */
+  background-color: #bbdefb;
   border-color: #2196f3;
   color: #0d47a1;
 }
 
 .eventConfirmado {
-  background-color: #1976d2; /* Dark blue */
+  background-color: #1976d2;
   border-color: #0d47a1;
   color: white;
 }
 
 .eventCompareceu {
-  background-color: #f3a144; /* Light blue */
-  border: 2px solid #ff5e00; /* Green border */
+  background-color: #1976d2;
+  border: 3px solid #4caf50; 
   color: #0d47a1;
 }
 
 .eventVenda {
-  background-color: #bbdefb; /* Light blue */
-  border: 2px solid #4caf50; /* Green border */
+  background-color: rgb(235, 141, 235); 
+  border: 3px solid rgb(158, 20, 158); 
   color: #0d47a1;
   font-weight: bold;
 }

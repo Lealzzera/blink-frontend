@@ -14,18 +14,21 @@ import styles from "./styles/calendario.module.css";
 
 export default function Calendario() {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [eventDetails, setEventDetails] = useState<any | null>(null);
   const [openNewAppointmentModal, setOpenNewAppointmentModal] = useState(false);
   const [events, setEvents] = useState<any[]>([]);
   const [eventStatuses, setEventStatuses] = useState<Record<string, string>>({});
-  const [eventSales, setEventSales] = useState<Record<string, string>>({});
+  const [eventSales, setEventSales] = useState<Record<string, any[]>>({});
   const [currentDuration, setCurrentDuration] = useState(30);
   const [allowOverbooking, setAllowOverbooking] = useState(false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
 
+  const API_BASE = "https://be.blinkdentalmarketing.com.br";
+
   const fetchConfigurations = async () => {
     try {
-      const res = await fetch("http://localhost:51234/configurations/appointments/1", {
+      const res = await fetch(`${API_BASE}/configurations/appointments/1`, {
         method: "GET",
         mode: "cors",
       });
@@ -33,6 +36,8 @@ export default function Calendario() {
       const data = await res.json();
       setCurrentDuration(data.duration || 30);
       setAllowOverbooking(data.overbooking || false);
+      console.log("Abaixo")
+      console.log(data)
     } catch (error) {
       console.error("Erro ao buscar configurações:", error);
     }
@@ -41,15 +46,17 @@ export default function Calendario() {
   const fetchAvailability = async () => {
     const today = new Date();
     const startDate = today.toISOString().split("T")[0];
-    const endDate = new Date(today.setDate(today.getDate() + 7)).toISOString().split("T")[0];
+    const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
 
     try {
       const res = await fetch(
-        `http://localhost:51234/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
+        `${API_BASE}/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
         { mode: "cors" }
       );
+
       if (!res.ok) throw new Error("Erro ao buscar dados de agendamentos");
       const availability = await res.json();
+      console.log(availability)
 
       const calcEnd = (start: string, durMin: number) => {
         const [h, m] = start.split(":").map(Number);
@@ -60,7 +67,7 @@ export default function Calendario() {
 
       const grouped: Record<string, any[]> = {};
       const statuses: Record<string, string> = {};
-      const sales: Record<string, string> = {};
+      const sales: Record<string, any[]> = {};
 
       for (const day of availability) {
         if (!day.date || !Array.isArray(day.appointments)) continue;
@@ -85,7 +92,9 @@ export default function Calendario() {
 
           grouped[key].push(event);
           statuses[ag.id] = ag.status || "AGENDADO";
-          if (ag.sale_value) sales[ag.id] = ag.sale_value;
+          if (ag.sales && ag.sales.length > 0) {
+            sales[ag.id] = ag.sales;
+          }
         }
       }
 
@@ -102,20 +111,13 @@ export default function Calendario() {
     }
   };
 
-  const updateEventStatus = async (id: string, newStatus: string, saleValue?: string) => {
+  const updateEventStatus = async (id: string, newStatus: string) => {
     try {
-      const res = await fetch("http://localhost:51234/appointments/status", {
+      const res = await fetch(`${API_BASE}/appointments/status`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          appointment_id: Number(id), 
-          new_status: newStatus,
-          sale_value: saleValue 
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ appointment_id: Number(id), new_status: newStatus }),
       });
-
       if (!res.ok) throw new Error("Erro ao atualizar status do agendamento");
       return true;
     } catch (error) {
@@ -124,100 +126,83 @@ export default function Calendario() {
     }
   };
 
-  const handleStatusToggle = async (id: string, action: "confirm" | "attend") => {
+  const handleStatusToggle = async (id: string, action: "confirm" | "attend" | "sale") => {
     const currentStatus = eventStatuses[id];
 
     if (action === "confirm") {
-      if (currentStatus === "AGENDADO") {
-        const success = await updateEventStatus(id, "CONFIRMADO");
-        if (success) {
-          setEventStatuses((prev) => ({ ...prev, [id]: "CONFIRMADO" }));
-          setEventSales((prev) => {
-            const copy = { ...prev };
-            delete copy[id];
-            return copy;
-          });
-        }
-      } else {
-        const success = await updateEventStatus(id, "AGENDADO");
-        if (success) {
-          setEventStatuses((prev) => ({ ...prev, [id]: "AGENDADO" }));
-          setEventSales((prev) => {
-            const copy = { ...prev };
-            delete copy[id];
-            return copy;
-          });
-        }
-      }
+      const success = await updateEventStatus(id, currentStatus === "AGENDADO" ? "CONFIRMADO" : "AGENDADO");
+      if (success) setEventStatuses((prev) => ({ ...prev, [id]: currentStatus === "AGENDADO" ? "CONFIRMADO" : "AGENDADO" }));
     } else if (action === "attend") {
-      if (currentStatus === "CONFIRMADO") {
-        setCurrentEventId(id);
-        setShowValorVendaModal(true);
-      } else {
-        const success = await updateEventStatus(id, "CONFIRMADO");
-        if (success) {
-          setEventStatuses((prev) => ({ ...prev, [id]: "CONFIRMADO" }));
-          setEventSales((prev) => {
-            const copy = { ...prev };
-            delete copy[id];
-            return copy;
-          });
-        }
-      }
+      const success = await updateEventStatus(id, currentStatus === "COMPARECEU" ? "CONFIRMADO" : "COMPARECEU");
+      if (success) setEventStatuses((prev) => ({ ...prev, [id]: currentStatus === "COMPARECEU" ? "CONFIRMADO" : "COMPARECEU" }));
+    } else if (action === "sale") {
+      setCurrentEventId(id);
+      setShowValorVendaModal(true);
     }
   };
 
   const handleConfirmValorVenda = async (valor: string) => {
     if (!currentEventId) return;
-    
-    const newStatus = valor ? "VENDA" : "COMPARECEU";
-    const success = await updateEventStatus(currentEventId, newStatus, valor);
-    
-    if (success) {
-      setEventStatuses((prev) => ({ ...prev, [currentEventId]: newStatus }));
-      if (valor) {
-        setEventSales((prev) => ({ ...prev, [currentEventId]: valor }));
-      } else {
-        setEventSales((prev) => {
-          const copy = { ...prev };
-          delete copy[currentEventId];
-          return copy;
-        });
-      }
+
+    const now = new Date();
+    const datePart = now.toISOString().split("T")[0];
+    const timePart = now.toTimeString().split(":").slice(0,2).join(":");
+    const registeredAt = `${datePart} ${timePart}`;
+
+    try {
+      const res = await fetch(`${API_BASE}/sales`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          appointment_id: Number(currentEventId),
+          value: parseFloat(valor),
+          service_type: 1,
+          registered_by_user: 1,
+          registered_at: registeredAt,
+        }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao registrar venda");
+
+      const newSale = await res.json();
+
+      setEventSales((prev) => ({
+        ...prev,
+        [currentEventId]: [...(prev[currentEventId] || []), newSale],
+      }));
+
+      setCurrentEventId(null);
+      setShowValorVendaModal(false);
+    } catch (error) {
+      console.error("Erro ao registrar venda:", error);
     }
-    
-    setCurrentEventId(null);
-    setShowValorVendaModal(false);
   };
 
   const renderEventContent = (arg: EventContentArg) => {
     const id = arg.event.extendedProps.id;
     const status = eventStatuses[id];
+    const hasSales = eventSales[id] && eventSales[id].length > 0;
     const view = arg.view.type;
 
     const Buttons = () => (
       <>
         <button
-          className={`${styles.checkButton} ${
-            status === "CONFIRMADO" || status === "COMPARECEU" || status === "VENDA" ? styles.checked : ""
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleStatusToggle(id, "confirm");
-          }}
+          className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
         >
-          {status === "CONFIRMADO" || status === "COMPARECEU" || status === "VENDA" ? "✔" : ""}
+          {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
         </button>
         <button
-          className={`${styles.checkButton} ${
-            status === "COMPARECEU" || status === "VENDA" ? styles.checked : ""
-          }`}
-          onClick={(e) => {
-            e.stopPropagation();
-            handleStatusToggle(id, "attend");
-          }}
+          className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
         >
-          {status === "COMPARECEU" || status === "VENDA" ? "✔" : ""}
+          {status === "COMPARECEU" ? "✔" : ""}
+        </button>
+        <button
+          className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
+        >
+          {hasSales ? "✔" : ""}
         </button>
       </>
     );
@@ -233,27 +218,13 @@ export default function Calendario() {
 
     return (
       <div style={{ position: "absolute", height: "100%", display: "flex", flexDirection: "column" }}>
-        <div
-          style={{
-            flex: "1 1 auto",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-            fontSize: currentDuration <= 30 ? "0.9em" : "0.8em",
-          }}
-        >
+        <div style={{
+          flex: "1 1 auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+          fontSize: currentDuration <= 30 ? "0.9em" : "0.8em",
+        }}>
           {currentDuration > 30 ? <div>{arg.timeText}</div> : arg.timeText}
         </div>
-        <div
-          style={{
-            position: "relative",
-            top: "-4px",
-            right: "2px",
-            display: "flex",
-            gap: "4px",
-            zIndex: 1,
-          }}
-        >
+        <div style={{ position: "relative", top: "-4px", right: "2px", display: "flex", gap: "4px", zIndex: 1 }}>
           <Buttons />
         </div>
       </div>
@@ -263,10 +234,8 @@ export default function Calendario() {
   const eventClassNames = (arg: any) => {
     const id = arg.event.extendedProps.id;
     const status = eventStatuses[id];
-    const hasSale = !!eventSales[id];
-    
-    if (status === "VENDA" && hasSale) return styles.eventVendaComValor;
-    if (status === "VENDA") return styles.eventVendaSemValor;
+    const hasSales = eventSales[id] && eventSales[id].length > 0;
+    if (hasSales) return styles.eventVenda; // alterado aqui
     if (status === "COMPARECEU") return styles.eventCompareceu;
     if (status === "CONFIRMADO") return styles.eventConfirmado;
     return styles.eventAgendado;
@@ -275,39 +244,26 @@ export default function Calendario() {
   const handleEventClick = async (info: EventClickArg) => {
     const id = info.event.extendedProps.id;
     try {
-      const res = await fetch(`http://localhost:51234/appointments/${id}/details`, {
-        method: "GET",
-        mode: "cors",
-      });
+      const res = await fetch(`${API_BASE}/appointments/${id}/details`, { method: "GET", mode: "cors" });
       if (!res.ok) throw new Error(`Erro ao buscar detalhes do agendamento ${id}`);
-      await res.json();
+      const details = await res.json();
+      console.log(details)
+      setEventDetails(details);
     } catch (error) {
       console.error("Erro ao buscar detalhes do agendamento:", error);
+      setEventDetails(null);
     }
     setSelectedEvent(info.event);
   };
 
   const handleEventRemoved = (id: string) => {
     setEvents((prev) => prev.filter((e) => e.extendedProps.id !== id));
-    setEventStatuses((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-    setEventSales((prev) => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
+    setEventStatuses((prev) => { const c = { ...prev }; delete c[id]; return c; });
+    setEventSales((prev) => { const c = { ...prev }; delete c[id]; return c; });
   };
 
-  useEffect(() => {
-    fetchConfigurations();
-  }, []);
-
-  useEffect(() => {
-    fetchAvailability();
-  }, [currentDuration, allowOverbooking]);
+  useEffect(() => { fetchConfigurations(); }, []);
+  useEffect(() => { fetchAvailability(); }, [currentDuration, allowOverbooking]);
 
   return (
     <div className={styles.container}>
@@ -316,11 +272,7 @@ export default function Calendario() {
           locale={ptBrLocale}
           plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
           initialView="timeGridWeek"
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
-          }}
+          headerToolbar={{ left: "prev,next today", center: "title", right: "dayGridMonth,timeGridWeek,timeGridDay" }}
           editable
           selectable
           eventOverlap
@@ -330,39 +282,23 @@ export default function Calendario() {
           eventClassNames={eventClassNames}
         />
       </div>
-
       {selectedEvent && (
         <ModalDetalhes
           event={selectedEvent}
-          onClose={() => {
-            setSelectedEvent(null);
-            fetchAvailability();
-          }}
+          eventDetails={eventDetails}
+          onClose={() => { setSelectedEvent(null); setEventDetails(null); fetchAvailability(); }}
           onEventRemoved={handleEventRemoved}
         />
       )}
-
-      <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>
-        +
-      </button>
-
+      <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>+</button>
       {openNewAppointmentModal && (
-        <ModalNovoAgendamento
-          onClose={() => {
-            setOpenNewAppointmentModal(false);
-            fetchAvailability();
-          }}
-        />
+        <ModalNovoAgendamento onClose={() => { setOpenNewAppointmentModal(false); fetchAvailability(); }} />
       )}
-
-      {showValorVendaModal && (
+      {showValorVendaModal && currentEventId && (
         <ModalValorVenda
-          onClose={() => {
-            setCurrentEventId(null);
-            setShowValorVendaModal(false);
-          }}
+          onClose={() => { setCurrentEventId(null); setShowValorVendaModal(false); }}
           onConfirm={handleConfirmValorVenda}
-          appointmentId={selectedEvent?.extendedProps?.id ? Number(selectedEvent.extendedProps.id) : 1}
+          appointmentId={Number(currentEventId)}
         />
       )}
     </div>
