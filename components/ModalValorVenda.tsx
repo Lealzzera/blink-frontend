@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import styles from "./styles/calendario.module.css";
+import { createClient } from '@/lib/client'
+
+const supabase = createClient()
+const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface ModalValorVendaProps {
   onClose: () => void;
@@ -24,19 +28,23 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
 
     if (valor) {
       try {
-        const res = await fetch("https://be.blinkdentalmarketing.com.br/sales", {
+          const { data: sessionData } = await supabase.auth.getSession()
+          const token = sessionData.session?.access_token
+          
+          const res = await fetch(`${API_BASE}/sales`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
           },
           body: JSON.stringify({
             appointment_id: appointmentId,
             value: parseFloat(valor),
-            service_type: 1, // fixo por enquanto (ajustar se quiser)
-            registered_by_user: 1, // fixo, ajustar conforme auth ou contexto
+            service_type: 1,
+            registered_by_user: 1,
             registered_at: formatDate(new Date()),
           }),
-        });
+        })
         
         const data = await res.json()
         console.log(data)

@@ -1,78 +1,73 @@
 "use client";
-import styles from "./config.module.css";
-import { Switch } from "@/components/ui/switch";
-import { useState, useEffect } from "react";
-import Notification from "@/components/Notification";
+import React, { useState, useEffect } from 'react';
+import styles from './config.module.css';
+import Notification from '@/components/Notification';
+import { AppointmentSettings } from '../../components/appointments/AppointmentSettings';
+import { WhatsAppStatus } from '../../components/whatsapp/WhatsAppStatus';
+import { AvailabilitySettings } from '../../components/availability/AvailabilitySettings';
+import { ExceptionForm } from '../../components/exceptions/ExceptionForm';
+import { ExceptionsList } from '../../components/exceptions/ExceptionsList';
+import { useAuth } from '../hooks/useAuth';
+import { useNotification } from '../hooks/useNotification';
+import { whatsappService } from '../services/whatsappService';
+import { appointmentService } from '../services/appointmentService';
+import { availabilityService } from '../services/availabilityService';
+import { exceptionService } from '../services/exceptionService';
+import { formatDate, formatTime } from '../utils/dateUtils';
+import { validateWorkDays, validateExceptions } from '../utils/validationUtils';
+
+const DAYS_OF_WEEK = [
+  "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"
+];
+
+const initialWorkDaysState = Object.fromEntries(
+  DAYS_OF_WEEK.map((_, i) => [
+    i,
+    {
+      isWorkDay: false,
+      open: "08:00",
+      close: "17:00",
+      breakStart: i < 5 ? "12:00" : "",
+      breakEnd: i < 5 ? "13:00" : "",
+    },
+  ])
+);
 
 export default function Config() {
-const [defaultDuration, setDefaultDuration] = useState(30); 
-const [allowDoubleBooking, setAllowDoubleBooking] = useState(false);
-const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
-const [qrCodeError, setQrCodeError] = useState<string | null>(null);
-const [showQrCode, setShowQrCode] = useState(false);
-const [conectado, setConectado] = useState()
-const [numero, setNumero] = useState()
+  // Authentication
+  const { getAuthToken } = useAuth();
+  const { notification, showNotification, hideNotification } = useNotification();
 
-  useEffect(() => {
-      async function status(){
-        const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/1/status')
-        const data = await response.json()
-        setConectado(data.status)
-        setNumero(data.connected_phone_number)
-        console.log(numero)
-        console.log(conectado)
-    }
-    status()
-  }, [conectado, numero])
+  // Appointment settings
+  const [defaultDuration, setDefaultDuration] = useState(30);
+  const [allowDoubleBooking, setAllowDoubleBooking] = useState(false);
+  const [loadingAppointmentConfig, setLoadingAppointmentConfig] = useState({
+    duration: false,
+    doubleBooking: false
+  });
 
+  // WhatsApp settings
+  const [whatsappStatus, setWhatsappStatus] = useState<string>();
+  const [phoneNumber, setPhoneNumber] = useState<string>();
+  const [qrCodeUrl, setQrCodeUrl] = useState<string | null>(null);
+  const [qrCodeError, setQrCodeError] = useState<string | null>(null);
+  const [showQrCode, setShowQrCode] = useState(false);
 
+  // Availability settings
+  const [workDays, setWorkDays] = useState(initialWorkDaysState);
 
-  const diasDaSemana = [
-    "SEGUNDA",
-    "TERCA",
-    "QUARTA",
-    "QUINTA",
-    "SEXTA",
-    "SABADO",
-    "DOMINGO",
-  ];
+  // Exceptions
+  const [exceptions, setExceptions] = useState<Array<{
+    id: number;
+    date: string;
+    isOpen: boolean;
+    start: string;
+    end: string;
+    lunchStart: string;
+    lunchEnd: string;
+  }>>([]);
 
-  const initialWorkDaysState = Object.fromEntries(
-    diasDaSemana.map((_, i) => [
-      i,
-      {
-        isWorkDay: false,
-        open: "08:00",
-        close: "17:00",
-        breakStart: i < 5 ? "12:00" : "",
-        breakEnd: i < 5 ? "13:00" : "",
-      },
-    ])
-  );
-
-  const [diasTrabalho, setDiasTrabalho] = useState<{
-    [key: number]: {
-      isWorkDay: boolean;
-      open: string;
-      close: string;
-      breakStart: string;
-      breakEnd: string;
-    };
-  }>(initialWorkDaysState);
-
-  const [excecoesCadastradas, setExcecoesCadastradas] = useState<
-    Array<{
-      id: number;
-      date: string;
-      isOpen: boolean;
-      start: string;
-      end: string;
-      lunchStart: string;
-      lunchEnd: string;
-    }>
-  >([]);
-
-  const [novaExcecao, setNovaExcecao] = useState({
+  const [newException, setNewException] = useState({
     id: Date.now(),
     date: "",
     isOpen: false,
@@ -82,88 +77,71 @@ const [numero, setNumero] = useState()
     lunchEnd: "",
   });
 
+  // Loading states
   const [loading, setLoading] = useState(false);
-  const [loadingAppointmentConfig, setLoadingAppointmentConfig] = useState({
-    duration: false,
-    doubleBooking: false
-  });
   const [error, setError] = useState<string | null>(null);
   const [appointmentConfigError, setAppointmentConfigError] = useState<string | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
-  const [notification, setNotification] = useState<{
-    message: string;
-    type: "success" | "warning" | "error";
-  } | null>(null);
 
-useEffect(() => {
-  const carregarConfiguracoes = async () => {
-    try {
-      setInitialLoad(true);
-
-      // Carregar dias de trabalho
+  // Load initial data
+  useEffect(() => {
+    const loadConfigurations = async () => {
       try {
-        const availabilityResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/1");
-        console.log('Status disponibilidade:', availabilityResponse.status);
+        setInitialLoad(true);
+        const token = await getAuthToken();
 
-        if (!availabilityResponse.ok) {
-          throw new Error(`Erro ao carregar disponibilidade: ${availabilityResponse.status}`);
+        // Load WhatsApp status
+        try {
+          const whatsappData = await whatsappService.getStatus(token);
+          setWhatsappStatus(whatsappData.status);
+          setPhoneNumber(whatsappData.connected_phone_number);
+        } catch (error) {
+          console.error("Erro ao carregar status do WhatsApp:", error);
+          showNotification("Erro ao carregar status do WhatsApp", "error");
         }
 
-        const availabilityData = await availabilityResponse.json();
-        const novosDiasTrabalho = { ...initialWorkDaysState };
+        // Load availability
+        try {
+          const availabilityData = await availabilityService.getAvailability(token);
+          const newWorkDays = { ...initialWorkDaysState };
 
-        if (Array.isArray(availabilityData)) {
-          availabilityData.forEach((dia) => {
-            const index = diasDaSemana.indexOf(dia.week_day);
-            if (index !== -1) {
-              novosDiasTrabalho[index] = {
-                isWorkDay: dia.is_work_day,
-                open: dia.open || "08:00",
-                close: dia.close || "17:00",
-                breakStart: index < 5 ? (dia.break_start || "12:00") : "",
-                breakEnd: index < 5 ? (dia.break_end || "13:00") : "",
-              };
-            }
-          });
+          if (Array.isArray(availabilityData)) {
+            availabilityData.forEach((day) => {
+              const index = DAYS_OF_WEEK.indexOf(day.week_day);
+              if (index !== -1) {
+                newWorkDays[index] = {
+                  isWorkDay: day.is_work_day,
+                  open: day.open || "08:00",
+                  close: day.close || "17:00",
+                  breakStart: index < 5 ? (day.break_start || "12:00") : "",
+                  breakEnd: index < 5 ? (day.break_end || "13:00") : "",
+                };
+              }
+            });
+          }
+
+          setWorkDays(newWorkDays);
+        } catch (error) {
+          console.error("Erro ao carregar disponibilidade:", error);
+          showNotification("Erro ao carregar dias de trabalho.", "error");
         }
 
-        setDiasTrabalho(novosDiasTrabalho);
-      } catch (error) {
-        console.error("Erro ao carregar disponibilidade:", error);
-        setNotification({ message: "Erro ao carregar dias de trabalho.", type: "error" });
-      }
-
-      // Carregar configurações de agendamento
-      try {
-        const appointmentsResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/appointments/1");
-        console.log('Status appointments:', appointmentsResponse.status);
-
-        if (!appointmentsResponse.ok) {
-          throw new Error(`Erro ao carregar configurações de agendamento: ${appointmentsResponse.status}`);
+        // Load appointment settings
+        try {
+          const appointmentData = await appointmentService.getConfig(token);
+          setDefaultDuration(appointmentData.duration || 30);
+          setAllowDoubleBooking(appointmentData.overbooking || false);
+        } catch (error) {
+          console.error("Erro ao carregar configurações de agendamento:", error);
+          showNotification("Erro ao carregar configurações de agendamento.", "error");
         }
 
-        const appointmentsData = await appointmentsResponse.json();
-        if (appointmentsData) {
-          setDefaultDuration(appointmentsData.duration || 30);
-          setAllowDoubleBooking(appointmentsData.overbooking || false);
-        }
-      } catch (error) {
-        console.error("Erro ao carregar configurações de agendamento:", error);
-        setNotification({ message: "Erro ao carregar configurações de agendamento.", type: "error" });
-      }
-
-      // Carregar exceções
-      try {
-        const exceptionsResponse = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/1/exception");
-        console.log('Status exceptions:', exceptionsResponse.status);
-
-        if (!exceptionsResponse.ok) {
-          console.warn(`Aviso ao carregar exceções: ${exceptionsResponse.status}`);
-        } else {
-          const exceptionsData = await exceptionsResponse.json();
-          if (Array.isArray(exceptionsData) && exceptionsData.length > 0) {
+        // Load exceptions
+        try {
+          const exceptionsData = await exceptionService.getExceptions(token);
+          if (exceptionsData.length > 0) {
             const formattedExceptions = exceptionsData.map((ex) => ({
-              id: Date.now() + Math.random(),
+              id: ex.id,
               date: ex.exception_day || "",
               isOpen: ex.is_working_day || false,
               start: ex.open || "",
@@ -171,29 +149,25 @@ useEffect(() => {
               lunchStart: ex.lunch_start_time || "",
               lunchEnd: ex.lunch_end_time || "",
             }));
-            setExcecoesCadastradas(formattedExceptions);
+            setExceptions(formattedExceptions);
           }
+        } catch (error) {
+          console.error("Erro ao carregar exceções:", error);
+          showNotification("Erro ao carregar exceções.", "warning");
         }
-      } catch (error) {
-        console.error("Erro ao carregar exceções:", error);
-        setNotification({ message: "Erro ao carregar exceções.", type: "warning" });
+
+      } catch (err) {
+        console.error("Erro inesperado ao carregar configurações:", err);
+        showNotification("Erro inesperado ao carregar configurações.", "error");
+      } finally {
+        setInitialLoad(false);
       }
+    };
 
-    } catch (err) {
-      console.error("Erro inesperado ao carregar configurações:", err);
-      setNotification({
-        message: "Erro inesperado ao carregar configurações.",
-        type: "error"
-      });
-    } finally {
-      setInitialLoad(false);
-    }
-  };
+    loadConfigurations();
+  }, []);
 
-  carregarConfiguracoes();
-}, []);
-
-
+  // Auto-hide loading states
   useEffect(() => {
     let timer: NodeJS.Timeout;
     if (loadingAppointmentConfig.duration) {
@@ -214,8 +188,9 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }, [loadingAppointmentConfig.doubleBooking]);
 
-  const handleChangeDia = (index: number, field: string, value: string) => {
-    setDiasTrabalho((prev) => ({
+  // Handlers
+  const handleChangeWorkDay = (index: number, field: string, value: string) => {
+    setWorkDays((prev) => ({
       ...prev,
       [index]: {
         ...prev[index],
@@ -224,8 +199,8 @@ useEffect(() => {
     }));
   };
 
-  const toggleDiaTrabalho = (index: number) => {
-    setDiasTrabalho((prev) => ({
+  const handleToggleWorkDay = (index: number) => {
+    setWorkDays((prev) => ({
       ...prev,
       [index]: {
         ...prev[index],
@@ -234,57 +209,41 @@ useEffect(() => {
     }));
   };
 
-  const atualizarCampoNovaExcecao = (
-    campo: string,
-    valor: string | boolean
-  ) => {
-    setNovaExcecao(prev => ({
+  const handleUpdateExceptionField = (field: string, value: string | boolean) => {
+    setNewException(prev => ({
       ...prev,
-      [campo]: valor
+      [field]: value
     }));
   };
 
-  const adicionarExcecao = async () => {
-    if (!novaExcecao.date) {
-      setNotification({
-        message: "Por favor, informe a data da exceção",
-        type: "warning"
-      });
+  const handleAddException = async () => {
+    if (!newException.date) {
+      showNotification("Por favor, informe a data da exceção", "warning");
       return;
     }
 
     try {
       setLoading(true);
       
-      const excecaoParaSalvar = {
+      const exceptionData = {
         clinic_id: 1,
-        exception_day: formatDate(novaExcecao.date),
-        is_working_day: novaExcecao.isOpen,
-        open: novaExcecao.isOpen ? formatTime(novaExcecao.start) : null,
-        close: novaExcecao.isOpen ? formatTime(novaExcecao.end) : null,
-        break_start: novaExcecao.isOpen && novaExcecao.lunchStart ? formatTime(novaExcecao.lunchStart) : null,
-        break_end: novaExcecao.isOpen && novaExcecao.lunchEnd ? formatTime(novaExcecao.lunchEnd) : null,
+        exception_day: formatDate(newException.date),
+        is_working_day: newException.isOpen,
+        open: newException.isOpen ? formatTime(newException.start) : null,
+        close: newException.isOpen ? formatTime(newException.end) : null,
+        break_start: newException.isOpen && newException.lunchStart ? formatTime(newException.lunchStart) : null,
+        break_end: newException.isOpen && newException.lunchEnd ? formatTime(newException.lunchEnd) : null,
       };
 
-      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability/exception", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(excecaoParaSalvar),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
-      }
-
-      setExcecoesCadastradas(prev => [...prev, {
-        ...novaExcecao,
-        id: Date.now() + Math.random()
+      const token = await getAuthToken();
+      const responseData = await exceptionService.createException(token, exceptionData);
+      
+      setExceptions(prev => [...prev, {
+        ...newException,
+        id: responseData.id
       }]);
 
-      setNovaExcecao({
+      setNewException({
         id: Date.now(),
         date: "",
         isOpen: false,
@@ -294,200 +253,89 @@ useEffect(() => {
         lunchEnd: "",
       });
 
-      setNotification({
-        message: "Exceção adicionada com sucesso!",
-        type: "success"
-      });
+      showNotification("Exceção adicionada com sucesso!", "success");
     } catch (err) {
       console.error("Erro ao adicionar exceção:", err);
-      setNotification({
-        message: "Erro ao adicionar exceção",
-        type: "error"
-      });
+      showNotification("Exceção adicionada com sucesso!", "success");
     } finally {
       setLoading(false);
     }
   };
 
-  const validarHorarios = (dias: any[]) => {
-    for (const dia of dias) {
-      if (!dia.open || !dia.close) {
-        return "Todos os dias de trabalho precisam ter horários de abertura e fechamento preenchidos.";
+  const handleRemoveException = async (id: number) => {
+    try {
+      setLoading(true);
+      
+      const token = await getAuthToken();
+      await exceptionService.deleteException(token, id);
+
+      setExceptions(prev => prev.filter(ex => ex.id !== id));
+      showNotification("Exceção removida com sucesso!", "success");
+    } catch (err) {
+      console.error("Erro ao remover exceção:", err);
+      if (err instanceof Error && err.message.includes('autenticação')) {
+        showNotification("Erro de autenticação. Faça login novamente.", "error");
+      } else {
+        showNotification("Erro ao remover exceção", "error");
       }
-
-      const horaAbertura = parseInt(dia.open.split(':')[0]);
-      const minutoAbertura = parseInt(dia.open.split(':')[1]);
-      const horaFechamento = parseInt(dia.close.split(':')[0]);
-      const minutoFechamento = parseInt(dia.close.split(':')[1]);
-
-      if (horaAbertura > horaFechamento || 
-          (horaAbertura === horaFechamento && minutoAbertura >= minutoFechamento)) {
-        return `Horário de fechamento deve ser após o horário de abertura no dia ${dia.week_day}`;
-      }
-
-      const index = diasDaSemana.indexOf(dia.week_day);
-      if (index < 5 && dia.breakStart && dia.breakEnd) {
-        const horaInicioAlmoco = parseInt(dia.breakStart.split(':')[0]);
-        const minutoInicioAlmoco = parseInt(dia.breakStart.split(':')[1]);
-        const horaFimAlmoco = parseInt(dia.breakEnd.split(':')[0]);
-        const minutoFimAlmoco = parseInt(dia.breakEnd.split(':')[1]);
-
-        if (horaInicioAlmoco > horaFimAlmoco || 
-            (horaInicioAlmoco === horaFimAlmoco && minutoInicioAlmoco >= minutoFimAlmoco)) {
-          return `Horário de fim do almoço deve ser após o horário de início no dia ${dia.week_day}`;
-        }
-
-        if (horaInicioAlmoco < horaAbertura || 
-            (horaInicioAlmoco === horaAbertura && minutoInicioAlmoco < minutoAbertura)) {
-          return `Horário de almoço não pode ser antes da abertura no dia ${dia.week_day}`;
-        }
-
-        if (horaFimAlmoco > horaFechamento || 
-            (horaFimAlmoco === horaFechamento && minutoFimAlmoco > minutoFechamento)) {
-          return `Horário de almoço não pode ser após o fechamento no dia ${dia.week_day}`;
-        }
-      }
+    } finally {
+      setLoading(false);
     }
-    return null;
   };
 
-  const validarExcecoes = () => {
-    for (const excecao of excecoesCadastradas) {
-      if (excecao.isOpen) {
-        if (!excecao.start || !excecao.end) {
-          return "Para exceções abertas, os horários de abertura e fechamento são obrigatórios.";
-        }
-
-        const horaAbertura = parseInt(excecao.start.split(':')[0]);
-        const minutoAbertura = parseInt(excecao.start.split(':')[1]);
-        const horaFechamento = parseInt(excecao.end.split(':')[0]);
-        const minutoFechamento = parseInt(excecao.end.split(':')[1]);
-
-        if (horaAbertura > horaFechamento || 
-            (horaAbertura === horaFechamento && minutoAbertura >= minutoFechamento)) {
-          return `Horário de fechamento deve ser após o horário de abertura na exceção de ${excecao.date}`;
-        }
-
-        if (excecao.lunchStart || excecao.lunchEnd) {
-          if (!excecao.lunchStart || !excecao.lunchEnd) {
-            return "Se definir horário de almoço, ambos início e fim devem ser preenchidos.";
-          }
-
-          const horaInicioAlmoco = parseInt(excecao.lunchStart.split(':')[0]);
-          const minutoInicioAlmoco = parseInt(excecao.lunchStart.split(':')[1]);
-          const horaFimAlmoco = parseInt(excecao.lunchEnd.split(':')[0]);
-          const minutoFimAlmoco = parseInt(excecao.lunchEnd.split(':')[1]);
-
-          if (horaInicioAlmoco > horaFimAlmoco || 
-              (horaInicioAlmoco === horaFimAlmoco && minutoInicioAlmoco >= minutoFimAlmoco)) {
-            return `Horário de fim do almoço deve ser após o horário de início na exceção de ${excecao.date}`;
-          }
-
-          if (horaInicioAlmoco < horaAbertura || 
-              (horaInicioAlmoco === horaAbertura && minutoInicioAlmoco < minutoAbertura)) {
-            return `Horário de almoço não pode ser antes da abertura na exceção de ${excecao.date}`;
-          }
-
-          if (horaFimAlmoco > horaFechamento || 
-              (horaFimAlmoco === horaFechamento && minutoFimAlmoco > minutoFechamento)) {
-            return `Horário de almoço não pode ser após o fechamento na exceção de ${excecao.date}`;
-          }
-        }
-      }
-    }
-    return null;
-  };
-
-  const formatDate = (date: string | Date): string => {
-    const d = new Date(date);
-    return d.toISOString().split('T')[0];
-  };
-
-  const formatTime = (time: string | Date | null | undefined): string | null => {
-    if (!time) return null;
-    const date = typeof time === 'string' ? new Date(`1970-01-01T${time}`) : new Date(time);
-    return date.toTimeString().slice(0, 5);
-  };
-
-  const salvarConfiguracoes = async () => {
+  const handleSaveAvailability = async () => {
     setLoading(true);
     setError(null);
 
-    const todosOsDias = Object.entries(diasTrabalho).map(([index, dia]) => ({
+    const allDays = Object.entries(workDays).map(([index, day]) => ({
       clinic_id: 1,
-      week_day: diasDaSemana[Number(index)],
-      is_work_day: dia.isWorkDay,
-      open: dia.isWorkDay ? dia.open : null,
-      close: dia.isWorkDay ? dia.close : null,
-      break_start: dia.isWorkDay && Number(index) < 5 ? dia.breakStart : null,
-      break_end: dia.isWorkDay && Number(index) < 5 ? dia.breakEnd : null,
+      week_day: DAYS_OF_WEEK[Number(index)],
+      is_work_day: day.isWorkDay,
+      open: day.isWorkDay ? day.open : null,
+      close: day.isWorkDay ? day.close : null,
+      break_start: day.isWorkDay && Number(index) < 5 ? day.breakStart : null,
+      break_end: day.isWorkDay && Number(index) < 5 ? day.breakEnd : null,
     }));
 
-    const diasSelecionados = todosOsDias.filter(dia => dia.is_work_day);
+    const selectedDays = allDays.filter(day => day.is_work_day);
 
-    if (diasSelecionados.length === 0) {
+    if (selectedDays.length === 0) {
       setError("Selecione pelo menos um dia de trabalho.");
-      setNotification({
-        message: "Selecione pelo menos um dia de trabalho",
-        type: "warning"
-      });
+      showNotification("Selecione pelo menos um dia de trabalho", "warning");
       setLoading(false);
       return;
     }
 
-    const erroValidacaoDias = validarHorarios(diasSelecionados);
-    if (erroValidacaoDias) {
-      setError(erroValidacaoDias);
-      setNotification({
-        message: erroValidacaoDias,
-        type: "warning"
-      });
+    const daysValidationError = validateWorkDays(selectedDays);
+    if (daysValidationError) {
+      setError(daysValidationError);
+      showNotification(daysValidationError, "warning");
       setLoading(false);
       return;
     }
 
-    const erroValidacaoExcecoes = validarExcecoes();
-    if (erroValidacaoExcecoes) {
-      setError(erroValidacaoExcecoes);
-      setNotification({
-        message: erroValidacaoExcecoes,
-        type: "warning"
-      });
+    const exceptionsValidationError = validateExceptions(exceptions);
+    if (exceptionsValidationError) {
+      setError(exceptionsValidationError);
+      showNotification(exceptionsValidationError, "warning");
       setLoading(false);
       return;
     }
 
     try {
-      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/availability", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(todosOsDias),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
-      }
-
-      setNotification({
-        message: "Configurações salvas com sucesso!",
-        type: "success",
-      });
+      const token = await getAuthToken();
+      await availabilityService.updateAvailability(token, allDays);
+      showNotification("Configurações salvas com sucesso!", "success");
     } catch (err) {
       console.error("Erro ao salvar configurações:", err);
       setError(err instanceof Error ? err.message : "Erro desconhecido ao salvar configurações");
-      setNotification({
-        message: "Erro ao salvar configurações",
-        type: "error",
-      });
+      showNotification("Erro ao salvar configurações", "error");
     } finally {
       setLoading(false);
     }
   };
 
-  const salvarConfiguracoesAgendamento = async (newDuration?: number, newAllowDoubleBooking?: boolean) => {
+  const handleSaveAppointmentConfig = async (newDuration?: number, newAllowDoubleBooking?: boolean) => {
     try {
       if (newDuration !== undefined) {
         setLoadingAppointmentConfig(prev => ({...prev, duration: true}));
@@ -498,36 +346,20 @@ useEffect(() => {
       
       setAppointmentConfigError(null);
 
-      const response = await fetch("https://be.blinkdentalmarketing.com.br/configurations/appointments", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          clinic_id: 1,
-          duration: newDuration !== undefined ? newDuration : defaultDuration,
-          overbooking: newAllowDoubleBooking !== undefined ? newAllowDoubleBooking : allowDoubleBooking,
-        }),
+      const token = await getAuthToken();
+      await appointmentService.updateConfig(token, {
+        clinic_id: 1,
+        duration: newDuration !== undefined ? newDuration : defaultDuration,
+        overbooking: newAllowDoubleBooking !== undefined ? newAllowDoubleBooking : allowDoubleBooking,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro HTTP: ${response.status}`);
-      }
-
-      setNotification({
-        message: "Configurações de agendamento atualizadas!",
-        type: "success",
-      });
+      showNotification("Configurações de agendamento atualizadas!", "success");
     } catch (err) {
       console.error("Erro ao salvar configurações de agendamento:", err);
       setAppointmentConfigError(
         err instanceof Error ? err.message : "Erro desconhecido ao salvar configurações de agendamento"
       );
-      setNotification({
-        message: "Erro ao atualizar configurações",
-        type: "error",
-      });
+      showNotification("Erro ao atualizar configurações", "error");
       
       if (newDuration !== undefined) {
         setLoadingAppointmentConfig(prev => ({...prev, duration: false}));
@@ -543,17 +375,8 @@ useEffect(() => {
     setQrCodeError(null);
     
     try {
-      const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/1/qr-code', {
-        headers: {
-          'Accept': 'image/png'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erro ao buscar o QR Code: ${response.status}`);
-      }
-
-      const blob = await response.blob();
+      const token = await getAuthToken();
+      const blob = await whatsappService.getQrCode(token);
       const url = URL.createObjectURL(blob);
       setQrCodeUrl(url);
     } catch (err) {
@@ -565,12 +388,12 @@ useEffect(() => {
   const handleDurationChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newDuration = Number(e.target.value);
     setDefaultDuration(newDuration);
-    await salvarConfiguracoesAgendamento(newDuration);
+    await handleSaveAppointmentConfig(newDuration);
   };
 
   const handleDoubleBookingChange = async (checked: boolean) => {
     setAllowDoubleBooking(checked);
-    await salvarConfiguracoesAgendamento(undefined, checked);
+    await handleSaveAppointmentConfig(undefined, checked);
   };
 
   if (initialLoad) {
@@ -583,7 +406,7 @@ useEffect(() => {
         <Notification
           message={notification.message}
           type={notification.type}
-          onClose={() => setNotification(null)}
+          onClose={hideNotification}
         />
       )}
 
@@ -594,288 +417,45 @@ useEffect(() => {
       {error && <div className={styles.errorMessage}>{error}</div>}
       {appointmentConfigError && <div className={styles.errorMessage}>{appointmentConfigError}</div>}
 
-      <div className={styles.item}>
-        <h3 className={styles.label}>Duração padrão da consulta</h3>
-        <select
-          id="select"
-          className={styles.select}
-          value={defaultDuration}
-          onChange={handleDurationChange}
-          disabled={loadingAppointmentConfig.duration}
-        >
-          <option value="30">30min</option>
-          <option value="60">1h</option>
-          <option value="90">1h30min</option>
-          <option value="120">2h</option>
-        </select>
-      </div>
+      <AppointmentSettings
+        defaultDuration={defaultDuration}
+        allowDoubleBooking={allowDoubleBooking}
+        loadingConfig={loadingAppointmentConfig}
+        onDurationChange={handleDurationChange}
+        onDoubleBookingChange={handleDoubleBookingChange}
+      />
 
-      <div className={styles.item}>
-        <h3>Permitir agendar 2 pacientes no mesmo horário?</h3>
-        <Switch
-          className={styles.switch}
-          checked={allowDoubleBooking}
-          onCheckedChange={handleDoubleBookingChange}
-          disabled={loadingAppointmentConfig.doubleBooking}
-        />
-      </div>
-
-      <div className={styles.item}>
-        <h3>Número conectado</h3>
-        <p className={styles.number}>
-          {conectado === 'DISCONNECTED' ? (
-            <>
-              Desconectado <span className={styles.disconnected}></span>
-            </>
-          ) : (
-            numero
-          )}
-        </p>
-      </div>
-
-      <button className={styles.buttonWpp} onClick={handleShowQrCode}>
-        QR Code WhatsApp
-      </button>
-      
-      {showQrCode && (
-        <div className={styles.qrCodeContainer}>
-          {qrCodeUrl ? (
-            <img
-              src={qrCodeUrl}
-              alt="QR Code WhatsApp"
-              className={styles.qrCodeImage}
-            />
-          ) : qrCodeError ? (
-            <p className={styles.errorMessage}>{qrCodeError}</p>
-          ) : (
-            <p>Carregando QR Code...</p>
-          )}
-        </div>
-      )}
+      <WhatsAppStatus
+        status={whatsappStatus}
+        phoneNumber={phoneNumber}
+        onShowQrCode={handleShowQrCode}
+        showQrCode={showQrCode}
+        qrCodeUrl={qrCodeUrl}
+        qrCodeError={qrCodeError}
+      />
 
       <hr className={styles.line}/>
 
-      <div className={styles.availabilityTop}>
-        <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
-        <button
-          className={styles.saveButton}
-          onClick={salvarConfiguracoes}
-          disabled={loading}
-        >
-          {loading ? "Salvando..." : "Salvar configurações"}
-        </button>
-      </div>
+      <AvailabilitySettings
+        workDays={workDays}
+        loading={loading}
+        onToggleWorkDay={handleToggleWorkDay}
+        onChangeTime={handleChangeWorkDay}
+        onSave={handleSaveAvailability}
+      />
 
-      <div className={styles.availability}>
-        {diasDaSemana.map((dia, index) => (
-          <div key={index} className={styles.availabilityRow}>
-            <span className={styles.day}>
-              {dia.charAt(0) + dia.slice(1).toLowerCase()}
-            </span>
+      <ExceptionForm
+        exception={newException}
+        loading={loading}
+        onUpdateField={handleUpdateExceptionField}
+        onAdd={handleAddException}
+      />
 
-            <label className={styles.labelSmall}>
-              Dia de trabalho
-              <input
-                type="checkbox"
-                className={styles.checkbox}
-                checked={diasTrabalho[index].isWorkDay}
-                onChange={() => toggleDiaTrabalho(index)}
-              />
-            </label>
-
-            {diasTrabalho[index].isWorkDay && (
-              <>
-                <div className={styles.timeInputGroup}>
-                  <label className={styles.timeLabel}>Abertura</label>
-                  <input
-                    type="time"
-                    className={styles.timeInput}
-                    value={diasTrabalho[index].open}
-                    onChange={(e) =>
-                      handleChangeDia(index, "open", e.target.value)
-                    }
-                  />
-                </div>
-
-                {index < 5 && (
-                  <>
-                    <div className={styles.timeInputGroup}>
-                      <label className={styles.timeLabel}>Início almoço</label>
-                      <input
-                        type="time"
-                        className={styles.timeInput}
-                        value={diasTrabalho[index].breakStart}
-                        onChange={(e) =>
-                          handleChangeDia(index, "breakStart", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div className={styles.timeInputGroup}>
-                      <label className={styles.timeLabel}>Fim almoço</label>
-                      <input
-                        type="time"
-                        className={styles.timeInput}
-                        value={diasTrabalho[index].breakEnd}
-                        onChange={(e) =>
-                          handleChangeDia(index, "breakEnd", e.target.value)
-                        }
-                      />
-                    </div>
-                  </>
-                )}
-
-                <div className={styles.timeInputGroup}>
-                  <label className={styles.timeLabel}>Fechamento</label>
-                  <input
-                    type="time"
-                    className={styles.timeInput}
-                    value={diasTrabalho[index].close}
-                    onChange={(e) =>
-                      handleChangeDia(index, "close", e.target.value)
-                    }
-                  />
-                </div>
-              </>
-            )}
-          </div>
-        ))}
-      </div>
-
-      <h3 className={styles.subheading}>Adicionar Nova Exceção de Funcionamento</h3>
-      <div className={styles.exceptionsSection}>
-        <div className={styles.exceptionRow}>
-          <input
-            type="date"
-            className={styles.dateInput}
-            value={novaExcecao.date}
-            onChange={(e) =>
-              atualizarCampoNovaExcecao("date", e.target.value)
-            }
-          />
-
-          <label className={styles.labelSmall}>
-            Clínica abrirá neste dia?
-            <input
-              type="checkbox"
-              checked={novaExcecao.isOpen}
-              onChange={(e) =>
-                atualizarCampoNovaExcecao("isOpen", e.target.checked)
-              }
-              className={styles.checkbox}
-            />
-          </label>
-
-          {novaExcecao.isOpen && (
-            <div className={styles.timeInputs}>
-              <div className={styles.timeInputGroup}>
-                <label className={styles.timeLabel}>Abertura</label>
-                <input
-                  type="time"
-                  className={styles.timeInput}
-                  value={novaExcecao.start}
-                  onChange={(e) =>
-                    atualizarCampoNovaExcecao("start", e.target.value)
-                  }
-                />
-              </div>
-
-              <div className={styles.timeInputGroup}>
-                <label className={styles.timeLabel}>Fechamento</label>
-                <input
-                  type="time"
-                  className={styles.timeInput}
-                  value={novaExcecao.end}
-                  onChange={(e) =>
-                    atualizarCampoNovaExcecao("end", e.target.value)
-                  }
-                />
-              </div>
-
-              <div className={styles.timeInputGroup}>
-                <label className={styles.timeLabel}>Início almoço</label>
-                <input
-                  type="time"
-                  className={styles.timeInput}
-                  value={novaExcecao.lunchStart}
-                  onChange={(e) =>
-                    atualizarCampoNovaExcecao("lunchStart", e.target.value)
-                  }
-                />
-              </div>
-
-              <div className={styles.timeInputGroup}>
-                <label className={styles.timeLabel}>Fim almoço</label>
-                <input
-                  type="time"
-                  className={styles.timeInput}
-                  value={novaExcecao.lunchEnd}
-                  onChange={(e) =>
-                    atualizarCampoNovaExcecao("lunchEnd", e.target.value)
-                  }
-                />
-              </div>
-            </div>
-          )}
-
-          <button
-            type="button"
-            className={styles.addButton}
-            onClick={adicionarExcecao}
-            disabled={loading}
-          >
-            Adicionar
-          </button>
-        </div>
-      </div>
-
-      <h3 className={styles.subheading}>Exceções Cadastradas</h3>
-      <div className={styles.exceptionsSection}>
-        {excecoesCadastradas.length === 0 ? (
-          <p className={styles.noExceptions}>Nenhuma exceção cadastrada</p>
-        ) : (
-          excecoesCadastradas.map((excecao) => (
-            <div className={styles.exceptionRow} key={excecao.id}>
-              <div className={styles.exceptionDate}>
-                {new Date(excecao.date).toLocaleDateString('pt-BR')}
-              </div>
-
-              <div className={styles.exceptionStatus}>
-                {excecao.isOpen ? "Aberto" : "Fechado"}
-              </div>
-
-              {excecao.isOpen && (
-                <div className={styles.exceptionTimes}>
-                  <div className={styles.timeGroup}>
-                    <b className={styles.timeLabel}>Abertura:</b>
-                    <span> {excecao.start}</span>
-                  </div>
-                  <div className={styles.timeGroup}>
-                    <b className={styles.timeLabel}>Fechamento:</b>
-                    <span> {excecao.end}</span>
-                  </div>
-                  {excecao.lunchStart && excecao.lunchEnd && (
-                    <>
-                      <div className={styles.timeGroup}>
-                        <b className={styles.timeLabel}>Almoço:</b>
-                        <span> {excecao.lunchStart} - {excecao.lunchEnd}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-
-              <button
-                type="button"
-                className={styles.removeButton}
-                disabled={loading}
-              >
-                Remover
-              </button>
-            </div>
-          ))
-        )}
-      </div>
+      <ExceptionsList
+        exceptions={exceptions}
+        loading={loading}
+        onRemove={handleRemoveException}
+      />
     </div>
   );
 }

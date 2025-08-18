@@ -7,6 +7,24 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Send } from "lucide-react";
 
 export default function MessageShot() {
+
+  interface Pessoas {
+    nome: string,
+    nmr: number
+  }
+
+  const pessoas: Pessoas[] = [
+    {
+    nome: 'Lucas', nmr: 11989898989,
+    },
+    {
+    nome: 'Andressa', nmr: 11989898989,
+    },
+    {
+    nome: 'Luiza', nmr: 11989898989,
+    },
+]
+
   return (
     <div className={styles.container}>
       <Card className={styles.card}>
@@ -22,15 +40,27 @@ export default function MessageShot() {
 
           <div className={styles.contactsSection}>
             <h3 className={styles.contactsTitle}>Contatos selecionados</h3>
-            <ul className={styles.contactsList}>
-              <li className={styles.contactItem}>
-                <span className={styles.contactName}>Lucas Benini</span> – 11999999999
-              </li>
-              <li className={styles.contactItem}>
-                <span className={styles.contactName}>Maria Silva</span> – 11888888888
-              </li>
-            </ul>
+            <div className={styles.headerSelect}>
+                <select name="filter" id="filter" className={styles.filter}>
+                  <option value="placeholder" selected>Classificar</option>
+                  <option value="Valor1">Opcao 1</option>
+                  <option value="Valor2">Opcao 2</option>
+                  <option value="Valor3">Opcao 3</option>
+                </select>
+                <Button className={styles.button}>
+                    Selecionar Todos
+                </Button>
+            </div>
+              {pessoas.map((pessoa, index) => (
+                <>
+                  <div className={styles.contacts}>
+                      <input type="radio" />
+                      <h1 key={index}><strong>{pessoa.nome}</strong> - {pessoa.nmr}</h1>
+                  </div>
+                </>
+              ))}
           </div>
+
         </CardContent>
       </Card>
     </div>

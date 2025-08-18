@@ -93,7 +93,7 @@
 }
 
 .buttonWpp:hover {
-  background-color: #22c55e;
+  background-color: #48b670 !important;
 }
 
 .qrCodeContainer {
@@ -244,7 +244,7 @@
   padding: 3px 10px;
   border-radius: 6px;
   transition: 0.5s;
-  position: fixed;
+  position: static;
   top: 1%;
   right: 2%;
 }

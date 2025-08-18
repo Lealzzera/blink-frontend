@@ -14,6 +14,11 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import styles from './styles/realtime-chat.module.css'
 import { Switch } from '@/components/ui/switch'
 import Image from 'next/image'
+import { createClient } from '@/lib/client'
+import { chatService, type ChatConfig } from '@/app/services/chatService'
+
+const supabase = createClient()
+const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface RealtimeChatProps {
   roomName: string
@@ -21,20 +26,6 @@ interface RealtimeChatProps {
   onMessage?: (messages: ChatMessage[]) => void
   messages?: ChatMessage[]
 }
-
-const mockContacts = [
-  { id: 1, name: 'Fabiana', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 2, name: 'Lucas', number: '(11)983401004', scheduled: true, photo: '' },
-  { id: 3, name: 'Ricardo', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 4, name: 'Guilherme', number: '(11)982006666', scheduled: true, photo: '' },
-  { id: 5, name: 'Paula', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 6, name: 'Rafael', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 7, name: 'Miguel', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 8, name: 'Melissa', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 9, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 10, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
-  { id: 11, name: 'Nome do Contato', number: '(11)999999999', scheduled: true, photo: '' },
-]
 
 export const RealtimeChat = ({
   roomName,
@@ -54,36 +45,83 @@ export const RealtimeChat = ({
   })
 
   const [newMessage, setNewMessage] = useState('')
-  const [contacts, setContacts] = useState<typeof mockContacts>([])
+  const [contacts, setContacts] = useState<any[]>([])
+  const [loadingContacts, setLoadingContacts] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [selectedContact, setSelectedContact] = useState<typeof mockContacts[0] | null>(null)
+  const [selectedContact, setSelectedContact] = useState<any | null>(null)
   const [showContacts, setShowContacts] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
+  // Busca os contatos reais da API
   useEffect(() => {
     const fetchContacts = async () => {
-      setContacts(mockContacts)
-      setSelectedContact(mockContacts[0])
+      try {
+        setLoadingContacts(true)
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData.session?.access_token
+
+        if (!token) {
+          setError('Token de autenticação não encontrado.')
+          setLoadingContacts(false)
+          return
+        }
+
+        const apiContacts: ChatConfig[] = await chatService.getOverview(token)
+
+        const mappedContacts = apiContacts.map((c, index) => ({
+          id: index + 1,
+          name: c.whats_app_name || c.phone_number || 'Contato sem nome',
+          number: c.phone_number || '',
+          scheduled: c.ai_answer ?? false,
+          photo: c.picture_url || '',
+          lastMessage: c.last_message,
+          sentAt: c.sent_at,
+          fromMe: c.from_me,
+        }))
+
+        setContacts(mappedContacts)
+        if (mappedContacts.length > 0) {
+          setSelectedContact(mappedContacts[0])
+        }
+      } catch (err) {
+        setError('Erro ao buscar contatos.')
+        console.error('Erro ao buscar contatos:', err)
+      } finally {
+        setLoadingContacts(false)
+      }
     }
+
     fetchContacts()
   }, [])
 
+  // Unir mensagens e garantir que todas tenham id e createdAt
   const allMessages = useMemo(() => {
     const mergedMessages = [...initialMessages, ...realtimeMessages]
+
     const uniqueMessages = mergedMessages.filter(
-      (message, index, self) => index === self.findIndex((m) => m.id === message.id)
+      (message, index, self) =>
+        index === self.findIndex(m => (m.id || m.createdAt) === (message.id || message.createdAt))
     )
-    return uniqueMessages.sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+
+    const sortedMessages = uniqueMessages.sort((a, b) => {
+      const dateA = new Date(a.createdAt).getTime()
+      const dateB = new Date(b.createdAt).getTime()
+      return dateA - dateB
+    })
+
+    return sortedMessages
   }, [initialMessages, realtimeMessages])
 
   useEffect(() => {
     if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
+  // Scroll para o fim após renderizar
   useEffect(() => {
-    scrollToBottom()
+    const timeout = setTimeout(() => scrollToBottom(), 50)
+    return () => clearTimeout(timeout)
   }, [allMessages, scrollToBottom])
 
   useEffect(() => {
@@ -104,30 +142,29 @@ export const RealtimeChat = ({
         setIsSending(true)
         setError(null)
 
-        // Envia para o Supabase Chat
         sendMessage(newMessage)
 
-        // Formata o número de telefone
         const phoneNumber = selectedContact.number.replace(/\D/g, '')
         const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`
 
-        // Verifica se o número está completo
         if (formattedNumber.length < 12) {
           throw new Error('Número de telefone inválido. Deve incluir DDD e 9 dígitos.')
         }
 
-        // Envia para o WhatsApp via backend
-        const response = await fetch('https://be.blinkdentalmarketing.com.br/message/whats-app/send-message', {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData.session?.access_token
+        if (!token) throw new Error('Token de autenticação não encontrado.')
+
+        const response = await fetch(`${API_BASE}/message/whats-app/send-message`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            // Adicione se necessário:
-            // 'Authorization': `Bearer ${localStorage.getItem('token')}`
+            'Authorization': `Bearer ${token}`,
           },
           body: JSON.stringify({
-            clinic_id: 1, // Verifique se este ID é válido
+            clinic_id: 1,
             message: newMessage,
-            phone_number: formattedNumber
+            phone_number: formattedNumber,
           }),
         })
 
@@ -136,10 +173,8 @@ export const RealtimeChat = ({
           throw new Error(errorData.message || `Erro HTTP: ${response.status}`)
         }
 
-        // Limpa a mensagem
         setNewMessage('')
       } catch (err) {
-        console.error('Erro ao enviar mensagem:', err)
         setError(err instanceof Error ? err.message : 'Erro desconhecido ao enviar mensagem')
       } finally {
         setIsSending(false)
@@ -172,34 +207,42 @@ export const RealtimeChat = ({
           </div>
           <hr />
         </div>
-        {contacts
-          .filter(contact => contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
-          .map(contact => (
-            <div
-              key={contact.id}
-              className={styles.contact}
-              onClick={() => {
-                setSelectedContact(contact)
-                if (isMobile) toggleMenu()
-              }}
-            >
-              <div className={styles.contactPhoto}>
-                <Image
-                  src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
-                  alt={contact.name}
-                  width={45}
-                  height={45}
-                  className={styles.photo}
-                />
-                <div className={styles.insideContact}>
-                  <h3 className={styles.name}>{contact.name}</h3>
-                  <p className={styles.number}>{contact.number}</p>
+
+        {loadingContacts ? (
+          <div className={styles.loader}>Carregando contatos...</div>
+        ) : (
+          contacts
+            .filter(contact => contact.name && contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .map(contact => (
+              <div
+                key={contact.id}
+                className={styles.contact}
+                onClick={() => {
+                  setSelectedContact(contact)
+                  if (isMobile) toggleMenu()
+                }}
+              >
+                <div className={styles.contactPhoto}>
+                  <Image
+                    src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
+                    alt={contact.name}
+                    width={45}
+                    height={45}
+                    className={styles.photo}
+                  />
+                  <div className={styles.insideContact}>
+                    <h3 className={styles.name}>{contact.name}</h3>
+                    <p className={styles.number}>
+                      {contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}
+                    </p>
+                  </div>
                 </div>
+                <Switch className={styles.switch} defaultChecked={contact.scheduled} />
               </div>
-              <Switch className={styles.switch} defaultChecked />
-            </div>
-        ))}
+          ))
+        )}
       </div>
+
       <div className={styles.chat}>
         <div className={styles.chatHeader}>
           <div className={styles.spanContainer} onClick={toggleMenu}>
@@ -219,26 +262,28 @@ export const RealtimeChat = ({
               <h3 className={styles.headerTitle}>{selectedContact.name}</h3>
             </div>
           )}
-          <Switch className={styles.switch} defaultChecked />
+          <Switch className={styles.switch} defaultChecked={selectedContact?.scheduled} />
         </div>
+
         <div ref={containerRef} className={styles.messages}>
           {allMessages.length === 0 && (
             <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
           )}
           {error && (
-            <div className={styles.errorMessage}>
-              {error}
-            </div>
+            <div className={styles.errorMessage}>{error}</div>
           )}
           <div className={styles.messageList}>
             {allMessages.map((message, index) => {
               const prevMessage = index > 0 ? allMessages[index - 1] : null
-              const showHeader = !prevMessage || prevMessage.user.name !== message.user.name
+              const showHeader = !prevMessage || prevMessage.user?.name !== message.user?.name
+              const displayMessage = message.user?.name === username
+                ? `${message.content} ✓`
+                : message.content
               return (
-                <div key={message.id} className={styles.messageItem}>
+                <div key={message.id || message.createdAt} className={styles.messageItem}>
                   <ChatMessageItem
-                    message={message}
-                    isOwnMessage={message.user.name === username}
+                    message={{ ...message, content: displayMessage }}
+                    isOwnMessage={message.user?.name === username}
                     showHeader={showHeader}
                   />
                 </div>
@@ -246,6 +291,7 @@ export const RealtimeChat = ({
             })}
           </div>
         </div>
+
         <form onSubmit={handleSendMessage} className={styles.inputContainer}>
           <Input
             className={cn(

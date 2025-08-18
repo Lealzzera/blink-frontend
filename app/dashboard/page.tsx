@@ -3,33 +3,80 @@
 
 import styles from './dashboard.module.css'
 import Head from 'next/head'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { dashboardService, DashboardConfig } from '../services/dashboardService'
+import { useAuth } from '../hooks/useAuth';
 
-// Definindo os tipos para garantir que 'selectedPeriod' só possa ser uma chave válida
+// Definindo os tipos para os períodos
 type Period = 'Hoje' | 'Semana' | 'Mês';
+
+// Função auxiliar para formatar datas
+const formatDate = (date: Date) => {
+  return date.toISOString().split("T")[0]; // YYYY-MM-DD
+};
+
+// Função para calcular range de datas
+const getDateRange = (period: Period): { startDate: string, endDate: string } => {
+  const today = new Date();
+  let startDate = formatDate(today);
+  let endDate = formatDate(today);
+
+  if (period === "Semana") {
+    const firstDay = new Date(today);
+    firstDay.setDate(today.getDate() - 7);
+    const lastDay = new Date(today);
+    lastDay.setDate(firstDay.getDate() + 7);
+
+    startDate = formatDate(firstDay);
+    endDate = formatDate(lastDay);
+  }
+
+  if (period === "Mês") {
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+    const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+
+    startDate = formatDate(firstDay);
+    endDate = formatDate(lastDay);
+  }
+
+  return { startDate, endDate };
+};
 
 export default function Dashboard() {
   const [selectedPeriod, setSelectedPeriod] = useState<Period>('Hoje')
-  
-  // Simulando dados para cada período
-  const data: Record<Period, { 
-    gastoMídia: number; 
-    novasMensagens: number; 
-    agendamentos: number; 
-    taxaComparecimento: number; 
-    vendasQuantidade: number; 
-    valorVendas: number;
-  }> = {
-    Hoje: { gastoMídia: 99, novasMensagens: 99, agendamentos: 99, taxaComparecimento: 99, vendasQuantidade: 99, valorVendas: 99 },
-    Semana: { gastoMídia: 250, novasMensagens: 200, agendamentos: 150, taxaComparecimento: 75, vendasQuantidade: 80, valorVendas: 1200 },
-    Mês: { gastoMídia: 1000, novasMensagens: 500, agendamentos: 300, taxaComparecimento: 80, vendasQuantidade: 200, valorVendas: 5000 }
-  }
+  const [data, setData] = useState<DashboardConfig | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { getAuthToken } = useAuth();
+
+  // Buscar dados quando o período mudar
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setError(null)
+      const token = await getAuthToken();
+      const { startDate, endDate } = getDateRange(selectedPeriod);
+
+      console.log(`🔎 Buscando dados para período: ${selectedPeriod} (${startDate} → ${endDate}) com token=${token}`)
+
+      try {
+        const response = await dashboardService.getDashboard(token, startDate, endDate)
+        console.log("✅ Dados recebidos do backend:", response)
+        setData(response)
+      } catch (err: any) {
+        console.error("Erro ao buscar dados do dashboard:", err)
+        setError("Erro ao carregar dados.")
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchData()
+  }, [selectedPeriod])
 
   const handlePeriodChange = (period: Period) => {
     setSelectedPeriod(period)
   }
-
-  const selectedData = data[selectedPeriod];
 
   return (
     <div className={styles.container}>
@@ -43,35 +90,36 @@ export default function Dashboard() {
         <button onClick={() => handlePeriodChange('Mês')}>Este Mês</button>
       </div>
 
-      <div className={styles.cards}>
-        <div className={styles.card}>
-            <h3 className={styles.title}>Gasto em Mídia (Meta Ads)</h3>
-            <h2><span className={styles.preText}>R$</span> {selectedData.gastoMídia}</h2>
-        </div>
-        <div className={styles.card}>
+      {loading && <p>Carregando dados...</p>}
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {data && (
+        <div className={styles.cards}>
+          <div className={styles.card}>
             <h3 className={styles.title}>Novas Mensagens</h3>
-            <h2>{selectedData.novasMensagens}</h2>
-        </div>
-        <div className={styles.card}>
+            <h2>{data.received_messages_count_total}</h2>
+          </div>
+          <div className={styles.card}>
             <h3 className={styles.title}>Agendamentos Realizados</h3>
-            <h2>{selectedData.agendamentos}</h2>
-        </div>
-        <div className={styles.card}>
+            <h2>{data.appointments_count_total}</h2>
+          </div>
+          <div className={styles.card}>
             <h3 className={styles.title}>Comparecimento</h3>
-            <h2>{selectedData.taxaComparecimento}</h2>
-        </div>
-        <div className={styles.card}>
+            <h2>{data.show_ups_count_total}</h2>
+          </div>
+          <div className={styles.card}>
             <h3 className={styles.title}>Vendas</h3>
-            <h2>{selectedData.vendasQuantidade}</h2>
-        </div>
-        <div className={styles.card}>
+            <h2>{data.sales_count_total}</h2>
+          </div>
+          <div className={styles.card}>
             <h3 className={styles.title}>Valor Total de Vendas</h3>
-            <h2><span className={styles.preText}>R$</span> {selectedData.valorVendas}</h2>
+            <h2><span className={styles.preText}>R$</span> {data.sales_value_total}</h2>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className={styles.charts}>
-        <div className={styles.chart}>Tendências de Agendamento x Comparecimentos</div>
+        <div className={styles.chart}>Taxa de Agendamento x Comparecimentos</div>
         <div className={styles.chart}>Vendas por período</div>
         <div className={styles.chart}>ROI</div>
       </div>

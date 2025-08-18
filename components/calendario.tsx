@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -11,6 +11,7 @@ import ModalDetalhes from "./ModalCalendario";
 import ModalNovoAgendamento from "./ModalNovoAgendamento";
 import ModalValorVenda from "./ModalValorVenda";
 import styles from "./styles/calendario.module.css";
+import { createClient } from '@/lib/client'
 
 export default function Calendario() {
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
@@ -23,21 +24,29 @@ export default function Calendario() {
   const [allowOverbooking, setAllowOverbooking] = useState(false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
+  const [caption, setCaption] = useState('')
 
-  const API_BASE = "https://be.blinkdentalmarketing.com.br";
+  const supabase = createClient()
+  const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
   const fetchConfigurations = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
       const res = await fetch(`${API_BASE}/configurations/appointments/1`, {
         method: "GET",
         mode: "cors",
-      });
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      })
+
       if (!res.ok) throw new Error("Erro ao buscar configurações");
       const data = await res.json();
       setCurrentDuration(data.duration || 30);
       setAllowOverbooking(data.overbooking || false);
-      console.log("Abaixo")
-      console.log(data)
     } catch (error) {
       console.error("Erro ao buscar configurações:", error);
     }
@@ -47,16 +56,23 @@ export default function Calendario() {
     const today = new Date();
     const startDate = today.toISOString().split("T")[0];
     const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
 
     try {
       const res = await fetch(
         `${API_BASE}/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
-        { mode: "cors" }
-      );
+        {
+          mode: "cors",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      )
 
       if (!res.ok) throw new Error("Erro ao buscar dados de agendamentos");
       const availability = await res.json();
-      console.log(availability)
 
       const calcEnd = (start: string, durMin: number) => {
         const [h, m] = start.split(":").map(Number);
@@ -113,11 +129,18 @@ export default function Calendario() {
 
   const updateEventStatus = async (id: string, newStatus: string) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
       const res = await fetch(`${API_BASE}/appointments/status`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ appointment_id: Number(id), new_status: newStatus }),
-      });
+      })
+
       if (!res.ok) throw new Error("Erro ao atualizar status do agendamento");
       return true;
     } catch (error) {
@@ -146,13 +169,19 @@ export default function Calendario() {
 
     const now = new Date();
     const datePart = now.toISOString().split("T")[0];
-    const timePart = now.toTimeString().split(":").slice(0,2).join(":");
+    const timePart = now.toTimeString().split(":").slice(0, 2).join(":");
     const registeredAt = `${datePart} ${timePart}`;
+
+    const { data: sessionData } = await supabase.auth.getSession()
+    const token = sessionData.session?.access_token
 
     try {
       const res = await fetch(`${API_BASE}/sales`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({
           appointment_id: Number(currentEventId),
           value: parseFloat(valor),
@@ -160,7 +189,7 @@ export default function Calendario() {
           registered_by_user: 1,
           registered_at: registeredAt,
         }),
-      });
+      })
 
       if (!res.ok) throw new Error("Erro ao registrar venda");
 
@@ -178,56 +207,101 @@ export default function Calendario() {
     }
   };
 
-  const renderEventContent = (arg: EventContentArg) => {
-    const id = arg.event.extendedProps.id;
-    const status = eventStatuses[id];
+  function EventoConteudo({
+    event,
+    viewType,
+    eventStatuses,
+    eventSales,
+    currentDuration,
+    handleStatusToggle,
+  }: {
+    event: any;
+    viewType: string;
+    eventStatuses: Record<string, string>;
+    eventSales: Record<string, any[]>;
+    currentDuration: number;
+    handleStatusToggle: (id: string, action: "confirm" | "attend" | "sale") => void;
+  }) {
+    const [isHovered, setIsHovered] = useState(false);
+    const id = event.extendedProps.id;
+    const status = eventStatuses[id] || "AGENDADO";
     const hasSales = eventSales[id] && eventSales[id].length > 0;
-    const view = arg.view.type;
+    const horaConsulta = event.start ? new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+    const displayStatus = hasSales ? "venda" : status.toLowerCase();
 
+    
     const Buttons = () => (
-      <>
-        <button
-          className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
-        >
-          {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
-        </button>
-        <button
-          className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
-        >
-          {status === "COMPARECEU" ? "✔" : ""}
-        </button>
-        <button
-          className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
-        >
-          {hasSales ? "✔" : ""}
-        </button>
-      </>
-    );
-
-    if (view === "dayGridMonth") {
-      return (
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <b style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{arg.event.title}</b>
-          <div style={{ display: "flex", gap: "4px" }}><Buttons /></div>
+      <div className={styles.buttonsContainer}>
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
+            onMouseEnter={() => setCaption("Confirmou")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
+          </button>
         </div>
-      );
-    }
-
-    return (
-      <div style={{ position: "absolute", height: "100%", display: "flex", flexDirection: "column" }}>
-        <div style={{
-          flex: "1 1 auto", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-          fontSize: currentDuration <= 30 ? "0.9em" : "0.8em",
-        }}>
-          {currentDuration > 30 ? <div>{arg.timeText}</div> : arg.timeText}
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
+            onMouseEnter={() => setCaption("Compareceu")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {status === "COMPARECEU" ? "✔" : ""}
+          </button>
         </div>
-        <div style={{ position: "relative", top: "-4px", right: "2px", display: "flex", gap: "4px", zIndex: 1 }}>
-          <Buttons />
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
+            onMouseEnter={() => setCaption("Registrar Venda")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {hasSales ? "✔" : ""}
+          </button>
         </div>
       </div>
+    );
+
+    const StatusText = () => (
+      <div className={styles.statusContainer}>
+        {displayStatus}
+      </div>
+    );
+
+    return (
+      <div
+        className={viewType === "dayGridMonth" ? styles.eventContentMonth : styles.eventContent}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <div className={styles.eventHeader}>
+          {currentDuration > 30 && (
+            <>
+              <span className={styles.pacienteName}>{event.title}</span>
+              <span className={styles.consultationTime}>{horaConsulta}</span>
+            </>
+          )}
+        </div>
+        <div className={styles.eventFooterTop}>
+          {isHovered ? <Buttons /> : <StatusText />}
+        </div>
+      </div>
+    );
+  }
+
+  const renderEventContent = (arg: EventContentArg) => {
+    return (
+      <EventoConteudo
+        event={arg.event}
+        viewType={arg.view.type}
+        eventStatuses={eventStatuses}
+        eventSales={eventSales}
+        currentDuration={currentDuration}
+        handleStatusToggle={handleStatusToggle}
+      />
     );
   };
 
@@ -235,7 +309,7 @@ export default function Calendario() {
     const id = arg.event.extendedProps.id;
     const status = eventStatuses[id];
     const hasSales = eventSales[id] && eventSales[id].length > 0;
-    if (hasSales) return styles.eventVenda; // alterado aqui
+    if (hasSales) return styles.eventVenda;
     if (status === "COMPARECEU") return styles.eventCompareceu;
     if (status === "CONFIRMADO") return styles.eventConfirmado;
     return styles.eventAgendado;
@@ -244,10 +318,20 @@ export default function Calendario() {
   const handleEventClick = async (info: EventClickArg) => {
     const id = info.event.extendedProps.id;
     try {
-      const res = await fetch(`${API_BASE}/appointments/${id}/details`, { method: "GET", mode: "cors" });
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
+      const res = await fetch(`${API_BASE}/appointments/${id}/details`, {
+        method: "GET",
+        mode: "cors",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      })
+
       if (!res.ok) throw new Error(`Erro ao buscar detalhes do agendamento ${id}`);
       const details = await res.json();
-      console.log(details)
       setEventDetails(details);
     } catch (error) {
       console.error("Erro ao buscar detalhes do agendamento:", error);
@@ -301,6 +385,7 @@ export default function Calendario() {
           appointmentId={Number(currentEventId)}
         />
       )}
+        {caption ? <span className={styles.statusCaption}>{caption}</span> : null}
     </div>
   );
 }

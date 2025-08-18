@@ -83,11 +83,15 @@
 }
 
 .cancelar {
-  background-color: rgb(255, 75, 75) !important;
+  background-color: rgb(255, 126, 126) !important;
   border: 2px solid red !important;
-  color: white;font-weight: bold;
+  color: white;
+  transition: 0.5s;
 }
 
+.cancelar:hover{
+  background-color: rgb(255, 84, 84) !important;
+}
 
 .successIcon {
   display: flex;

@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import styles from "./styles/agendamento-modal.module.css";
 import MessageBox from "./MessageBox";
+import { createClient } from '@/lib/client'
+const supabase = createClient()
+const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface Props {
   onClose: () => void;
@@ -14,6 +17,20 @@ interface WorkingDay {
   break_end: string;
 }
 
+interface ExceptionDay {
+  exception_day: string;
+  is_working_day: boolean;
+  open: string | null;
+  close: string | null;
+  break_start: string | null;
+  break_end: string | null;
+}
+
+interface ClinicConfig {
+  appointment_duration: number; // em minutos
+  allow_overbooking: boolean;
+}
+
 export default function ModalNovoAgendamento({ onClose }: Props) {
   const [patientName, setPatientName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -22,9 +39,23 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
   const [clinicId, setClinicId] = useState(1);
   const [notes, setNotes] = useState("");
   const [serviceType, setServiceType] = useState(0);
+  const [clinicConfig, setClinicConfig] = useState<ClinicConfig>({
+    appointment_duration: 30, // valor padrão de 60 minutos
+    allow_overbooking: false
+  });
 
   const [workingDays, setWorkingDays] = useState<WorkingDay[]>([]);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
+
+  const diasDaSemana = [
+    "SEGUNDA",
+    "TERCA",
+    "QUARTA",
+    "QUINTA",
+    "SEXTA",
+    "SABADO",
+    "DOMINGO",
+  ];
 
   const [messageBox, setMessageBox] = useState<{
     message: string;
@@ -35,13 +66,43 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
     setMessageBox({ message, type });
   };
 
+  const fetchClinicConfig = async () => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      const res = await fetch(`${API_BASE}/configurations/appointments/${clinicId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!res.ok) throw new Error("Erro ao buscar configurações da clínica");
+      const data = await res.json();
+      setClinicConfig({
+        appointment_duration: data.duration || 60,
+        allow_overbooking: data.overbooking || false
+      });
+      console.log(data.duration)
+    } catch (err) {
+      console.error(err);
+      showMessage("Erro ao buscar configurações da clínica.", "error");
+    }
+  };
+
   const fetchWorkingDays = async () => {
     try {
-      const today = new Date();
-      const startDate = today.toISOString().split("T")[0];
-      const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
 
-      const res = await fetch(`https://be.blinkdentalmarketing.com.br/appointments/availability?start_date=${startDate}&end_date=${endDate}`);
+      const res = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+      
       if (!res.ok) throw new Error("Erro ao buscar dias de trabalho");
       const data = await res.json();
       setWorkingDays(data);
@@ -51,67 +112,147 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
     }
   };
 
-  const generateOptionsForDate = (selectedDate: string) => {
-    const day = workingDays.find(d => d.date === selectedDate);
-    if (!day) return [];
+  const convertToMinutes = (time: string) => {
+    const [hour, min] = time.split(":").map(Number);
+    return hour * 60 + min;
+  };
 
+  const convertMinutesToTime = (minutes: number) => {
+    const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
+    const min = String(minutes % 60).padStart(2, "0");
+    return `${hour}:${min}`;
+  };
+
+  const generateTimeOptions = (
+    open: string,
+    close: string,
+    breakStart: string,
+    breakEnd: string,
+    appointmentDuration: number
+  ) => {
     const options: string[] = [];
-    const openParts = day.open.split(":").map(Number);
-    const closeParts = day.close.split(":").map(Number);
-    const breakStartParts = day.break_start.split(":").map(Number);
-    const breakEndParts = day.break_end.split(":").map(Number);
+    const openMinutes = convertToMinutes(open);
+    const closeMinutes = convertToMinutes(close);
+    const breakStartMinutes = convertToMinutes(breakStart);
+    const breakEndMinutes = convertToMinutes(breakEnd);
+    const durationMinutes = appointmentDuration;
 
-    const openMinutes = openParts[0] * 60 + openParts[1];
-    const closeMinutes = closeParts[0] * 60 + closeParts[1];
-    const breakStartMinutes = breakStartParts[0] * 60 + breakStartParts[1];
-    const breakEndMinutes = breakEndParts[0] * 60 + breakEndParts[1];
-
-    for (let minutes = openMinutes; minutes < closeMinutes; minutes += 15) {
+    for (let minutes = openMinutes; minutes <= closeMinutes - durationMinutes; minutes += 15) {
+      // Verifica se o horário está dentro do intervalo de almoço
       if (minutes >= breakStartMinutes && minutes < breakEndMinutes) continue;
-      const hour = String(Math.floor(minutes / 60)).padStart(2, "0");
-      const min = String(minutes % 60).padStart(2, "0");
-      options.push(`${hour}:${min}`);
+      
+      // Verifica se a consulta ultrapassa o horário de almoço
+      if (minutes < breakStartMinutes && (minutes + durationMinutes) > breakStartMinutes) continue;
+      
+      // Verifica se a consulta ultrapassa o horário de fechamento
+      if ((minutes + durationMinutes) > closeMinutes) continue;
+      
+      const timeStr = convertMinutesToTime(minutes);
+      options.push(timeStr);
     }
 
     return options;
   };
 
-  useEffect(() => {
-    async function disponibilidade(){
-        try{
-          const response = await fetch('https://be.blinkdentalmarketing.com.br/configurations/appointments/1')
-          const data = await response.json()
-          console.log("Aqui!", data)
-        }catch(e){
-          console.error(e)
-        } 
+  const checkExceptionAndGenerateOptions = async (selectedDate: string) => {
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
+      // Buscar exceções
+      const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+      
+      if (!exceptionsRes.ok) throw new Error("Erro ao buscar exceções");
+      const exceptions: ExceptionDay[] = await exceptionsRes.json();
+
+      // Verificar se há exceção para esta data
+      const exception = exceptions.find((e) => e.exception_day === selectedDate);
+
+      if (exception) {
+        if (!exception.is_working_day) {
+          setAvailableHours([]);
+          showMessage("A clínica estará fechada neste dia por exceção.", "error");
+          return;
+        }
+
+        if (exception.open && exception.close) {
+          const options = generateTimeOptions(
+            exception.open,
+            exception.close,
+            exception.break_start || "12:00",
+            exception.break_end || "13:00",
+            clinicConfig.appointment_duration
+          );
+          setAvailableHours(options);
+          return;
+        }
+      }
+
+      // Se não houver exceção, usar horários padrão baseados no dia da semana
+      const dateObj = new Date(selectedDate);
+      const dayOfWeek = dateObj.getDay(); // 0=Domingo, 1=Segunda, etc.
+      
+      // Ajuste para corresponder ao seu array diasDaSemana (SEGUNDA=0)
+      const workingDaysRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}`, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json",
+        }
+      });
+
+      if (!workingDaysRes.ok) throw new Error("Erro ao buscar dias de trabalho");
+      const workingDays: any[] = await workingDaysRes.json();
+
+      const defaultDay = workingDays.find(d => d.week_day === diasDaSemana[dayOfWeek]);
+      
+      if (defaultDay && defaultDay.is_work_day) {
+        const options = generateTimeOptions(
+          defaultDay.open || "08:00",
+          defaultDay.close || "17:00",
+          defaultDay.break_start || "12:00",
+          defaultDay.break_end || "13:00",
+          clinicConfig.appointment_duration
+        );
+        setAvailableHours(options);
+      } else {
+        setAvailableHours([]);
+        showMessage("A clínica não funciona neste dia da semana.", "error");
+      }
+    } catch (error) {
+      console.error(error);
+      showMessage("Erro ao processar horários disponíveis.", "error");
+      setAvailableHours([]);
     }
-    disponibilidade()
-  }, [])
+  };
 
   useEffect(() => {
     fetchWorkingDays();
-  }, []);
+    fetchClinicConfig();
+  }, [clinicId]);
 
   useEffect(() => {
     if (date) {
-      const filtered = generateOptionsForDate(date);
-      setAvailableHours(filtered);
+      checkExceptionAndGenerateOptions(date);
       setHour(""); // reseta hora se trocar a data
     }
-  }, [date, workingDays]);
+  }, [date, clinicId, clinicConfig]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!date) {
-      showMessage("Selecione uma data válida.", "error");
+    if (!date || !hour) {
+      showMessage("Selecione data e hora válidas.", "error");
       return;
     }
 
     const selectedDate = new Date(`${date}T${hour}`);
     if (selectedDate < new Date()) {
-      showMessage("Não é possível agendar em dias anteriores.", "error");
+      showMessage("Não é possível agendar em datas passadas.", "error");
       return;
     }
 
@@ -122,11 +263,17 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         clinic_id: clinicId,
       };
 
-      const pacientRes = await fetch("https://be.blinkdentalmarketing.com.br/patient", {
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
+      const pacientRes = await fetch(`${API_BASE}/patient`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(patientPayload),
-      });
+      })
 
       if (pacientRes.status !== 201 && pacientRes.status !== 409) {
         const text = await pacientRes.text();
@@ -142,11 +289,14 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         service_type: serviceType,
       };
 
-      const res = await fetch("https://be.blinkdentalmarketing.com.br/appointments", {
+      const res = await fetch(`${API_BASE}/appointments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(appointmentPayload),
-      });
+      })
 
       const text = await res.text();
       let responseBody;
@@ -156,7 +306,31 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         showMessage("Agendamento criado com sucesso!", "success");
         onClose();
       } else if (res.status === 409) {
-        showMessage("Horário já ocupado! Verifique se o overbooking está habilitado.", "error"); // Aqui esta atrapalhando o overbooking! Se estiver ligado, permite 2 agendamentos no mesmo hor.
+        if (clinicConfig.allow_overbooking) {
+          // Se overbooking estiver permitido, perguntar se quer continuar
+          if (window.confirm("Horário já ocupado! Deseja fazer overbooking?")) {
+            const overbookingRes = await fetch(`${API_BASE}/appointments`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...appointmentPayload,
+                is_overbooking: true
+              }),
+            });
+            
+            if (overbookingRes.ok) {
+              showMessage("Agendamento com overbooking criado com sucesso!", "success");
+              onClose();
+            } else {
+              showMessage("Erro ao criar agendamento com overbooking.", "error");
+            }
+          }
+        } else {
+          showMessage("Horário já ocupado! Verifique se o overbooking está habilitado.", "error");
+        }
       } else {
         showMessage(`Erro inesperado: ${JSON.stringify(responseBody)}`, "error");
       }
