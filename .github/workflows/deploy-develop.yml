@@ -1,43 +1,40 @@
-name: Deploy Frontend Develop
+name: Deploy to Hetzner
 
 on:
   push:
-    branches:
-      - develop
+    branches: [ dev-deploy-test ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    
+
     steps:
-      - name: Checkout code
+      - name: Checkout código
         uses: actions/checkout@v3
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+
+      - name: Build Docker image
+        run: docker build -t blink-fe .
+
+      - name: Exportar Docker image
+        run: docker save blink-fe | gzip > blink-fe.tar.gz
+
+      - name: Enviar imagem para Hetzner
+        uses: appleboy/scp-action@v0.1.7
         with:
-          node-version: '18'
-          cache: 'npm'
-          
-      - name: Deploy via SFTP
-        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "blink-fe.tar.gz"
+          target: "/opt/frontend/dev/"
+
+      - name: Executar container no Hetzner
+        uses: appleboy/ssh-action@v1.0.0
         with:
-          server: ${{ secrets.HOST }}
-          username: blink
-          password: Blink10@
-          local_path: ./*
-          remote_path: /opt/frontend-dev/
-          sftpArgs: '-o StrictHostKeyChecking=no'
-          
-      - name: Build and restart
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USERNAME }}
-          password: ${{ secrets.PASSWORD }}
+          host: ${{ secrets.HETZNER_HOST }}
+          username: ${{ secrets.HETZNER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/frontend-dev
-            npm install
-            npm run build
-            pm2 restart frontend-dev
-            pm2 save
+            docker load < /opt/frontend/dev/blink-fe.tar.gz
+            docker stop blink-fe-dev || true
+            docker rm blink-fe-dev || true
+            docker run -d --name blink-fe-dev -p 3002:3000 --network blink-docker-network
