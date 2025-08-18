@@ -1,4 +1,4 @@
-const BASE_URL = 'https://be.blinkdentalmarketing.com.br/api/v1';
+const NEXT_PUBLIC_BLINK_BE_BASE_URL=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL
 
 export const createApiHeaders = (token: string) => ({
   'Content-Type': 'application/json',
@@ -6,14 +6,14 @@ export const createApiHeaders = (token: string) => ({
 });
 
 export const apiEndpoints = {
-  whatsappStatus: `${BASE_URL}/message/whats-app/1/status`,
-  whatsappQrCode: `${BASE_URL}/message/whats-app/1/qr-code`,
-  availability: `${BASE_URL}/configurations/availability/1`,
-  availabilityConfig: `${BASE_URL}/configurations/availability`,
-  appointments: `${BASE_URL}/configurations/appointments/1`,
-  appointmentsConfig: `${BASE_URL}/configurations/appointments`,
-  exceptions: `${BASE_URL}/configurations/availability/1/exception`,
-  exceptionsConfig: `${BASE_URL}/configurations/availability/exception`,
-  overview: `${BASE_URL}/chat/1/overview`,
-  dashboardInfo: `${BASE_URL}/dashboards/1`
+  whatsappStatus: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/1/status`,
+  whatsappQrCode: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/1/qr-code`,
+  availability: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1`,
+  availabilityConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability`,
+  appointments: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments/1`,
+  appointmentsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments`,
+  exceptions: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1/exception`,
+  exceptionsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/exception`,
+  overview: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/1/overview`,
+  dashboardInfo: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/1`
 };
