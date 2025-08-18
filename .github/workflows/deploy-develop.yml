@@ -37,4 +37,4 @@ jobs:
             docker load < /opt/frontend/dev/blink-fe.tar.gz
             docker stop blink-fe-dev || true
             docker rm blink-fe-dev || true
-            docker run -d --name blink-fe-dev -p 3002:3000 --network blink-docker-network blink-fe
+            docker run -d --name blink-fe-dev -p 3000:3002 --network blink-docker-network blink-fe
