@@ -13,7 +13,11 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Build Docker image
-        run: docker build -t blink-fe .
+        run: |
+          docker build \ 
+          --build-arg NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }} \ 
+          --build-arg NEXT_PUBLIC_SUPABASE_ANON_KEY = ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }} \ 
+          -t blink-fe .
 
       - name: Exportar Docker image
         run: docker save blink-fe | gzip > blink-fe.tar.gz
@@ -37,4 +41,4 @@ jobs:
             docker load < /opt/frontend/dev/blink-fe.tar.gz
             docker stop blink-fe-dev || true
             docker rm blink-fe-dev || true
-            docker run -d --name blink-fe-dev -p 3002:3000 --network blink-docker-network
+            docker run -d --name blink-fe-dev -p 3002:3000 --network blink-docker-network blink-fe
