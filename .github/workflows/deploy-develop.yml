@@ -2,7 +2,7 @@ name: Deploy to Hetzner
 
 on:
   push:
-    branches: [ dev-deploy-test ]
+    branches: [ develop ]
 
 jobs:
   deploy:
