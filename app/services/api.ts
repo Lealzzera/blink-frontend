@@ -1,4 +1,5 @@
 const NEXT_PUBLIC_BLINK_BE_BASE_URL=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL
+console.log(NEXT_PUBLIC_BLINK_BE_BASE_URL)
 
 export const createApiHeaders = (token: string) => ({
   'Content-Type': 'application/json',
