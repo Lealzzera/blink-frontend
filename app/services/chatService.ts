@@ -1,16 +1,5 @@
 import { apiEndpoints, createApiHeaders} from "./api"
 
-/*
-    "phone_number": "string",
-    "picture_url": "string",
-    "patient_name": "string",
-    "last_message": "string",
-    "sent_at": "2025-08-15T15:34:54.002Z",
-    "from_me": true,
-    "ai_answer": true
-*/
-
-
 export interface ChatConfig{
     phone_number: string;
     picture_url: string;
@@ -25,6 +14,7 @@ export interface ChatConfig{
 export const chatService = {
     async getOverview(token: string): Promise<ChatConfig[]> {
         const response = await fetch(apiEndpoints.overview, {
+            mode: "cors",
             headers: createApiHeaders(token)
         });
 

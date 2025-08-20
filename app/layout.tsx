@@ -2,7 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from "@/components/theme-provider";
 import Sidebar from './Sidebar';
-import { CalendarConfigProvider } from '@/context/CalendarConfigContext';
+//import { CalendarConfigProvider } from '@/context/CalendarConfigContext';
 
 export const metadata: Metadata = {
   title: 'blink',
@@ -21,10 +21,8 @@ export default function RootLayout({
     <html lang="pt-BR" suppressHydrationWarning>
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" enableSystem={false}>
-          <CalendarConfigProvider> 
             <Sidebar />
             {children}
-          </CalendarConfigProvider>
         </ThemeProvider>
       </body>
     </html>

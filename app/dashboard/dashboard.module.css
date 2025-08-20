@@ -23,7 +23,44 @@
   .periodSelector button:hover {
     background-color: #01bfd4;
   }
-  
+
+    .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .cardSkeleton {
+    background: #f3f3f3;
+    border-radius: 8px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: pulse 1.5s infinite ease-in-out;
+  }
+
+  .titleSkeleton {
+    width: 70%;
+    height: 16px;
+    background: #e0e0e0;
+    border-radius: 4px;
+  }
+
+  .valueSkeleton {
+    width: 50%;
+    height: 28px;
+    background: #e0e0e0;
+    border-radius: 4px;
+  }
+
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.4; }
+    100% { opacity: 1; }
+  }
+
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));

@@ -54,7 +54,7 @@ export const RealtimeChat = ({
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Busca os contatos reais da API
+  // Busca os contatos da API
   useEffect(() => {
     const fetchContacts = async () => {
       try {
@@ -209,7 +209,17 @@ export const RealtimeChat = ({
         </div>
 
         {loadingContacts ? (
-          <div className={styles.loader}>Carregando contatos...</div>
+          <div className={styles.skeletonList}>
+            {Array.from({ length: 10 }).map((_, i) => (
+              <div key={i} className={styles.skeletonContact}>
+                <div className={styles.skeletonAvatar}></div>
+                <div className={styles.skeletonInfo}>
+                  <div className={styles.skeletonLine}></div>
+                  <div className={styles.skeletonLineShort}></div>
+                </div>
+              </div>
+            ))}
+          </div>
         ) : (
           contacts
             .filter(contact => contact.name && contact.name.toLowerCase().includes(searchTerm.toLowerCase()))

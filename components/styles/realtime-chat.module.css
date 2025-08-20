@@ -157,6 +157,10 @@
   height: 7vh;
 }
 
+.chatPhoto{
+  margin-top: 5px;
+}
+
 .chatHeaderContact {
   display: flex;
   gap: 1.25rem;
@@ -348,7 +352,8 @@
   }
 }
 
-@media(min-width: 769px) and (max-width: 1024px) {
+/*
+@media(min-width: 800px) and (max-width: 1024px) {
   .chat {
     margin-left: 0;
     max-height: 97%;
@@ -368,7 +373,8 @@
   }
 }
 
-@media(max-width: 768px) {
+*/
+@media(max-width: 1024px) {
   .container {
     margin-top: 3vh;
   }
@@ -411,4 +417,53 @@
   .iconContact {
     display: none;
   }
+}
+
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 10px;
+}
+
+.skeletonContact {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeletonAvatar {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonInfo {
+  flex: 1;
+}
+
+.skeletonLine {
+  width: 70%;
+  height: 12px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  margin-bottom: 6px;
+  animation: pulse 1.5s infinite;
+}
+
+.skeletonLineShort {
+  width: 40%;
+  height: 10px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
 }

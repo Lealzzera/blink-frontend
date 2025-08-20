@@ -37,14 +37,15 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
 }) => {
   return (
     <>
-      <div className={styles.availabilityTop}>
+    <div className={styles.containerAvailability}>
+          <div className={styles.availabilityTop}>
         <h2 className={styles.subtitle}>Disponibilidade da Clínica</h2>
         <button
           className={styles.saveButton}
           onClick={onSave}
           disabled={loading}
         >
-          {loading ? "Salvando..." : "Salvar configurações"}
+          {loading ? "Salvando..." : "Salvar Disponibilidade"}
         </button>
       </div>
 
@@ -60,6 +61,7 @@ export const AvailabilitySettings: React.FC<AvailabilitySettingsProps> = ({
           />
         ))}
       </div>
+    </div>
     </>
   );
 };

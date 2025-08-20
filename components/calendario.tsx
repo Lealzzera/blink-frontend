@@ -214,6 +214,7 @@ export default function Calendario() {
     eventSales,
     currentDuration,
     handleStatusToggle,
+    setCaption
   }: {
     event: any;
     viewType: string;
@@ -221,6 +222,7 @@ export default function Calendario() {
     eventSales: Record<string, any[]>;
     currentDuration: number;
     handleStatusToggle: (id: string, action: "confirm" | "attend" | "sale") => void;
+    setCaption: React.Dispatch<React.SetStateAction<string>>;
   }) {
     const [isHovered, setIsHovered] = useState(false);
     const id = event.extendedProps.id;
@@ -229,53 +231,38 @@ export default function Calendario() {
     const horaConsulta = event.start ? new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
     const displayStatus = hasSales ? "venda" : status.toLowerCase();
 
-    
     const Buttons = () => (
       <div className={styles.buttonsContainer}>
-        <div className={styles.tooltipWrapper}>
-          <button
-            className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
-            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
-            onMouseEnter={() => setCaption("Confirmou")}
-            onMouseLeave={() => setCaption('')}
-          >
-            {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
-          </button>
-        </div>
-        <div className={styles.tooltipWrapper}>
-          <button
-            className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
-            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
-            onMouseEnter={() => setCaption("Compareceu")}
-            onMouseLeave={() => setCaption('')}
-          >
-            {status === "COMPARECEU" ? "✔" : ""}
-          </button>
-        </div>
-        <div className={styles.tooltipWrapper}>
-          <button
-            className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
-            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
-            onMouseEnter={() => setCaption("Registrar Venda")}
-            onMouseLeave={() => setCaption('')}
-          >
-            {hasSales ? "✔" : ""}
-          </button>
-        </div>
+        <button
+          className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
+        >
+          {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
+        </button>
+        <button
+          className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
+        >
+          {status === "COMPARECEU" ? "✔" : ""}
+        </button>
+        <button
+          className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
+          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
+        >
+          {hasSales ? "✔" : ""}
+        </button>
       </div>
     );
 
     const StatusText = () => (
-      <div className={styles.statusContainer}>
-        {displayStatus}
-      </div>
+      <div className={styles.statusContainer}>{displayStatus}</div>
     );
 
     return (
       <div
         className={viewType === "dayGridMonth" ? styles.eventContentMonth : styles.eventContent}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={() => { setIsHovered(true); }}
+        onMouseLeave={() => { setIsHovered(false); }}
       >
         <div className={styles.eventHeader}>
           {currentDuration > 30 && (
@@ -301,6 +288,7 @@ export default function Calendario() {
         eventSales={eventSales}
         currentDuration={currentDuration}
         handleStatusToggle={handleStatusToggle}
+        setCaption={setCaption}
       />
     );
   };
@@ -366,6 +354,7 @@ export default function Calendario() {
           eventClassNames={eventClassNames}
         />
       </div>
+
       {selectedEvent && (
         <ModalDetalhes
           event={selectedEvent}
@@ -374,10 +363,13 @@ export default function Calendario() {
           onEventRemoved={handleEventRemoved}
         />
       )}
+
       <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>+</button>
+
       {openNewAppointmentModal && (
         <ModalNovoAgendamento onClose={() => { setOpenNewAppointmentModal(false); fetchAvailability(); }} />
       )}
+
       {showValorVendaModal && currentEventId && (
         <ModalValorVenda
           onClose={() => { setCurrentEventId(null); setShowValorVendaModal(false); }}
@@ -385,7 +377,8 @@ export default function Calendario() {
           appointmentId={Number(currentEventId)}
         />
       )}
-        {caption ? <span className={styles.statusCaption}>{caption}</span> : null}
+
+      {caption ? <span className={styles.statusCaption}>{caption}</span> : null}
     </div>
   );
 }
