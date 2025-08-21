@@ -53,6 +53,61 @@
   font-size: 1rem;
 }
 
+.contactCard {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  border-bottom: 1px solid #e0e0e0;
+  cursor: pointer;
+  overflow: hidden;  
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.name {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-left: 47px;
+}
+
+.body {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.photo {
+  border-radius: 50%;
+}
+
+.messageRow {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.lastMessage {
+  max-width: 80%;      /* limita a largura em relação ao container */
+  white-space: nowrap; /* impede quebrar linha */
+  overflow: hidden;    /* esconde o que ultrapassa */
+  text-overflow: ellipsis; /* adiciona "..." no final */
+  display: block;      /* garante que funcione bem */
+  font-weight: 500;
+  color: #535353;
+}
+
+.sentAt {
+  font-size: 0.8rem;
+  color: #888;
+  white-space: nowrap;
+}
+
+
 .photo,
 .chatPhoto {
   border-radius: 50%;

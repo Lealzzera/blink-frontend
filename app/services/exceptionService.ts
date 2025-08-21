@@ -26,6 +26,7 @@ export interface ExceptionFormData {
 export const exceptionService = {
   async getExceptions(token: string): Promise<Exception[]> {
     const response = await fetch(apiEndpoints.exceptions, {
+      mode: "cors",
       headers: createApiHeaders(token)
     });
 
@@ -44,6 +45,7 @@ export const exceptionService = {
     const response = await fetch(apiEndpoints.exceptionsConfig, {
       method: "POST",
       headers: createApiHeaders(token),
+      mode: "cors",
       body: JSON.stringify(exception),
     });
  
@@ -62,6 +64,7 @@ export const exceptionService = {
 
     const response = await fetch(`${apiEndpoints.exceptionsConfig}/${id}`, {
       method: "DELETE",
+      mode: "cors",
       headers: createApiHeaders(token),
     });
     

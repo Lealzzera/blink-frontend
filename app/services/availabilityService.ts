@@ -13,6 +13,7 @@ export interface WorkDay {
 export const availabilityService = {
   async getAvailability(token: string): Promise<WorkDay[]> {
     const response = await fetch(apiEndpoints.availability, {
+      mode: "cors",
       headers: createApiHeaders(token)
     });
 
@@ -27,6 +28,7 @@ export const availabilityService = {
     const response = await fetch(apiEndpoints.availabilityConfig, {
       method: "PUT",
       headers: createApiHeaders(token),
+      mode: "cors",
       body: JSON.stringify(workDays),
     });
 

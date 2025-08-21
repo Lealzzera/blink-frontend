@@ -24,7 +24,6 @@ export default function Calendario() {
   const [allowOverbooking, setAllowOverbooking] = useState(false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
-  const [caption, setCaption] = useState('')
 
   const supabase = createClient()
   const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
@@ -214,7 +213,6 @@ export default function Calendario() {
     eventSales,
     currentDuration,
     handleStatusToggle,
-    setCaption
   }: {
     event: any;
     viewType: string;
@@ -222,9 +220,9 @@ export default function Calendario() {
     eventSales: Record<string, any[]>;
     currentDuration: number;
     handleStatusToggle: (id: string, action: "confirm" | "attend" | "sale") => void;
-    setCaption: React.Dispatch<React.SetStateAction<string>>;
   }) {
     const [isHovered, setIsHovered] = useState(false);
+    const [caption, setCaption] = useState('');
     const id = event.extendedProps.id;
     const status = eventStatuses[id] || "AGENDADO";
     const hasSales = eventSales[id] && eventSales[id].length > 0;
@@ -233,36 +231,50 @@ export default function Calendario() {
 
     const Buttons = () => (
       <div className={styles.buttonsContainer}>
-        <button
-          className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
-        >
-          {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
-        </button>
-        <button
-          className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
-        >
-          {status === "COMPARECEU" ? "✔" : ""}
-        </button>
-        <button
-          className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
-          onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
-        >
-          {hasSales ? "✔" : ""}
-        </button>
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "confirm"); }}
+            onMouseEnter={() => setCaption("Confirmou")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {status === "CONFIRMADO" || status === "COMPARECEU" ? "✔" : ""}
+          </button>
+        </div>
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "attend"); }}
+            onMouseEnter={() => setCaption("Compareceu")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {status === "COMPARECEU" ? "✔" : ""}
+          </button>
+        </div>
+        <div className={styles.tooltipWrapper}>
+          <button
+            className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
+            onClick={(e) => { e.stopPropagation(); handleStatusToggle(id, "sale"); }}
+            onMouseEnter={() => setCaption("Registrar Venda")}
+            onMouseLeave={() => setCaption('')}
+          >
+            {hasSales ? "✔" : ""}
+          </button>
+        </div>
       </div>
     );
 
     const StatusText = () => (
-      <div className={styles.statusContainer}>{displayStatus}</div>
+      <div className={styles.statusContainer}>
+        {displayStatus.toUpperCase()}
+      </div>
     );
 
     return (
       <div
         className={viewType === "dayGridMonth" ? styles.eventContentMonth : styles.eventContent}
-        onMouseEnter={() => { setIsHovered(true); }}
-        onMouseLeave={() => { setIsHovered(false); }}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
       >
         <div className={styles.eventHeader}>
           {currentDuration > 30 && (
@@ -275,6 +287,7 @@ export default function Calendario() {
         <div className={styles.eventFooterTop}>
           {isHovered ? <Buttons /> : <StatusText />}
         </div>
+        {caption ? <span className={styles.statusCaption}>{caption.toUpperCase()}</span> : null}
       </div>
     );
   }
@@ -288,7 +301,6 @@ export default function Calendario() {
         eventSales={eventSales}
         currentDuration={currentDuration}
         handleStatusToggle={handleStatusToggle}
-        setCaption={setCaption}
       />
     );
   };
@@ -354,7 +366,6 @@ export default function Calendario() {
           eventClassNames={eventClassNames}
         />
       </div>
-
       {selectedEvent && (
         <ModalDetalhes
           event={selectedEvent}
@@ -363,13 +374,10 @@ export default function Calendario() {
           onEventRemoved={handleEventRemoved}
         />
       )}
-
       <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>+</button>
-
       {openNewAppointmentModal && (
         <ModalNovoAgendamento onClose={() => { setOpenNewAppointmentModal(false); fetchAvailability(); }} />
       )}
-
       {showValorVendaModal && currentEventId && (
         <ModalValorVenda
           onClose={() => { setCurrentEventId(null); setShowValorVendaModal(false); }}
@@ -377,8 +385,6 @@ export default function Calendario() {
           appointmentId={Number(currentEventId)}
         />
       )}
-
-      {caption ? <span className={styles.statusCaption}>{caption}</span> : null}
     </div>
   );
 }

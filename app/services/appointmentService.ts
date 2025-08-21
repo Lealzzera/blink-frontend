@@ -8,6 +8,7 @@ export interface AppointmentConfig {
 export const appointmentService = {
   async getConfig(token: string): Promise<AppointmentConfig> {
     const response = await fetch(apiEndpoints.appointments, {
+      mode: "cors",
       headers: createApiHeaders(token)
     });
 

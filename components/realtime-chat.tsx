@@ -224,30 +224,37 @@ export const RealtimeChat = ({
           contacts
             .filter(contact => contact.name && contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(contact => (
-              <div
+              <div className={styles.contactCard}
                 key={contact.id}
-                className={styles.contact}
                 onClick={() => {
                   setSelectedContact(contact)
                   if (isMobile) toggleMenu()
                 }}
               >
-                <div className={styles.contactPhoto}>
+                <div className={styles.header}>
+                  <h3 className={styles.name}>{contact.name}</h3>
+                  <Switch className={styles.switch} defaultChecked={contact.scheduled} />
+                </div>
+
+                <div className={styles.body}>
                   <Image
-                    src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
+                    src={
+                      contact.photo ||
+                      `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`
+                    }
                     alt={contact.name}
                     width={45}
                     height={45}
                     className={styles.photo}
                   />
-                  <div className={styles.insideContact}>
-                    <h3 className={styles.name}>{contact.name}</h3>
-                    <p className={styles.number}>
+
+                  <div className={styles.messageRow}>
+                    <p className={styles.lastMessage}>
                       {contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}
                     </p>
+                    <p className={styles.sentAt}>{contact.sentAt}</p>
                   </div>
                 </div>
-                <Switch className={styles.switch} defaultChecked={contact.scheduled} />
               </div>
           ))
         )}
@@ -328,3 +335,5 @@ export const RealtimeChat = ({
     </div>
   )
 }
+
+

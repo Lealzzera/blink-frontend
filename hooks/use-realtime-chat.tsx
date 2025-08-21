@@ -29,7 +29,7 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const newChannel = supabase.channel(roomName);
+    const newChannel = supabase.channel('roomName');
 
     newChannel
       .on("broadcast", { event: EVENT_MESSAGE_TYPE }, (payload) => {

@@ -13,6 +13,7 @@ export const dashboardService = {
     const url = `${apiEndpoints.dashboardInfo}?startDate=${startDate}&endDate=${endDate}`
 
     const response = await fetch(url, {
+      mode: "cors",
       headers: createApiHeaders(token)
     })
 
