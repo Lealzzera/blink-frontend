@@ -23,19 +23,20 @@ const EVENT_MESSAGE_TYPE = "message";
 export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
   const supabase = createClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [channel, setChannel] = useState<ReturnType<
-    typeof supabase.channel
-  > | null>(null);
+  const [channel, setChannel] = useState<ReturnType<typeof supabase.channel> | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    const newChannel = supabase.channel('roomName');
+    if (!roomName) return;
+
+    // Cria canal com o nome da sala correto
+    const newChannel = supabase.channel(roomName);
 
     newChannel
       .on("broadcast", { event: EVENT_MESSAGE_TYPE }, (payload) => {
         setMessages((current) => [...current, payload.payload as ChatMessage]);
       })
-      .subscribe(async (status) => {
+      .subscribe((status) => {
         if (status === "SUBSCRIBED") {
           setIsConnected(true);
         }
@@ -43,19 +44,21 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
 
     setChannel(newChannel);
 
+    // Limpa canal ao trocar de sala
     return () => {
       supabase.removeChannel(newChannel);
+      setMessages([]); // limpa mensagens do chat anterior
+      setIsConnected(false);
     };
-  }, [roomName, username, supabase]);
+  }, [roomName, supabase]);
 
   const sendMessage = useCallback(
     async (content: string) => {
       if (!channel || !isConnected) return;
 
-      //TODO: AJUSTAR ESSE TEXT COM 'STRING' POIS FOI FEITO UMA MEDIDA PALEATIVA
       const message: ChatMessage = {
         id: crypto.randomUUID(),
-        text: "text",
+        text: content,
         content,
         user: {
           name: username,
@@ -63,7 +66,6 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
         createdAt: new Date().toISOString(),
       };
 
-      // Update local state immediately for the sender
       setMessages((current) => [...current, message]);
 
       await channel.send({

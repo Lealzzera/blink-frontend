@@ -21,28 +21,17 @@ const supabase = createClient()
 const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface RealtimeChatProps {
-  roomName: string
   username: string
   onMessage?: (messages: ChatMessage[]) => void
   messages?: ChatMessage[]
 }
 
 export const RealtimeChat = ({
-  roomName,
   username,
   onMessage,
   messages: initialMessages = [],
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll()
-
-  const {
-    messages: realtimeMessages,
-    sendMessage,
-    isConnected,
-  } = useRealtimeChat({
-    roomName,
-    username,
-  })
 
   const [newMessage, setNewMessage] = useState('')
   const [contacts, setContacts] = useState<any[]>([])
@@ -53,6 +42,7 @@ export const RealtimeChat = ({
   const [isMobile, setIsMobile] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [messages, setMessages] = useState<ChatMessage[]>([])
 
   // Busca os contatos da API
   useEffect(() => {
@@ -79,6 +69,7 @@ export const RealtimeChat = ({
           lastMessage: c.last_message,
           sentAt: c.sent_at,
           fromMe: c.from_me,
+          roomName: c.phone_number, // cada contato tem sua sala própria
         }))
 
         setContacts(mappedContacts)
@@ -96,29 +87,63 @@ export const RealtimeChat = ({
     fetchContacts()
   }, [])
 
-  // Unir mensagens e garantir que todas tenham id e createdAt
+  // Hook de mensagens em tempo real
+  const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
+    roomName: selectedContact?.roomName || '',
+    username,
+  })
+
+  // Busca últimas 10 mensagens ao selecionar contato
+  useEffect(() => {
+    if (!selectedContact) return
+
+    const fetchMessages = async () => {
+      try {
+        const { data: sessionData } = await supabase.auth.getSession()
+        const token = sessionData.session?.access_token
+        console.log(token)
+        if (!token) throw new Error('Token de autenticação não encontrado.')
+
+        const phoneNumber = selectedContact.number
+        const lastMessages = await chatService.getOverviewPhone(token, phoneNumber)
+
+        const mappedMessages: ChatMessage[] = lastMessages.map((msg) => ({
+          id: crypto.randomUUID(),
+          text: msg.message_text,
+          content: msg.message_text,
+          user: { name: msg.from_me ? username : selectedContact.name },
+          createdAt: msg.sent_at,
+        }))
+
+        setMessages(mappedMessages)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao buscar mensagens')
+        console.error(err)
+      }
+    }
+
+    fetchMessages()
+  }, [selectedContact, username])
+
+  // Combina mensagens do histórico com tempo real
   const allMessages = useMemo(() => {
-    const mergedMessages = [...initialMessages, ...realtimeMessages]
+    const mergedMessages = [...messages, ...realtimeMessages]
 
     const uniqueMessages = mergedMessages.filter(
       (message, index, self) =>
         index === self.findIndex(m => (m.id || m.createdAt) === (message.id || message.createdAt))
     )
 
-    const sortedMessages = uniqueMessages.sort((a, b) => {
-      const dateA = new Date(a.createdAt).getTime()
-      const dateB = new Date(b.createdAt).getTime()
-      return dateA - dateB
-    })
-
-    return sortedMessages
-  }, [initialMessages, realtimeMessages])
+    return uniqueMessages.sort((a, b) =>
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    )
+  }, [messages, realtimeMessages])
 
   useEffect(() => {
     if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
-  // Scroll para o fim após renderizar
+  // Scroll para o fim
   useEffect(() => {
     const timeout = setTimeout(() => scrollToBottom(), 50)
     return () => clearTimeout(timeout)
@@ -148,7 +173,7 @@ export const RealtimeChat = ({
         const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`
 
         if (formattedNumber.length < 12) {
-          throw new Error('Número de telefone inválido. Deve incluir DDD e 9 dígitos.')
+          throw new Error('Número de telefone inválido.')
         }
 
         const { data: sessionData } = await supabase.auth.getSession()
@@ -185,6 +210,7 @@ export const RealtimeChat = ({
 
   return (
     <div className={styles.container}>
+      {/* Contatos */}
       <div
         className={styles.contacts}
         style={isMobile ? {
@@ -222,9 +248,10 @@ export const RealtimeChat = ({
           </div>
         ) : (
           contacts
-            .filter(contact => contact.name && contact.name.toLowerCase().includes(searchTerm.toLowerCase()))
+            .filter(contact => contact.name?.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(contact => (
-              <div className={styles.contactCard}
+              <div
+                className={styles.contactCard}
                 key={contact.id}
                 onClick={() => {
                   setSelectedContact(contact)
@@ -238,16 +265,12 @@ export const RealtimeChat = ({
 
                 <div className={styles.body}>
                   <Image
-                    src={
-                      contact.photo ||
-                      `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`
-                    }
+                    src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
                     alt={contact.name}
                     width={45}
                     height={45}
                     className={styles.photo}
                   />
-
                   <div className={styles.messageRow}>
                     <p className={styles.lastMessage}>
                       {contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}
@@ -256,10 +279,11 @@ export const RealtimeChat = ({
                   </div>
                 </div>
               </div>
-          ))
+            ))
         )}
       </div>
 
+      {/* Chat */}
       <div className={styles.chat}>
         <div className={styles.chatHeader}>
           <div className={styles.spanContainer} onClick={toggleMenu}>
@@ -286,9 +310,7 @@ export const RealtimeChat = ({
           {allMessages.length === 0 && (
             <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
           )}
-          {error && (
-            <div className={styles.errorMessage}>{error}</div>
-          )}
+          {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.messageList}>
             {allMessages.map((message, index) => {
               const prevMessage = index > 0 ? allMessages[index - 1] : null
@@ -322,9 +344,9 @@ export const RealtimeChat = ({
             disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
-            <Button 
-              className={styles.sendButton} 
-              type="submit" 
+            <Button
+              className={styles.sendButton}
+              type="submit"
               disabled={!isConnected || isSending}
             >
               {isSending ? 'Enviando...' : <Send className={styles.sendIcon} />}
@@ -335,5 +357,3 @@ export const RealtimeChat = ({
     </div>
   )
 }
-
-

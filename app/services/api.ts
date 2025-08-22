@@ -16,5 +16,6 @@ export const apiEndpoints = {
   exceptions: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1/exception`,
   exceptionsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/exception`,
   overview: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/1/overview`,
+  overviewPhone: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/1/overview`,
   dashboardInfo: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/1`
 };
