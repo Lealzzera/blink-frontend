@@ -51,6 +51,7 @@ export default function MessageShot() {
                     Selecionar Todos
                 </Button>
             </div>
+            <h2><strong><i>Puxar dos contatos do wpp?</i></strong></h2>
               {pessoas.map((pessoa, index) => (
                 <>
                   <div className={styles.contacts}>

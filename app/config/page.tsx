@@ -92,7 +92,7 @@
         try {
           setInitialLoad(true);
           const token = await getAuthToken();
-
+          console.log(token)
           // Load WhatsApp status
           try {
             const whatsappData = await whatsappService.getStatus(token);

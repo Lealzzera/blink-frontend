@@ -28,3 +28,5 @@ export default function MessageBox({ message, type, onHide }: Props) {
     </div>
   );
 }
+
+//EXCLUIR ESTE COMPONENTE?????

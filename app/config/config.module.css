@@ -491,6 +491,13 @@
   .qrCodeContainer{
     width: 100%;
   }
+  .skeletonHeader{
+      width: 100% !important;
+    height: 270px !important;
+  }
+  .skeletonSection{
+    width: 100% !important;
+  }
 }
 
 /* Skeletons */
