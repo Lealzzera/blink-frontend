@@ -48,7 +48,7 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
         
         const data = await res.json()
         console.log(data)
-
+        console.log('Venda registrada no componente modal! 100 aqui')
         if (!res.ok) throw new Error("Erro ao registrar venda");
       } catch (error) {
         console.error("Erro ao registrar venda:", error);

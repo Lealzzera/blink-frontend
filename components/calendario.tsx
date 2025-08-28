@@ -163,47 +163,22 @@ export default function Calendario() {
     }
   };
 
-  const handleConfirmValorVenda = async (valor: string) => {
+  // 🔹 Apenas atualiza o estado local, sem POST /sales
+  const handleConfirmValorVenda = (valor: string) => {
     if (!currentEventId) return;
 
-    const now = new Date();
-    const datePart = now.toISOString().split("T")[0];
-    const timePart = now.toTimeString().split(":").slice(0, 2).join(":");
-    const registeredAt = `${datePart} ${timePart}`;
+    const newSale = {
+      appointment_id: Number(currentEventId),
+      value: parseFloat(valor),
+    };
 
-    const { data: sessionData } = await supabase.auth.getSession()
-    const token = sessionData.session?.access_token
+    setEventSales((prev) => ({
+      ...prev,
+      [currentEventId]: [...(prev[currentEventId] || []), newSale],
+    }));
 
-    try {
-      const res = await fetch(`${API_BASE}/sales`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          appointment_id: Number(currentEventId),
-          value: parseFloat(valor),
-          service_type: 1,
-          registered_by_user: 1,
-          registered_at: registeredAt,
-        }),
-      })
-
-      if (!res.ok) throw new Error("Erro ao registrar venda");
-
-      const newSale = await res.json();
-
-      setEventSales((prev) => ({
-        ...prev,
-        [currentEventId]: [...(prev[currentEventId] || []), newSale],
-      }));
-
-      setCurrentEventId(null);
-      setShowValorVendaModal(false);
-    } catch (error) {
-      console.error("Erro ao registrar venda:", error);
-    }
+    setCurrentEventId(null);
+    setShowValorVendaModal(false);
   };
 
   function EventoConteudo({

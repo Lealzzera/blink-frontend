@@ -26,6 +26,20 @@ interface RealtimeChatProps {
   messages?: ChatMessage[]
 }
 
+// função utilitária para formatar data
+const formatDateTime = (dateString: string | null | undefined) => {
+  if (!dateString) return ''
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date)
+}
+
 export const RealtimeChat = ({
   username,
   onMessage,
@@ -101,7 +115,6 @@ export const RealtimeChat = ({
       try {
         const { data: sessionData } = await supabase.auth.getSession()
         const token = sessionData.session?.access_token
-        console.log(token)
         if (!token) throw new Error('Token de autenticação não encontrado.')
 
         const phoneNumber = selectedContact.number
@@ -275,7 +288,7 @@ export const RealtimeChat = ({
                     <p className={styles.lastMessage}>
                       {contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}
                     </p>
-                    <p className={styles.sentAt}>{contact.sentAt}</p>
+                    <p className={styles.sentAt}>{formatDateTime(contact.sentAt)}</p>
                   </div>
                 </div>
               </div>
@@ -321,7 +334,11 @@ export const RealtimeChat = ({
               return (
                 <div key={message.id || message.createdAt} className={styles.messageItem}>
                   <ChatMessageItem
-                    message={{ ...message, content: displayMessage }}
+                    message={{
+                      ...message,
+                      content: displayMessage,
+                      createdAt: formatDateTime(message.createdAt),
+                    }}
                     isOwnMessage={message.user?.name === username}
                     showHeader={showHeader}
                   />
