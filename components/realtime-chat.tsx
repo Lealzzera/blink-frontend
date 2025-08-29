@@ -10,12 +10,12 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Send, Users, Search } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import styles from './styles/realtime-chat.module.css'
 import { Switch } from '@/components/ui/switch'
 import Image from 'next/image'
 import { createClient } from '@/lib/client'
-import { chatService, type ChatConfig } from '@/app/services/chatService'
+import { chatService, type ChatConfig, type ChatPhoneConfig } from '@/app/services/chatService'
 
 const supabase = createClient()
 const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
@@ -26,7 +26,7 @@ interface RealtimeChatProps {
   messages?: ChatMessage[]
 }
 
-// função utilitária para formatar data
+// formata data
 const formatDateTime = (dateString: string | null | undefined) => {
   if (!dateString) return ''
   const date = new Date(dateString)
@@ -58,95 +58,168 @@ export const RealtimeChat = ({
   const [error, setError] = useState<string | null>(null)
   const [messages, setMessages] = useState<ChatMessage[]>([])
 
-  // Busca os contatos da API
-  useEffect(() => {
-    const fetchContacts = async () => {
-      try {
-        setLoadingContacts(true)
-        const { data: sessionData } = await supabase.auth.getSession()
-        const token = sessionData.session?.access_token
+  // paginação contatos
+  const [page, setPage] = useState(0)
+  const [hasMore, setHasMore] = useState(true)
+  const loaderRef = useRef<HTMLDivElement | null>(null)
 
-        if (!token) {
-          setError('Token de autenticação não encontrado.')
-          setLoadingContacts(false)
-          return
-        }
+  // paginação mensagens
+  const [pageMessages, setPageMessages] = useState(0)
+  const [hasMoreMessages, setHasMoreMessages] = useState(true)
+  const loaderMessagesRef = useRef<HTMLDivElement | null>(null)
+  const [loadingMessages, setLoadingMessages] = useState(false)
 
-        const apiContacts: ChatConfig[] = await chatService.getOverview(token)
+  // busca contatos paginados
+  const fetchContacts = useCallback(async (pageToLoad: number) => {
+    try {
+      setLoadingContacts(true)
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
 
-        const mappedContacts = apiContacts.map((c, index) => ({
-          id: index + 1,
-          name: c.whats_app_name || c.phone_number || 'Contato sem nome',
-          number: c.phone_number || '',
-          scheduled: c.ai_answer ?? false,
-          photo: c.picture_url || '',
-          lastMessage: c.last_message,
-          sentAt: c.sent_at,
-          fromMe: c.from_me,
-          roomName: c.phone_number, // cada contato tem sua sala própria
-        }))
-
-        setContacts(mappedContacts)
-        if (mappedContacts.length > 0) {
-          setSelectedContact(mappedContacts[0])
-        }
-      } catch (err) {
-        setError('Erro ao buscar contatos.')
-        console.error('Erro ao buscar contatos:', err)
-      } finally {
+      if (!token) {
+        setError('Token de autenticação não encontrado.')
         setLoadingContacts(false)
+        return
       }
-    }
 
-    fetchContacts()
+      const apiContacts: ChatConfig[] = await chatService.getOverview(token, pageToLoad)
+
+      if (!apiContacts || apiContacts.length === 0) {
+        setHasMore(false)
+        return
+      }
+
+      const mappedContacts = apiContacts.map((c) => ({
+        id: c.phone_number,
+        name: c.whats_app_name || c.phone_number || 'Contato sem nome',
+        number: c.phone_number || '',
+        scheduled: c.ai_answer ?? false,
+        photo: c.picture_url || '',
+        lastMessage: c.last_message,
+        sentAt: c.sent_at,
+        fromMe: c.from_me,
+        roomName: c.phone_number,
+      }))
+
+      setContacts(prev => {
+        const contactMap = new Map<string, any>()
+        ;[...prev, ...mappedContacts].forEach(c => {
+          if (c.number) contactMap.set(c.number, c)
+        })
+        return Array.from(contactMap.values())
+      })
+
+      if (pageToLoad === 0 && mappedContacts.length > 0) {
+        setSelectedContact(mappedContacts[0])
+      }
+    } catch (err) {
+      setError('Erro ao buscar contatos.')
+      console.error('Erro ao buscar contatos:', err)
+    } finally {
+      setLoadingContacts(false)
+    }
   }, [])
 
-  // Hook de mensagens em tempo real
+  useEffect(() => {
+    fetchContacts(0)
+  }, [fetchContacts])
+
+  // infinite scroll contatos
+  useEffect(() => {
+    if (!loaderRef.current || !hasMore) return
+
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !loadingContacts) {
+        setPage(prev => {
+          const next = prev + 1
+          fetchContacts(next)
+          return next
+        })
+      }
+    })
+
+    observer.observe(loaderRef.current)
+    return () => observer.disconnect()
+  }, [fetchContacts, hasMore, loadingContacts])
+
+  // Hook realtime
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
     username,
   })
 
-  // Busca últimas 10 mensagens ao selecionar contato
-  useEffect(() => {
-    if (!selectedContact) return
-
-    const fetchMessages = async () => {
+  // busca mensagens paginadas
+  const fetchMessages = useCallback(
+    async (pageToLoad: number, reset = false) => {
+      if (!selectedContact) return
       try {
+        setLoadingMessages(true)
         const { data: sessionData } = await supabase.auth.getSession()
         const token = sessionData.session?.access_token
         if (!token) throw new Error('Token de autenticação não encontrado.')
 
         const phoneNumber = selectedContact.number
-        const lastMessages = await chatService.getOverviewPhone(token, phoneNumber)
+        const lastMessages: ChatPhoneConfig[] = await chatService.getOverviewPhone(token, phoneNumber, pageToLoad)
+
+        if (!lastMessages || lastMessages.length === 0) {
+          setHasMoreMessages(false)
+          return
+        }
 
         const mappedMessages: ChatMessage[] = lastMessages.map((msg) => ({
-          id: crypto.randomUUID(),
+          id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`, // id estável
           text: msg.message_text,
           content: msg.message_text,
           user: { name: msg.from_me ? username : selectedContact.name },
           createdAt: msg.sent_at,
         }))
 
-        setMessages(mappedMessages)
+        setMessages(prev =>
+          reset ? mappedMessages : [...mappedMessages, ...prev]
+        )
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Erro ao buscar mensagens')
         console.error(err)
+      } finally {
+        setLoadingMessages(false)
       }
-    }
+    },
+    [selectedContact, username]
+  )
 
-    fetchMessages()
-  }, [selectedContact, username])
+  // resetar mensagens ao trocar de contato
+  useEffect(() => {
+    if (!selectedContact) return
+    setPageMessages(0)
+    setHasMoreMessages(true)
+    fetchMessages(0, true)
+  }, [selectedContact, fetchMessages])
 
-  // Combina mensagens do histórico com tempo real
+  // infinite scroll mensagens
+  useEffect(() => {
+    if (!loaderMessagesRef.current || !hasMoreMessages) return
+
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && !loadingMessages) {
+        setPageMessages(prev => {
+          const next = prev + 1
+          fetchMessages(next)
+          return next
+        })
+      }
+    })
+
+    observer.observe(loaderMessagesRef.current)
+    return () => observer.disconnect()
+  }, [fetchMessages, hasMoreMessages, loadingMessages])
+
+  // Combina histórico + realtime
   const allMessages = useMemo(() => {
     const mergedMessages = [...messages, ...realtimeMessages]
-
     const uniqueMessages = mergedMessages.filter(
       (message, index, self) =>
-        index === self.findIndex(m => (m.id || m.createdAt) === (message.id || message.createdAt))
+        index === self.findIndex(m => m.id === message.id)
     )
-
     return uniqueMessages.sort((a, b) =>
       new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
     )
@@ -156,7 +229,6 @@ export const RealtimeChat = ({
     if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
-  // Scroll para o fim
   useEffect(() => {
     const timeout = setTimeout(() => scrollToBottom(), 50)
     return () => clearTimeout(timeout)
@@ -185,9 +257,7 @@ export const RealtimeChat = ({
         const phoneNumber = selectedContact.number.replace(/\D/g, '')
         const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`
 
-        if (formattedNumber.length < 12) {
-          throw new Error('Número de telefone inválido.')
-        }
+        if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.')
 
         const { data: sessionData } = await supabase.auth.getSession()
         const token = sessionData.session?.access_token
@@ -247,8 +317,9 @@ export const RealtimeChat = ({
           <hr />
         </div>
 
-        {loadingContacts ? (
+        {loadingContacts && (
           <div className={styles.skeletonList}>
+            <h3>Carregando Contatos...</h3>
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className={styles.skeletonContact}>
                 <div className={styles.skeletonAvatar}></div>
@@ -259,7 +330,9 @@ export const RealtimeChat = ({
               </div>
             ))}
           </div>
-        ) : (
+        )}
+
+        {!loadingContacts &&
           contacts
             .filter(contact => contact.name?.toLowerCase().includes(searchTerm.toLowerCase()))
             .map(contact => (
@@ -293,6 +366,13 @@ export const RealtimeChat = ({
                 </div>
               </div>
             ))
+        }
+
+        {/* Loader para paginação infinita */}
+        {hasMore && !loadingContacts && (
+          <div ref={loaderRef} className={styles.loader}>
+            <p>Carregando...</p>
+          </div>
         )}
       </div>
 
@@ -320,7 +400,14 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
-          {allMessages.length === 0 && (
+          {/* loader mensagens no topo */}
+          {hasMoreMessages && (
+            <div ref={loaderMessagesRef} className={styles.loaderTop}>
+              {loadingMessages ? <p>Carregando mensagens...</p> : <p>Carregar mais</p>}
+            </div>
+          )}
+
+          {allMessages.length === 0 && !loadingContacts && (
             <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
           )}
           {error && <div className={styles.errorMessage}>{error}</div>}
@@ -332,7 +419,7 @@ export const RealtimeChat = ({
                 ? `${message.content} ✓`
                 : message.content
               return (
-                <div key={message.id || message.createdAt} className={styles.messageItem}>
+                <div key={message.id} className={styles.messageItem}>
                   <ChatMessageItem
                     message={{
                       ...message,
