@@ -33,14 +33,16 @@ interface ClinicConfig {
 
 export default function ModalNovoAgendamento({ onClose }: Props) {
   const [patientName, setPatientName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // exibido com máscara
+  const [rawPhone, setRawPhone] = useState(""); // apenas os números (para enviar ao backend)
   const [date, setDate] = useState("");
   const [hour, setHour] = useState("");
   const [clinicId, setClinicId] = useState(1);
   const [notes, setNotes] = useState("");
   const [serviceType, setServiceType] = useState(0);
+  const [disabled, setDisabled] = useState(false);
   const [clinicConfig, setClinicConfig] = useState<ClinicConfig>({
-    appointment_duration: 30, // valor padrão de 60 minutos
+    appointment_duration: 30,
     allow_overbooking: false
   });
 
@@ -64,6 +66,26 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
 
   const showMessage = (message: string, type: "success" | "error") => {
     setMessageBox({ message, type });
+  };
+
+  // Função para aplicar a máscara
+  const formatPhoneNumber = (value: string) => {
+    const numbers = value.replace(/\D/g, "").slice(0, 11); // apenas números e máximo 11
+    setRawPhone(numbers);
+
+    if (numbers.length <= 2) {
+      return numbers.replace(/(\d{0,2})/, "($1");
+    }
+    if (numbers.length <= 7) {
+      return numbers.replace(/(\d{2})(\d{0,5})/, "($1)$2");
+    }
+    return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1)$2-$3");
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = e.target.value;
+    const formatted = formatPhoneNumber(inputValue);
+    setPhoneNumber(formatted);
   };
 
   const fetchClinicConfig = async () => {
@@ -138,15 +160,10 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
     const durationMinutes = appointmentDuration;
 
     for (let minutes = openMinutes; minutes <= closeMinutes - durationMinutes; minutes += 15) {
-      // Verifica se o horário está dentro do intervalo de almoço
       if (minutes >= breakStartMinutes && minutes < breakEndMinutes) continue;
-      
-      // Verifica se a consulta ultrapassa o horário de almoço
       if (minutes < breakStartMinutes && (minutes + durationMinutes) > breakStartMinutes) continue;
-      
-      // Verifica se a consulta ultrapassa o horário de fechamento
       if ((minutes + durationMinutes) > closeMinutes) continue;
-      
+
       const timeStr = convertMinutesToTime(minutes);
       options.push(timeStr);
     }
@@ -159,7 +176,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
 
-      // Buscar exceções
       const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -170,7 +186,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
       if (!exceptionsRes.ok) throw new Error("Erro ao buscar exceções");
       const exceptions: ExceptionDay[] = await exceptionsRes.json();
 
-      // Verificar se há exceção para esta data
       const exception = exceptions.find((e) => e.exception_day === selectedDate);
 
       if (exception) {
@@ -193,11 +208,9 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         }
       }
 
-      // Se não houver exceção, usar horários padrão baseados no dia da semana
       const dateObj = new Date(selectedDate);
-      const dayOfWeek = dateObj.getDay(); // 0=Domingo, 1=Segunda, etc.
-      
-      // Ajuste para corresponder ao seu array diasDaSemana (SEGUNDA=0)
+      const dayOfWeek = dateObj.getDay();
+
       const workingDaysRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -238,28 +251,33 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
   useEffect(() => {
     if (date) {
       checkExceptionAndGenerateOptions(date);
-      setHour(""); // reseta hora se trocar a data
+      setHour("");
     }
   }, [date, clinicId, clinicConfig]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (disabled) return;
+    setDisabled(true);
+
     if (!date || !hour) {
       showMessage("Selecione data e hora válidas.", "error");
+      setDisabled(false);
       return;
     }
 
     const selectedDate = new Date(`${date}T${hour}`);
     if (selectedDate < new Date()) {
       showMessage("Não é possível agendar em datas passadas.", "error");
+      setDisabled(false);
       return;
     }
 
     try {
       const patientPayload = {
         name: patientName,
-        phone_number: phoneNumber,
+        phone_number: rawPhone, // envia somente os números
         clinic_id: clinicId,
       };
 
@@ -278,11 +296,12 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
       if (pacientRes.status !== 201 && pacientRes.status !== 409) {
         const text = await pacientRes.text();
         showMessage(`Erro ao criar paciente: ${text}`, "error");
+        setDisabled(false);
         return;
       }
 
       const appointmentPayload = {
-        patient_number: phoneNumber,
+        patient_number: rawPhone, // idem
         scheduled_time: `${date} ${hour}`,
         notes,
         clinic: clinicId,
@@ -307,7 +326,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         onClose();
       } else if (res.status === 409) {
         if (clinicConfig.allow_overbooking) {
-          // Se overbooking estiver permitido, perguntar se quer continuar
           if (window.confirm("Horário já ocupado! Deseja fazer overbooking?")) {
             const overbookingRes = await fetch(`${API_BASE}/appointments`, {
               method: "POST",
@@ -337,6 +355,8 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
     } catch (err) {
       console.error("Erro ao criar agendamento:", err);
       showMessage("Erro ao criar agendamento.", "error");
+    } finally {
+      setTimeout(() => setDisabled(false), 1000);
     }
   };
 
@@ -366,8 +386,9 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
             <input
               className={styles.input}
               value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
+              onChange={handlePhoneChange}
               required
+              maxLength={15} // (99)99999-9999 → 14 caracteres, segurança
             />
 
             <label className={styles.label}>Data:</label>
@@ -421,7 +442,7 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
             />
 
             <div className={styles.actions}>
-              <button type="submit" className={styles.buttonSubmit}>Agendar</button>
+              <button type="submit" className={styles.buttonSubmit} disabled={disabled}>Agendar</button>
               <button type="button" onClick={onClose} className={styles.buttonCancel}>Cancelar</button>
             </div>
           </form>

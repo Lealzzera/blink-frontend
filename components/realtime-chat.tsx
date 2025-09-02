@@ -167,7 +167,7 @@ export const RealtimeChat = ({
         }
 
         const mappedMessages: ChatMessage[] = lastMessages.map((msg) => ({
-          id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`, // id estável
+          id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
           text: msg.message_text,
           content: msg.message_text,
           user: { name: msg.from_me ? username : selectedContact.name },
@@ -229,9 +229,16 @@ export const RealtimeChat = ({
     if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
+  // ✅ scroll automático melhorado
   useEffect(() => {
-    const timeout = setTimeout(() => scrollToBottom(), 50)
-    return () => clearTimeout(timeout)
+    if (!containerRef.current) return
+    const container = containerRef.current
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150
+
+    if (isNearBottom) {
+      const timeout = setTimeout(() => scrollToBottom(), 50)
+      return () => clearTimeout(timeout)
+    }
   }, [allMessages, scrollToBottom])
 
   useEffect(() => {
@@ -319,7 +326,6 @@ export const RealtimeChat = ({
 
         {loadingContacts && (
           <div className={styles.skeletonList}>
-            <h3>Carregando Contatos...</h3>
             {Array.from({ length: 10 }).map((_, i) => (
               <div key={i} className={styles.skeletonContact}>
                 <div className={styles.skeletonAvatar}></div>
@@ -368,7 +374,6 @@ export const RealtimeChat = ({
             ))
         }
 
-        {/* Loader para paginação infinita */}
         {hasMore && !loadingContacts && (
           <div ref={loaderRef} className={styles.loader}>
             <p>Carregando...</p>
@@ -400,7 +405,6 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
-          {/* loader mensagens no topo */}
           {hasMoreMessages && (
             <div ref={loaderMessagesRef} className={styles.loaderTop}>
               {loadingMessages ? <p>Carregando mensagens...</p> : <p>Carregar mais</p>}
