@@ -36,7 +36,7 @@ export default function CalendarioClient({
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
 
-  const API_BASE = "http://blink-be-dev/api/v1";
+  const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
 
   const updateEventStatus = async (id: string, newStatus: string) => {
     try {

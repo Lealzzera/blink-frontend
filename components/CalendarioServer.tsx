@@ -28,7 +28,7 @@ export default async function CalendarioServer() {
   let allowOverbooking = false;
 
   try {
-    const configRes = await fetch(`${API_BASE2}/configurations/appointments/1`, {
+    const configRes = await fetch(`${API_BASE}/configurations/appointments/1`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
@@ -54,7 +54,7 @@ export default async function CalendarioServer() {
   let availability: any[] = [];
   try {
     const availRes = await fetch(
-      `${API_BASE2}/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
+      `${API_BASE}/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
       { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }
     );
 
