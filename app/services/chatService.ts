@@ -22,8 +22,8 @@ export const chatService = {
     const url = `${apiEndpoints.overview}?page=${page}`;
 
     const response = await fetch(url, {
-      mode: "cors",
       headers: createApiHeaders(token),
+      cache: 'no-store' // Para garantir dados frescos
     });
 
     if (!response.ok) {
@@ -38,8 +38,8 @@ export const chatService = {
     const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
 
     const response = await fetch(url, {
-      mode: "cors",
       headers: createApiHeaders(token),
+      cache: 'no-store'
     });
 
     if (!response.ok) {
