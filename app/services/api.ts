@@ -1,6 +1,6 @@
 const NEXT_PUBLIC_BLINK_BE_BASE_URL=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL
 const NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK || 'http://blink-be-dev:3003/api/v1'
-console.log(NEXT_PUBLIC_BLINK_BE_BASE_URL)
+console.log("URL:" + NEXT_PUBLIC_BLINK_BE_BASE_URL)
 
 export const createApiHeaders = (token: string) => ({
   'Content-Type': 'application/json',

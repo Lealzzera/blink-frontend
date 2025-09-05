@@ -27,7 +27,7 @@ export const chatService = {
     });
 
     if (!response.ok) {
-      throw new Error(`Erro ao buscar overview: ${response.status}`);
+      throw new Error(`Erro ao buscar endpoint overview: ${response.status}`);
     }
 
     const data: ChatConfig[] = await response.json();

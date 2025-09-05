@@ -3,7 +3,7 @@ import { chatService, type ChatConfig, type ChatPhoneConfig } from "@/app/servic
 import { createClient } from "@/lib/client";
 
 const supabase = createClient();
-const USERNAME = "blink";
+const USERNAME = "blinkk";
 
 async function fetchInitialData() {
   // Pega token SSR

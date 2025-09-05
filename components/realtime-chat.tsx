@@ -43,7 +43,7 @@ export const RealtimeChat = ({
   const { containerRef, scrollToBottom } = useChatScroll();
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
     id: c.phone_number,
-    name: c.whats_app_name || c.phone_number || 'Contato sem nome',
+    name: c.whats_app_name || c.phone_number || 'Contato sem Identificação',
     number: c.phone_number || '',
     scheduled: c.ai_answer ?? false,
     photo: c.picture_url || '',
