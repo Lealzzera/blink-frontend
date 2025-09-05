@@ -19,34 +19,46 @@ export interface ChatPhoneConfig {
 
 export const chatService = {
   async getOverview(token: string, page: number = 0): Promise<ChatConfig[]> {
-    const url = `${apiEndpoints.overview}?page=${page}`;
+    try {
+      const url = `${apiEndpoints.overview}?page=${page}`;
 
-    const response = await fetch(url, {
-      headers: createApiHeaders(token),
-      cache: 'no-store' // Para garantir dados frescos
-    });
+      const response = await fetch(url, {
+        headers: createApiHeaders(token),
+        cache: 'no-store'
+      });
 
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar endpoint overview: ${response.status}`);
+      if (!response.ok) {
+        console.warn(`Erro ao buscar overview: ${response.status}`);
+        return [];
+      }
+
+      const data: ChatConfig[] = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Erro em getOverview:", error);
+      return [];
     }
-
-    const data: ChatConfig[] = await response.json();
-    return data;
   },
 
   async getOverviewPhone(token: string, phoneNumber: string, page: number = 0): Promise<ChatPhoneConfig[]> {
-    const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
+    try {
+      const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
 
-    const response = await fetch(url, {
-      headers: createApiHeaders(token),
-      cache: 'no-store'
-    });
+      const response = await fetch(url, {
+        headers: createApiHeaders(token),
+        cache: 'no-store'
+      });
 
-    if (!response.ok) {
-      throw new Error(`Erro ao buscar overviewPhone: ${response.status}`);
+      if (!response.ok) {
+        console.warn(`Erro ao buscar overviewPhone: ${response.status}`);
+        return [];
+      }
+
+      const data: ChatPhoneConfig[] = await response.json();
+      return data;
+    } catch (error) {
+      console.error("Erro em getOverviewPhone:", error);
+      return [];
     }
-
-    const data: ChatPhoneConfig[] = await response.json();
-    return data;
   },
 };

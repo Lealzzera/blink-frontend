@@ -18,7 +18,7 @@ interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
   initialMessages?: ChatPhoneConfig[];
-  token?: string; // token para enviar mensagens via API
+  token?: string | null; // token pode ser null agora
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -99,8 +99,12 @@ export const RealtimeChat = ({
       setError(null);
       sendMessage(newMessage);
 
-      // Exemplo de envio via API com HTTPS (token do SSR)
-      if (!token) throw new Error('Token de autenticação não encontrado.');
+      // Se não tiver token, apenas envia para o realtime (modo demo)
+      if (!token) {
+        console.warn("Modo demo: Mensagem enviada apenas para realtime");
+        setNewMessage('');
+        return;
+      }
 
       const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
       const phoneNumber = selectedContact.number.replace(/\D/g, '');
@@ -119,6 +123,7 @@ export const RealtimeChat = ({
           phone_number: formattedNumber,
         }),
       });
+      
       if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
 
       setNewMessage('');
@@ -203,6 +208,11 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
+          {!token && (
+            <div className={styles.warningMessage}>
+              Modo demo: Conexão com API não disponível. Mensagens serão exibidas apenas localmente.
+            </div>
+          )}
           {allMessages.length === 0 && <div className={styles.noMessages}>Sem mensagens por enquanto.</div>}
           {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.messageList}>
@@ -229,7 +239,7 @@ export const RealtimeChat = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Digite a mensagem..."
+            placeholder={!token ? "Modo demo - Mensagens locais apenas" : "Digite a mensagem..."}
             disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
