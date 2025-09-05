@@ -34,8 +34,8 @@ function createApiHeaders(token: string) {
 const API_BASE = 'https://be.blinkdentalmarketing.com.br/api/v1';
 
 const apiEndpoints = {
-  overview: `${API_BASE}/overview`,
-  overviewPhone: `${API_BASE}/overview`,
+  overview: `${API_BASE}/chat/1/overview`,
+  overviewPhone: `${API_BASE}/chat/1/overview`,
 };
 // Funções que fazem os fetches
 async function getOverview(
