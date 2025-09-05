@@ -1,4 +1,5 @@
 const NEXT_PUBLIC_BLINK_BE_BASE_URL=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL
+const NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK=process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK
 console.log(NEXT_PUBLIC_BLINK_BE_BASE_URL)
 
 export const createApiHeaders = (token: string) => ({
@@ -15,7 +16,7 @@ export const apiEndpoints = {
   appointmentsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments`,
   exceptions: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1/exception`,
   exceptionsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/exception`,
-  overview: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/1/overview`,
-  overviewPhone: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/1/overview`,
+  overview: `${NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK}/chat/1/overview`,
+  overviewPhone: `${NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK}/chat/1/overview`,
   dashboardInfo: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/1`
 };

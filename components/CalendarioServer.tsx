@@ -20,8 +20,7 @@ export default async function CalendarioServer() {
   console.log({token})
   if (!token) return <div>Usuário não autenticado</div>;
 
-  const API_BASE = "http://blink-be-dev:3003/api/v1";
-  const API_BASE2 = "https://be.blinkdentalmarketing.com.br/api/v1";
+  const API_BASE = "http://blink-be-dev:3003/api/v1"; 
 
   // --- BUSCA CONFIG ---
   let currentDuration = 30;

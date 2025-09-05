@@ -18,10 +18,11 @@ import { createClient } from '@/lib/client'
 import { chatService, type ChatConfig, type ChatPhoneConfig } from '@/app/services/chatService'
 
 const supabase = createClient()
-const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE
 
 interface RealtimeChatProps {
   username: string
+  initialContacts: ChatConfig[]
   onMessage?: (messages: ChatMessage[]) => void
   messages?: ChatMessage[]
 }
@@ -42,6 +43,7 @@ const formatDateTime = (dateString: string | null | undefined) => {
 
 export const RealtimeChat = ({
   username,
+  initialContacts,
   onMessage,
   messages: initialMessages = [],
 }: RealtimeChatProps) => {
@@ -49,7 +51,7 @@ export const RealtimeChat = ({
 
   const [newMessage, setNewMessage] = useState('')
   const [contacts, setContacts] = useState<any[]>([])
-  const [loadingContacts, setLoadingContacts] = useState(true)
+  const [loadingContacts, setLoadingContacts] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedContact, setSelectedContact] = useState<any | null>(null)
   const [showContacts, setShowContacts] = useState(false)
@@ -69,13 +71,31 @@ export const RealtimeChat = ({
   const loaderMessagesRef = useRef<HTMLDivElement | null>(null)
   const [loadingMessages, setLoadingMessages] = useState(false)
 
-  // busca contatos paginados
+  // inicializa contatos vindos do servidor
+  useEffect(() => {
+    if (initialContacts && initialContacts.length > 0) {
+      const mappedContacts = initialContacts.map((c) => ({
+        id: c.phone_number,
+        name: c.whats_app_name || c.phone_number || 'Contato sem nome',
+        number: c.phone_number || '',
+        scheduled: c.ai_answer ?? false,
+        photo: c.picture_url || '',
+        lastMessage: c.last_message,
+        sentAt: c.sent_at,
+        fromMe: c.from_me,
+        roomName: c.phone_number,
+      }))
+      setContacts(mappedContacts)
+      setSelectedContact(mappedContacts[0])
+    }
+  }, [initialContacts])
+
+  // busca contatos paginados (client side extra)
   const fetchContacts = useCallback(async (pageToLoad: number) => {
     try {
       setLoadingContacts(true)
       const { data: sessionData } = await supabase.auth.getSession()
       const token = sessionData.session?.access_token
-
       if (!token) {
         setError('Token de autenticação não encontrado.')
         setLoadingContacts(false)
@@ -108,10 +128,6 @@ export const RealtimeChat = ({
         })
         return Array.from(contactMap.values())
       })
-
-      if (pageToLoad === 0 && mappedContacts.length > 0) {
-        setSelectedContact(mappedContacts[0])
-      }
     } catch (err) {
       setError('Erro ao buscar contatos.')
       console.error('Erro ao buscar contatos:', err)
@@ -119,10 +135,6 @@ export const RealtimeChat = ({
       setLoadingContacts(false)
     }
   }, [])
-
-  useEffect(() => {
-    fetchContacts(0)
-  }, [fetchContacts])
 
   // infinite scroll contatos
   useEffect(() => {
@@ -229,7 +241,7 @@ export const RealtimeChat = ({
     if (onMessage) onMessage(allMessages)
   }, [allMessages, onMessage])
 
-  // ✅ scroll automático melhorado
+  // scroll automático
   useEffect(() => {
     if (!containerRef.current) return
     const container = containerRef.current
@@ -323,20 +335,6 @@ export const RealtimeChat = ({
           </div>
           <hr />
         </div>
-
-        {loadingContacts && (
-          <div className={styles.skeletonList}>
-            {Array.from({ length: 10 }).map((_, i) => (
-              <div key={i} className={styles.skeletonContact}>
-                <div className={styles.skeletonAvatar}></div>
-                <div className={styles.skeletonInfo}>
-                  <div className={styles.skeletonLine}></div>
-                  <div className={styles.skeletonLineShort}></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
 
         {!loadingContacts &&
           contacts
