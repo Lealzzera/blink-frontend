@@ -15,7 +15,5 @@ export const apiEndpoints = {
   appointmentsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments`,
   exceptions: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1/exception`,
   exceptionsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/exception`,
-  overview: `http://blink-be-dev:3003/api/v1/chat/1/overview`,
-  overviewPhone: `http://blink-be-dev:3003/api/v1/chat/1/overview`,
   dashboardInfo: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/1`
 };

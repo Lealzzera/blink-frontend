@@ -30,8 +30,8 @@ function createApiHeaders(token: string) {
   };
 }
 
-// Endpoints da API (usando a base do .env)
-const API_BASE = 'http://localhost:3003/api/v1';
+// Endpoints da API 
+const API_BASE = 'http://blink-be-dev:3003/api/v1';
 
 const apiEndpoints = {
   overview: `${API_BASE}/overview`,
