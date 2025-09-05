@@ -2,37 +2,26 @@ import { RealtimeChat } from "@/components/realtime-chat";
 import { chatService, type ChatConfig, type ChatPhoneConfig } from "@/app/services/chatService";
 import { createClient } from "@/lib/client";
 
-const USERNAME = "blinkk";
+const supabase = createClient();
+const USERNAME = "blink";
 
 async function fetchInitialData() {
-  try {
-    const supabase = createClient();
-    
-    // Pega a sessão no servidor
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    
-    // Se não tiver token, retorna dados vazios
-    if (!token) {
-      console.warn("Token de autenticação não encontrado. Retornando dados vazios.");
-      return { contacts: [], messages: [], token: null };
-    }
+  // Pega token SSR
+  const { data: sessionData } = await supabase.auth.getSession();
+  const token = sessionData?.session?.access_token;
+  if (!token) throw new Error("Token de autenticação não encontrado.");
 
-    // Busca contatos iniciais
-    const contacts: ChatConfig[] = await chatService.getOverview(token, 0);
+  // Busca contatos iniciais
+  const contacts: ChatConfig[] = await chatService.getOverview(token, 0);
 
-    // Busca mensagens do primeiro contato
-    let messages: ChatPhoneConfig[] = [];
-    if (contacts.length > 0) {
-      const firstContactNumber = contacts[0].phone_number;
-      messages = await chatService.getOverviewPhone(token, firstContactNumber, 0);
-    }
-
-    return { contacts, messages, token };
-  } catch (error) {
-    console.error("Erro ao buscar dados iniciais:", error);
-    return { contacts: [], messages: [], token: null };
+  // Busca mensagens do primeiro contato
+  let messages: ChatPhoneConfig[] = [];
+  if (contacts.length > 0) {
+    const firstContactNumber = contacts[0].phone_number;
+    messages = await chatService.getOverviewPhone(token, firstContactNumber, 0);
   }
+
+  return { contacts, messages, token };
 }
 
 export default async function ChatPage() {
