@@ -46,6 +46,7 @@ export const chatService = {
       headers: createApiHeaders(token),
     })
 
+    
     if (!response.ok) {
       throw new Error(`Erro ao buscar overviewPhone: ${response.status}`)
     }
