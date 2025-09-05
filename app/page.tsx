@@ -2,16 +2,17 @@ import { RealtimeChat } from "@/components/realtime-chat";
 import { chatService, type ChatConfig, type ChatPhoneConfig } from "@/app/services/chatService";
 import { createClient } from "@/lib/client";
 
-const supabase = createClient();
 const USERNAME = "blinkk";
 
 async function fetchInitialData() {
   try {
-    // Pega token SSR
-    const { data: sessionData } = await supabase.auth.getSession();
-    const token = sessionData?.session?.access_token;
+    const supabase = createClient();
     
-    // Se não tiver token, retorna dados vazios (não quebra o build)
+    // Pega a sessão no servidor
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
+    // Se não tiver token, retorna dados vazios
     if (!token) {
       console.warn("Token de autenticação não encontrado. Retornando dados vazios.");
       return { contacts: [], messages: [], token: null };
@@ -30,7 +31,6 @@ async function fetchInitialData() {
     return { contacts, messages, token };
   } catch (error) {
     console.error("Erro ao buscar dados iniciais:", error);
-    // Retorna dados vazios em caso de erro para não quebrar o build
     return { contacts: [], messages: [], token: null };
   }
 }

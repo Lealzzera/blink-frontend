@@ -17,15 +17,33 @@ export interface ChatPhoneConfig {
   ack: string;
 }
 
+// Timeout para evitar que requisições travem o build
+const fetchWithTimeout = async (url: string, options: RequestInit = {}, timeout = 5000) => {
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+    clearTimeout(id);
+    return response;
+  } catch (error) {
+    clearTimeout(id);
+    throw error;
+  }
+};
+
 export const chatService = {
   async getOverview(token: string, page: number = 0): Promise<ChatConfig[]> {
     try {
       const url = `${apiEndpoints.overview}?page=${page}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         headers: createApiHeaders(token),
         cache: 'no-store'
-      });
+      }, 8000); // 8 segundos de timeout
 
       if (!response.ok) {
         console.warn(`Erro ao buscar overview: ${response.status}`);
@@ -44,10 +62,10 @@ export const chatService = {
     try {
       const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
 
-      const response = await fetch(url, {
+      const response = await fetchWithTimeout(url, {
         headers: createApiHeaders(token),
         cache: 'no-store'
-      });
+      }, 8000); // 8 segundos de timeout
 
       if (!response.ok) {
         console.warn(`Erro ao buscar overviewPhone: ${response.status}`);

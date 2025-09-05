@@ -18,7 +18,7 @@ interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
   initialMessages?: ChatPhoneConfig[];
-  token?: string | null; // token pode ser null agora
+  token?: string | null;
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -66,6 +66,7 @@ export const RealtimeChat = ({
   const [isSending, setIsSending] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [isDemoMode, setIsDemoMode] = useState(!token);
 
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
@@ -77,6 +78,11 @@ export const RealtimeChat = ({
     const unique = merged.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, realtimeMessages]);
+
+  useEffect(() => {
+    // Atualiza o modo demo baseado no token
+    setIsDemoMode(!token);
+  }, [token]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -97,19 +103,25 @@ export const RealtimeChat = ({
     try {
       setIsSending(true);
       setError(null);
+      
+      // Envia mensagem para o realtime (funciona mesmo sem token)
       sendMessage(newMessage);
 
-      // Se não tiver token, apenas envia para o realtime (modo demo)
-      if (!token) {
-        console.warn("Modo demo: Mensagem enviada apenas para realtime");
+      // Se estiver em modo demo, apenas limpa o input
+      if (isDemoMode) {
+        console.log("Modo demo: Mensagem enviada apenas para realtime");
         setNewMessage('');
         return;
       }
 
+      // Se tiver token, envia para a API
       const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
       const phoneNumber = selectedContact.number.replace(/\D/g, '');
       const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
-      if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
+      
+      if (formattedNumber.length < 12) {
+        throw new Error('Número de telefone inválido.');
+      }
 
       const response = await fetch(`${API_BASE}/message/whats-app/send-message`, {
         method: 'POST',
@@ -124,15 +136,18 @@ export const RealtimeChat = ({
         }),
       });
       
-      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+      if (!response.ok) {
+        const errorData = await response.text();
+        throw new Error(`Erro HTTP ${response.status}: ${errorData}`);
+      }
 
       setNewMessage('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : 'Erro desconhecido ao enviar mensagem');
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token]);
+  }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token, isDemoMode]);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -208,12 +223,19 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
-          {!token && (
-            <div className={styles.warningMessage}>
-              Modo demo: Conexão com API não disponível. Mensagens serão exibidas apenas localmente.
+          {isDemoMode && (
+            <div className={styles.infoMessage}>
+              💡 Modo demo: Mensagens são exibidas apenas localmente. Faça login para conectar com a API.
             </div>
           )}
-          {allMessages.length === 0 && <div className={styles.noMessages}>Sem mensagens por enquanto.</div>}
+          {allMessages.length === 0 && !isDemoMode && (
+            <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
+          )}
+          {allMessages.length === 0 && isDemoMode && (
+            <div className={styles.noMessages}>
+              Bem-vindo ao modo demo! Envie mensagens para testar a interface.
+            </div>
+          )}
           {error && <div className={styles.errorMessage}>{error}</div>}
           <div className={styles.messageList}>
             {allMessages.map((message, index) => {
@@ -239,7 +261,7 @@ export const RealtimeChat = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={!token ? "Modo demo - Mensagens locais apenas" : "Digite a mensagem..."}
+            placeholder={isDemoMode ? "Digite para testar (modo demo)..." : "Digite a mensagem..."}
             disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
