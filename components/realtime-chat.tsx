@@ -11,7 +11,24 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
-import { type ChatConfig, type ChatPhoneConfig } from '@/app/services/chatService';
+
+// Interfaces simplificadas para tipar os dados que chegam do SSR
+interface ChatConfig {
+  phone_number: string;
+  picture_url: string;
+  whats_app_name: string;
+  last_message: string;
+  sent_at: string;
+  from_me: boolean;
+  ai_answer: boolean;
+}
+
+interface ChatPhoneConfig {
+  message_text: string;
+  from_me: boolean;
+  sent_at: string;
+  ack: string;
+}
 
 interface RealtimeChatProps {
   username: string;
@@ -41,6 +58,7 @@ export const RealtimeChat = ({
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
+  // Converte os contatos recebidos do SSR para o formato local
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
     id: c.phone_number,
     name: c.whats_app_name || c.phone_number || 'Contato sem Identificação',
@@ -55,6 +73,7 @@ export const RealtimeChat = ({
 
   const [selectedContact, setSelectedContact] = useState<any>(contacts[0] || null);
 
+  // Converte as mensagens recebidas do SSR para o formato do chat
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages.map(msg => ({
     id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
     text: msg.message_text,
@@ -74,12 +93,14 @@ export const RealtimeChat = ({
     username,
   });
 
+  // Junta mensagens SSR + realtime
   const allMessages = useMemo(() => {
     const merged = [...messages, ...realtimeMessages];
     const unique = merged.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, realtimeMessages]);
 
+  // Scroll automático para o fim
   useEffect(() => {
     if (!containerRef.current) return;
     const container = containerRef.current;
@@ -90,6 +111,7 @@ export const RealtimeChat = ({
     }
   }, [allMessages, scrollToBottom]);
 
+  // Detecta mobile
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     handleResize();
@@ -99,6 +121,7 @@ export const RealtimeChat = ({
 
   const toggleMenu = () => setShowContacts(prev => !prev);
 
+  // Enviar mensagem
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return;
@@ -140,7 +163,10 @@ export const RealtimeChat = ({
   return (
     <div className={styles.container}>
       {/* Contatos */}
-      <div className={styles.contacts} style={isMobile ? { transform: showContacts ? 'translateX(0)' : 'translateX(-100%)' } : {}}>
+      <div
+        className={styles.contacts}
+        style={isMobile ? { transform: showContacts ? 'translateX(0)' : 'translateX(-100%)' } : {}}
+      >
         <div className={styles.contactHeader}>
           <div className={styles.contact_icon}>
             <Users className={styles.iconContact} />
