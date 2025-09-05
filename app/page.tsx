@@ -43,7 +43,7 @@ async function getOverview(
   page: number = 0
 ): Promise<ChatConfig[]> {
   const url = `${apiEndpoints.overview}?page=${page}`;
-  console.log("[DEBUG] getOverview URL:", url);
+  console.log("[DEBUGANDO] getOverview URL:", url);
 
   const response = await fetch(url, {
     headers: createApiHeaders(token),
