@@ -1,3 +1,4 @@
+// app/chat/page.tsx
 import { RealtimeChat } from "@/components/realtime-chat";
 import { chatService, type ChatConfig, type ChatPhoneConfig } from "@/app/services/chatService";
 import { createClient } from "@/lib/client";
@@ -6,7 +7,7 @@ const supabase = createClient();
 const USERNAME = "blink";
 
 async function fetchInitialData() {
-  // Pega token SSR
+  // Pega token do usuário SSR
   const { data: sessionData } = await supabase.auth.getSession();
   const token = sessionData?.session?.access_token;
   if (!token) throw new Error("Token de autenticação não encontrado.");

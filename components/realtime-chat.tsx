@@ -7,18 +7,17 @@ import { type ChatMessage, useRealtimeChat } from '@/hooks/use-realtime-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Users, Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
-
 import { type ChatConfig, type ChatPhoneConfig } from '@/app/services/chatService';
 
 interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
   initialMessages?: ChatPhoneConfig[];
-  token?: string; // token para enviar mensagens via API
+  token?: string;
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -41,6 +40,7 @@ export const RealtimeChat = ({
   token,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
+
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
     id: c.phone_number,
     name: c.whats_app_name || c.phone_number || 'Contato sem Identificação',
@@ -52,7 +52,9 @@ export const RealtimeChat = ({
     fromMe: c.from_me,
     roomName: c.phone_number,
   })));
+
   const [selectedContact, setSelectedContact] = useState<any>(contacts[0] || null);
+
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages.map(msg => ({
     id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
     text: msg.message_text,
@@ -88,6 +90,13 @@ export const RealtimeChat = ({
     }
   }, [allMessages, scrollToBottom]);
 
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const toggleMenu = () => setShowContacts(prev => !prev);
 
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
@@ -99,10 +108,9 @@ export const RealtimeChat = ({
       setError(null);
       sendMessage(newMessage);
 
-      // Exemplo de envio via API com HTTPS (token do SSR)
       if (!token) throw new Error('Token de autenticação não encontrado.');
 
-      const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
       const phoneNumber = selectedContact.number.replace(/\D/g, '');
       const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
       if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
@@ -119,8 +127,8 @@ export const RealtimeChat = ({
           phone_number: formattedNumber,
         }),
       });
-      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
 
+      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
       setNewMessage('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
@@ -128,13 +136,6 @@ export const RealtimeChat = ({
       setIsSending(false);
     }
   }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token]);
-
-  useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 768);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <div className={styles.container}>

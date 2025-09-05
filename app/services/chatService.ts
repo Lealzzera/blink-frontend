@@ -1,3 +1,4 @@
+// app/services/chatService.ts
 import { apiEndpoints, createApiHeaders } from "./api";
 
 export interface ChatConfig {
