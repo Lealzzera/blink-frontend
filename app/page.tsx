@@ -31,7 +31,7 @@ function createApiHeaders(token: string) {
 }
 
 // Endpoints da API (usando a base do .env)
-const API_BASE = 'http://blink-be-dev:3003/api/v1'
+const API_BASE = 'http://blink-be-dev:3003/api/v1';
 
 const apiEndpoints = {
   overview: `${API_BASE}/overview`,
@@ -44,16 +44,22 @@ async function getOverview(
   page: number = 0
 ): Promise<ChatConfig[]> {
   const url = `${apiEndpoints.overview}?page=${page}`;
+  console.log("[DEBUG] getOverview URL:", url);
+
   const response = await fetch(url, {
     headers: createApiHeaders(token),
     cache: "no-store",
   });
 
+  console.log("[DEBUG] getOverview response status:", response.status);
+
   if (!response.ok) {
     throw new Error(`Erro ao buscar endpoint overview: ${response.status}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("[DEBUG] getOverview data:", data);
+  return data;
 }
 
 async function getOverviewPhone(
@@ -62,20 +68,28 @@ async function getOverviewPhone(
   page: number = 0
 ): Promise<ChatPhoneConfig[]> {
   const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
+  console.log("[DEBUG] getOverviewPhone URL:", url);
+
   const response = await fetch(url, {
     headers: createApiHeaders(token),
     cache: "no-store",
   });
 
+  console.log("[DEBUG] getOverviewPhone response status:", response.status);
+
   if (!response.ok) {
     throw new Error(`Erro ao buscar overviewPhone: ${response.status}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log("[DEBUG] getOverviewPhone data:", data);
+  return data;
 }
 
 // SSR principal
 export default async function ChatPage() {
+  console.log("[DEBUG] Iniciando ChatPage SSR");
+
   // Supabase server-side client
   const supabase = await createClient();
 
@@ -84,21 +98,25 @@ export default async function ChatPage() {
     error: sessionError,
   } = await supabase.auth.getSession();
 
+  console.log("[DEBUG] Supabase session:", session);
   if (sessionError) {
-    console.error("Erro ao recuperar sessão Supabase:", sessionError);
+    console.error("[DEBUG] Erro ao recuperar sessão Supabase:", sessionError);
   }
 
   const token = session?.access_token;
   if (!token) {
+    console.warn("[DEBUG] Token não encontrado, usuário não autenticado");
     return <div>Usuário não autenticado</div>;
   }
+  console.log("[DEBUG] Token encontrado:", token);
 
   // Busca contatos
   let contacts: ChatConfig[] = [];
   try {
     contacts = await getOverview(token, 0);
+    console.log("[DEBUG] Contatos encontrados:", contacts.length);
   } catch (err) {
-    console.error("Erro ao buscar contatos:", err);
+    console.error("[DEBUG] Erro ao buscar contatos:", err);
   }
 
   // Busca mensagens do primeiro contato (se existir)
@@ -106,11 +124,17 @@ export default async function ChatPage() {
   if (contacts.length > 0) {
     try {
       const firstContactNumber = contacts[0].phone_number;
+      console.log("[DEBUG] Primeiro contato:", firstContactNumber);
       messages = await getOverviewPhone(token, firstContactNumber, 0);
+      console.log("[DEBUG] Mensagens encontradas:", messages.length);
     } catch (err) {
-      console.error("Erro ao buscar mensagens:", err);
+      console.error("[DEBUG] Erro ao buscar mensagens:", err);
     }
+  } else {
+    console.warn("[DEBUG] Nenhum contato encontrado, pulando fetch de mensagens");
   }
+
+  console.log("[DEBUG] Renderizando RealtimeChat com SSR");
 
   // Renderiza componente client com dados SSR
   return (
