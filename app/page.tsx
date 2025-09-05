@@ -31,7 +31,7 @@ function createApiHeaders(token: string) {
 }
 
 // Endpoints da API 
-const API_BASE = 'https://be.blinkdentalmarketing.com.br/api/v1';
+const API_BASE = 'http://blink-be-dev:3003/api/v1';
 
 const apiEndpoints = {
   overview: `${API_BASE}/chat/1/overview`,
