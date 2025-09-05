@@ -1,6 +1,6 @@
 // app/chat/page.tsx
 import { RealtimeChat } from "@/components/realtime-chat";
-import { createClient } from "@/lib/server"; // CORRIGIDO: usar server client
+import { createClient } from "@/lib/server";
 
 const USERNAME = "blink";
 
@@ -32,8 +32,7 @@ function createApiHeaders(token: string) {
 
 // Endpoints da API (usando a base do .env)
 const API_BASE =
-  process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK ||
-  "http://blink-be-dev:3003/api/v1";
+  process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL_DOCK
 
 const apiEndpoints = {
   overview: `${API_BASE}/overview`,
