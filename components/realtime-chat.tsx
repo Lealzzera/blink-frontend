@@ -166,25 +166,8 @@ export const RealtimeChat = ({
             createdAt: msg.sent_at,
           }));
 
-          if (reset) {
-            setMessages(mappedMessages);
-          } else {
-            // manter posição do scroll
-            if (containerRef.current) {
-              const el = containerRef.current;
-              const oldScrollHeight = el.scrollHeight;
-
-              setMessages(prev => [...mappedMessages, ...prev]);
-
-              setTimeout(() => {
-                const newScrollHeight = el.scrollHeight;
-                el.scrollTop = newScrollHeight - oldScrollHeight + el.scrollTop;
-              }, 0);
-            } else {
-              setMessages(prev => [...mappedMessages, ...prev]);
-            }
-          }
-
+          setMessages(prev => reset ? mappedMessages : [...mappedMessages, ...prev]);
+          
           if (data.length < 20) {
             setHasMoreMessages(false);
           }
@@ -198,14 +181,28 @@ export const RealtimeChat = ({
     } finally {
       setLoadingMessages(false);
     }
-  }, [token, selectedContact, username, containerRef]);
+  }, [token, selectedContact, username]);
 
   // Função buscar mais mensagens (rolando para cima)
   const loadMoreMessages = async () => {
-    if (!hasMoreMessages || loadingMessages) return;
+    if (!hasMoreMessages || loadingMessages || !containerRef.current) return;
+
+    const el = containerRef.current;
+    const prevScrollHeight = el.scrollHeight;
+    const prevScrollTop = el.scrollTop;
+
     const nextPage = messagesPage + 1;
     setMessagesPage(nextPage);
+
     await fetchMessages(nextPage, false);
+
+    // restaura posição do scroll
+    requestAnimationFrame(() => {
+      if (el) {
+        const newScrollHeight = el.scrollHeight;
+        el.scrollTop = prevScrollTop + (newScrollHeight - prevScrollHeight);
+      }
+    });
   };
 
   // Carregar mensagens quando selecionar um contato
