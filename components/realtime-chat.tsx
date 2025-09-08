@@ -115,7 +115,7 @@ export const RealtimeChat = ({
     try {
       setLoadingContacts(true);
       const nextPage = contactsPage + 1;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/chat/1/overview?page=${nextPage}`, {
+      const res = await fetch(`${'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview?page=${nextPage}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -151,7 +151,7 @@ export const RealtimeChat = ({
     if (!token || !selectedContact) return;
     try {
       setLoadingMessages(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/chat/1/overview/${selectedContact.number}?page=${pageToLoad}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview/${selectedContact.number}?page=${pageToLoad}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -248,7 +248,7 @@ export const RealtimeChat = ({
       const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
       if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/message/whats-app/send-message`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/message/whats-app/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
