@@ -29,12 +29,14 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
   useEffect(() => {
     if (!roomName) return;
 
-    // Cria canal com o nome da sala correto
     const newChannel = supabase.channel(roomName);
 
     newChannel
       .on("broadcast", { event: EVENT_MESSAGE_TYPE }, (payload) => {
-        setMessages((current) => [...current, payload.payload as ChatMessage]);
+        const msg = payload.payload as ChatMessage;
+        setMessages((current) =>
+          current.some((m) => m.id === msg.id) ? current : [...current, msg]
+        );
       })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
@@ -44,10 +46,9 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
 
     setChannel(newChannel);
 
-    // Limpa canal ao trocar de sala
     return () => {
       supabase.removeChannel(newChannel);
-      setMessages([]); // limpa mensagens do chat anterior
+      setMessages([]);
       setIsConnected(false);
     };
   }, [roomName, supabase]);
@@ -60,9 +61,7 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
         id: crypto.randomUUID(),
         text: content,
         content,
-        user: {
-          name: username,
-        },
+        user: { name: username },
         createdAt: new Date().toISOString(),
       };
 
@@ -77,5 +76,9 @@ export function useRealtimeChat({ roomName, username }: UseRealtimeChatProps) {
     [channel, isConnected, username]
   );
 
-  return { messages, sendMessage, isConnected };
+  return {
+    messages,
+    sendMessage,
+    isConnected,
+  };
 }

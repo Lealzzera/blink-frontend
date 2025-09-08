@@ -24,14 +24,14 @@ function createApiHeaders(token: string) {
 }
 
 // Endpoints
-const API_BASE = "http://blink-be-dev:3003/api/v1";
+const API_BASE = process.env.NEXT_PUBLIC_API_BASE || "http://blink-be-dev:3003/api/v1";
+const apiEndpoints = {
+  overview: `${API_BASE}/chat/1/overview`,
+};
 
-// Funções SSR para buscar dados iniciais
-async function getOverview(
-  token: string,
-  page: number = 0
-): Promise<ChatConfig[]> {
-  const url = `${API_BASE}/chat/1/overview?page=${page}`;
+// SSR principal
+async function getOverview(token: string, page: number = 0): Promise<ChatConfig[]> {
+  const url = `${apiEndpoints.overview}?page=${page}`;
   const response = await fetch(url, {
     headers: createApiHeaders(token),
     cache: "no-store",
@@ -44,7 +44,6 @@ async function getOverview(
   return response.json();
 }
 
-// SSR principal
 export default async function ChatPage() {
   const supabase = await createClient();
 
