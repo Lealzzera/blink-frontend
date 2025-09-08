@@ -38,6 +38,34 @@ export default function CalendarioClient({
 
   const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
 
+  // Função para adicionar novo evento ao calendário
+  const handleNewAppointment = (newAppointment: any) => {
+    // Formatar o evento no formato esperado pelo FullCalendar
+    const newEvent = {
+      id: newAppointment.id.toString(),
+      title: newAppointment.patient_name || "Novo Agendamento",
+      start: newAppointment.scheduled_time,
+      extendedProps: {
+        id: newAppointment.id.toString(),
+        // Outras propriedades estendidas, se necessário
+      }
+    };
+    
+    // Adicionar ao estado de eventos
+    setEvents(prevEvents => [...prevEvents, newEvent]);
+    
+    // Inicializar status e vendas para o novo evento
+    setEventStatuses(prev => ({
+      ...prev,
+      [newAppointment.id.toString()]: "AGENDADO"
+    }));
+    
+    setEventSales(prev => ({
+      ...prev,
+      [newAppointment.id.toString()]: []
+    }));
+  };
+
   const updateEventStatus = async (id: string, newStatus: string) => {
     try {
       const res = await fetch(`${API_BASE}/appointments/status`, {
@@ -263,6 +291,8 @@ export default function CalendarioClient({
       {openNewAppointmentModal && (
         <ModalNovoAgendamento
           onClose={() => setOpenNewAppointmentModal(false)}
+          onAppointmentCreated={handleNewAppointment}
+          token={token}
         />
       )}
       {showValorVendaModal && currentEventId && (
