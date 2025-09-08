@@ -7,12 +7,12 @@ import { type ChatMessage, useRealtimeChat } from '@/hooks/use-realtime-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Users, Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 
-// Interfaces simplificadas para tipar os dados que chegam do SSR
+// Interfaces simplificadas
 interface ChatConfig {
   phone_number: string;
   picture_url: string;
@@ -58,11 +58,11 @@ export const RealtimeChat = ({
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
-  // Converte os contatos recebidos do SSR para o formato local
+  // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
     id: c.phone_number,
-    name: c.whats_app_name || c.phone_number || 'Contato sem Identificação',
-    number: c.phone_number || '',
+    name: c.whats_app_name || c.phone_number,
+    number: c.phone_number,
     scheduled: c.ai_answer ?? false,
     photo: c.picture_url || '',
     lastMessage: c.last_message,
@@ -70,10 +70,10 @@ export const RealtimeChat = ({
     fromMe: c.from_me,
     roomName: c.phone_number,
   })));
+  const [contactsPage, setContactsPage] = useState(0);
 
+  // Estado mensagens
   const [selectedContact, setSelectedContact] = useState<any>(contacts[0] || null);
-
-  // Converte as mensagens recebidas do SSR para o formato do chat
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages.map(msg => ({
     id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
     text: msg.message_text,
@@ -81,7 +81,9 @@ export const RealtimeChat = ({
     user: { name: msg.from_me ? username : (contacts[0]?.name || 'Contato') },
     createdAt: msg.sent_at,
   })));
+  const [messagesPage, setMessagesPage] = useState(0);
 
+  // Novo estado
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
@@ -100,17 +102,6 @@ export const RealtimeChat = ({
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, realtimeMessages]);
 
-  // Scroll automático para o fim
-  useEffect(() => {
-    if (!containerRef.current) return;
-    const container = containerRef.current;
-    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
-    if (isNearBottom) {
-      const timeout = setTimeout(() => scrollToBottom(), 50);
-      return () => clearTimeout(timeout);
-    }
-  }, [allMessages, scrollToBottom]);
-
   // Detecta mobile
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -120,6 +111,92 @@ export const RealtimeChat = ({
   }, []);
 
   const toggleMenu = () => setShowContacts(prev => !prev);
+
+  // Função buscar mais contatos
+  const loadMoreContacts = async () => {
+    if (!token) return;
+    try {
+      const nextPage = contactsPage + 1;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/chat/1/overview?page=${nextPage}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data: ChatConfig[] = await res.json();
+        if (data.length > 0) {
+          setContacts(prev => [...prev, ...data.map(c => ({
+            id: c.phone_number,
+            name: c.whats_app_name || c.phone_number,
+            number: c.phone_number,
+            scheduled: c.ai_answer ?? false,
+            photo: c.picture_url || '',
+            lastMessage: c.last_message,
+            sentAt: c.sent_at,
+            fromMe: c.from_me,
+            roomName: c.phone_number,
+          }))]);
+          setContactsPage(nextPage);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar mais contatos", err);
+    }
+  };
+
+  // Função buscar mais mensagens (rolando para cima)
+  const loadMoreMessages = async () => {
+    if (!token || !selectedContact) return;
+    try {
+      const nextPage = messagesPage + 1;
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/chat/1/overview/${selectedContact.number}?page=${nextPage}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data: ChatPhoneConfig[] = await res.json();
+        if (data.length > 0) {
+          setMessages(prev => [
+            ...data.map(msg => ({
+              id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
+              text: msg.message_text,
+              content: msg.message_text,
+              user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
+              createdAt: msg.sent_at,
+            })),
+            ...prev,
+          ]);
+          setMessagesPage(nextPage);
+        }
+      }
+    } catch (err) {
+      console.error("Erro ao carregar mais mensagens", err);
+    }
+  };
+
+  // Scroll contatos -> fim da lista carrega mais
+  const contactsRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = contactsRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
+        loadMoreContacts();
+      }
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [contactsPage, token]);
+
+  // Scroll mensagens -> topo carrega mais
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      if (el.scrollTop <= 20) {
+        loadMoreMessages();
+      }
+    };
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [messagesPage, token, selectedContact]);
 
   // Enviar mensagem
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
@@ -133,12 +210,11 @@ export const RealtimeChat = ({
 
       if (!token) throw new Error('Token de autenticação não encontrado.');
 
-      const API_BASE = process.env.NEXT_PUBLIC_API_BASE || '';
       const phoneNumber = selectedContact.number.replace(/\D/g, '');
       const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
       if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
 
-      const response = await fetch(`${API_BASE}/message/whats-app/send-message`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE}/message/whats-app/send-message`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -164,6 +240,7 @@ export const RealtimeChat = ({
     <div className={styles.container}>
       {/* Contatos */}
       <div
+        ref={contactsRef}
         className={styles.contacts}
         style={isMobile ? { transform: showContacts ? 'translateX(0)' : 'translateX(-100%)' } : {}}
       >
