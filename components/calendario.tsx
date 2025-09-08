@@ -114,7 +114,9 @@ export default function CalendarioClient({
       <div className={styles.buttonsContainer}>
         <div className={styles.tooltipWrapper}>
           <button
-            className={`${styles.checkButton} ${status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""}`}
+            className={`${styles.checkButton} ${
+              status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               handleStatusToggle(id, "confirm");
@@ -176,7 +178,9 @@ export default function CalendarioClient({
     );
   }
 
-  const renderEventContent = (arg: EventContentArg) => <EventoConteudo event={arg.event} viewType={arg.view.type} />;
+  const renderEventContent = (arg: EventContentArg) => (
+    <EventoConteudo event={arg.event} viewType={arg.view.type} />
+  );
 
   const eventClassNames = (arg: any) => {
     const id = arg.event.extendedProps.id;
@@ -221,13 +225,8 @@ export default function CalendarioClient({
     });
   };
 
-  // **Nova função para adicionar evento**
-  const addEventToCalendar = (newEvent: any) => {
+  const handleAddEvent = (newEvent: any) => {
     setEvents((prev) => [...prev, newEvent]);
-    setEventStatuses((prev) => ({
-      ...prev,
-      [newEvent.extendedProps.id]: newEvent.status || "AGENDADO",
-    }));
   };
 
   return (
@@ -251,7 +250,6 @@ export default function CalendarioClient({
           eventClassNames={eventClassNames}
         />
       </div>
-
       {selectedEvent && (
         <ModalDetalhes
           event={selectedEvent}
@@ -263,16 +261,15 @@ export default function CalendarioClient({
           onEventRemoved={handleEventRemoved}
         />
       )}
-
-      <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>+</button>
-
+      <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>
+        +
+      </button>
       {openNewAppointmentModal && (
         <ModalNovoAgendamento
           onClose={() => setOpenNewAppointmentModal(false)}
-          onAppointmentCreated={addEventToCalendar} // passa a função
+          onAppointmentCreated={handleAddEvent} // <-- adicionada a prop
         />
       )}
-
       {showValorVendaModal && currentEventId && (
         <ModalValorVenda
           onClose={() => {
