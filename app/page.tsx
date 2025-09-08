@@ -15,13 +15,6 @@ interface ChatConfig {
   ai_answer: boolean;
 }
 
-interface ChatPhoneConfig {
-  message_text: string;
-  from_me: boolean;
-  sent_at: string;
-  ack: string;
-}
-
 // Helpers
 function createApiHeaders(token: string) {
   return {
@@ -33,17 +26,12 @@ function createApiHeaders(token: string) {
 // Endpoints
 const API_BASE = "http://blink-be-dev:3003/api/v1";
 
-const apiEndpoints = {
-  overview: `${API_BASE}/chat/1/overview`,
-  overviewPhone: `${API_BASE}/chat/1/overview`,
-};
-
 // Funções SSR para buscar dados iniciais
 async function getOverview(
   token: string,
   page: number = 0
 ): Promise<ChatConfig[]> {
-  const url = `${apiEndpoints.overview}?page=${page}`;
+  const url = `${API_BASE}/chat/1/overview?page=${page}`;
   const response = await fetch(url, {
     headers: createApiHeaders(token),
     cache: "no-store",
@@ -51,24 +39,6 @@ async function getOverview(
 
   if (!response.ok) {
     throw new Error(`Erro ao buscar overview: ${response.status}`);
-  }
-
-  return response.json();
-}
-
-async function getOverviewPhone(
-  token: string,
-  phoneNumber: string,
-  page: number = 0
-): Promise<ChatPhoneConfig[]> {
-  const url = `${apiEndpoints.overviewPhone}/${phoneNumber}?page=${page}`;
-  const response = await fetch(url, {
-    headers: createApiHeaders(token),
-    cache: "no-store",
-  });
-
-  if (!response.ok) {
-    throw new Error(`Erro ao buscar overviewPhone: ${response.status}`);
   }
 
   return response.json();
