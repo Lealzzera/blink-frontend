@@ -7,8 +7,6 @@ const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface Props {
   onClose: () => void;
-  onAppointmentCreated: (appointment: any) => void;
-  token: string;
 }
 
 interface WorkingDay {
@@ -33,7 +31,7 @@ interface ClinicConfig {
   allow_overbooking: boolean;
 }
 
-export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, token }: Props) {
+export default function ModalNovoAgendamento({ onClose }: Props) {
   const [patientName, setPatientName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // exibido com máscara
   const [rawPhone, setRawPhone] = useState(""); // apenas os números (para enviar ao backend)
@@ -92,6 +90,9 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
 
   const fetchClinicConfig = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch(`${API_BASE}/configurations/appointments/${clinicId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -114,6 +115,9 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
 
   const fetchWorkingDays = async () => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const res = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -169,6 +173,9 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
 
   const checkExceptionAndGenerateOptions = async (selectedDate: string) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+
       const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -227,7 +234,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
         setAvailableHours(options);
       } else {
         setAvailableHours([]);
-        showMessage("A clínica não funciona neste day da semana.", "error");
+        showMessage("A clínica não funciona neste dia da semana.", "error");
       }
     } catch (error) {
       console.error(error);
@@ -274,6 +281,9 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
         clinic_id: clinicId,
       };
 
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
       const pacientRes = await fetch(`${API_BASE}/patient`, {
         method: "POST",
         headers: {
@@ -312,14 +322,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
       try { responseBody = JSON.parse(text); } catch { responseBody = text; }
 
       if (res.status === 201) {
-        const newAppointment = JSON.parse(text);
         showMessage("Agendamento criado com sucesso!", "success");
-        
-        // Chamar a função callback para adicionar o novo agendamento ao calendário
-        if (onAppointmentCreated) {
-          onAppointmentCreated(newAppointment);
-        }
-        
         onClose();
       } else if (res.status === 409) {
         if (clinicConfig.allow_overbooking) {
@@ -337,14 +340,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated, to
             });
             
             if (overbookingRes.ok) {
-              const newAppointment = await overbookingRes.json();
               showMessage("Agendamento com overbooking criado com sucesso!", "success");
-              
-              // Chamar a função callback para adicionar o novo agendamento ao calendário
-              if (onAppointmentCreated) {
-                onAppointmentCreated(newAppointment);
-              }
-              
               onClose();
             } else {
               showMessage("Erro ao criar agendamento com overbooking.", "error");
