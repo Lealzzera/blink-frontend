@@ -210,7 +210,7 @@ export const RealtimeChat = ({
 
       const onScroll = () => {
         // Carregar mais quando descer um pouco
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 100) {
+        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 600) {
           loadMoreContacts();
         }
       };
