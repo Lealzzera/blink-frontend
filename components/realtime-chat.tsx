@@ -7,12 +7,12 @@ import { type ChatMessage, useRealtimeChat } from '@/hooks/use-realtime-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Users, Search } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 
-// Tipagens
+// Interfaces simplificadas
 interface ChatConfig {
   phone_number: string;
   picture_url: string;
@@ -33,9 +33,7 @@ interface ChatPhoneConfig {
 interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
-  initialMessages?: ChatPhoneConfig[];
   token?: string;
-  apiBase: string; // recebido do SSR
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -54,75 +52,50 @@ const formatDateTime = (dateString?: string | null) => {
 export const RealtimeChat = ({
   username,
   initialContacts = [],
-  initialMessages = [],
   token,
-  apiBase,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
-  // Mapeia dados iniciais
-  const initialMappedContacts = useMemo(
-    () =>
-      initialContacts.map((c) => ({
-        id: c.phone_number,
-        name: c.whats_app_name || c.phone_number || 'Contato sem Identificação',
-        number: c.phone_number || '',
-        scheduled: c.ai_answer ?? false,
-        photo: c.picture_url || '',
-        lastMessage: c.last_message,
-        sentAt: c.sent_at,
-        fromMe: c.from_me,
-        roomName: c.phone_number,
-      })),
-    [initialContacts]
-  );
-
-  const [contacts, setContacts] = useState<any[]>(initialMappedContacts);
+  // Estado contatos
+  const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
+    id: c.phone_number,
+    name: c.whats_app_name || c.phone_number,
+    number: c.phone_number,
+    scheduled: c.ai_answer ?? false,
+    photo: c.picture_url || '',
+    lastMessage: c.last_message,
+    sentAt: c.sent_at,
+    fromMe: c.from_me,
+    roomName: c.phone_number,
+  })));
   const [contactsPage, setContactsPage] = useState(0);
-  const [contactsHasMore, setContactsHasMore] = useState(true);
-  const [isLoadingContacts, setIsLoadingContacts] = useState(false);
+  const [hasMoreContacts, setHasMoreContacts] = useState(true);
+  const [loadingContacts, setLoadingContacts] = useState(false);
 
-  const initialMappedMessages = useMemo(
-    () =>
-      initialMessages.map((msg) => ({
-        id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
-        text: msg.message_text,
-        content: msg.message_text,
-        user: { name: msg.from_me ? username : (initialMappedContacts[0]?.name || 'Contato') },
-        createdAt: msg.sent_at,
-      })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [initialMessages] // deliberado: username/contacts[0] não mudam durante mount
-  );
-
-  const [selectedContact, setSelectedContact] = useState<any>(initialMappedContacts[0] || null);
-  const [messages, setMessages] = useState<ChatMessage[]>(initialMappedMessages);
+  // Estado mensagens
+  const [selectedContact, setSelectedContact] = useState<any>(contacts[0] || null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [messagesPage, setMessagesPage] = useState(0);
-  const [messagesHasMore, setMessagesHasMore] = useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [hasMoreMessages, setHasMoreMessages] = useState(true);
+  const [loadingMessages, setLoadingMessages] = useState(false);
 
+  // Novo estado
   const [newMessage, setNewMessage] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
     username,
   });
 
-  // --- Helpers
-  const createApiHeaders = (tokenMaybe?: string) => {
-    const h: Record<string, string> = { 'Content-Type': 'application/json' };
-    if (tokenMaybe) h.Authorization = `Bearer ${tokenMaybe}`;
-    return h;
-  };
-
-  // Unifica SSR + realtime (evita duplicatas por id)
+  // Junta mensagens SSR + realtime
   const allMessages = useMemo(() => {
     const merged = [...messages, ...realtimeMessages];
-    const unique = merged.filter((m, i, self) => i === self.findIndex((x) => x.id === m.id));
+    const unique = merged.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   }, [messages, realtimeMessages]);
 
@@ -134,211 +107,179 @@ export const RealtimeChat = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const toggleMenu = () => setShowContacts((p) => !p);
+  const toggleMenu = () => setShowContacts(prev => !prev);
 
-  // --- Carregar mais contatos (scroll bottom)
+  // Função buscar mais contatos
   const loadMoreContacts = async () => {
-    if (!token || isLoadingContacts || !contactsHasMore) return;
-    setIsLoadingContacts(true);
+    if (!token || !hasMoreContacts || loadingContacts) return;
     try {
+      setLoadingContacts(true);
       const nextPage = contactsPage + 1;
-      const url = `${apiBase}/chat/1/overview?page=${nextPage}`;
-      console.log("[DEBUG] loadMoreContacts url:", url);
-      const res = await fetch(url, { headers: createApiHeaders(token), cache: 'no-cache' });
-      if (!res.ok) {
-        console.warn("[DEBUG] loadMoreContacts status:", res.status);
-        setIsLoadingContacts(false);
-        return;
-      }
-      const data: ChatConfig[] = await res.json();
-      if (!data || data.length === 0) {
-        setContactsHasMore(false);
-      } else {
-        const mapped = data.map((c) => ({
-          id: c.phone_number,
-          name: c.whats_app_name || c.phone_number,
-          number: c.phone_number,
-          scheduled: c.ai_answer ?? false,
-          photo: c.picture_url || '',
-          lastMessage: c.last_message,
-          sentAt: c.sent_at,
-          fromMe: c.from_me,
-          roomName: c.phone_number,
-        }));
-        setContacts((prev) => [...prev, ...mapped]);
-        setContactsPage(nextPage);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/chat/1/overview?page=${nextPage}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data: ChatConfig[] = await res.json();
+        if (data.length > 0) {
+          setContacts(prev => [...prev, ...data.map(c => ({
+            id: c.phone_number,
+            name: c.whats_app_name || c.phone_number,
+            number: c.phone_number,
+            scheduled: c.ai_answer ?? false,
+            photo: c.picture_url || '',
+            lastMessage: c.last_message,
+            sentAt: c.sent_at,
+            fromMe: c.from_me,
+            roomName: c.phone_number,
+          }))]);
+          setContactsPage(nextPage);
+        } else {
+          setHasMoreContacts(false);
+        }
       }
     } catch (err) {
       console.error("Erro ao carregar mais contatos", err);
+      setHasMoreContacts(false);
     } finally {
-      setIsLoadingContacts(false);
+      setLoadingContacts(false);
     }
   };
 
-  // --- Carregar mais mensagens (scroll topo). Preserva scroll.
-  const loadMoreMessages = async () => {
-    if (!token || !selectedContact || isLoadingMessages || !messagesHasMore) return;
-    setIsLoadingMessages(true);
+  // Função buscar mensagens ao selecionar contato
+  const fetchMessages = useCallback(async (pageToLoad: number = 0, reset: boolean = false) => {
+    if (!token || !selectedContact) return;
     try {
-      const nextPage = messagesPage + 1;
-      const phone = selectedContact.number || selectedContact.id || '';
-      const url = `${apiBase}/chat/1/overview/${encodeURIComponent(phone)}?page=${nextPage}`;
-      console.log("[DEBUG] loadMoreMessages url:", url);
-
-      const container = containerRef.current;
-      const prevScrollHeight = container?.scrollHeight ?? 0;
-      const prevScrollTop = container?.scrollTop ?? 0;
-
-      const res = await fetch(url, { headers: createApiHeaders(token), cache: 'no-cache' });
-      if (!res.ok) {
-        console.warn("[DEBUG] loadMoreMessages status:", res.status);
-        setIsLoadingMessages(false);
-        return;
-      }
-      const data: ChatPhoneConfig[] = await res.json();
-      if (!data || data.length === 0) {
-        setMessagesHasMore(false);
-      } else {
-        const mapped = data.map((msg) => ({
-          id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
-          text: msg.message_text,
-          content: msg.message_text,
-          user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
-          createdAt: msg.sent_at,
-        }));
-        // Prepend
-        setMessages((prev) => [...mapped, ...prev]);
-        setMessagesPage(nextPage);
-
-        // Preserva posição: espera o DOM atualizar antes de ajustar
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            const newScrollHeight = container?.scrollHeight ?? 0;
-            if (container) {
-              container.scrollTop = newScrollHeight - prevScrollHeight + prevScrollTop;
-            }
-          });
-        });
+      setLoadingMessages(true);
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/chat/1/overview/${selectedContact.number}?page=${pageToLoad}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        const data: ChatPhoneConfig[] = await res.json();
+        if (data.length > 0) {
+          const mappedMessages = data.map(msg => ({
+            id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
+            text: msg.message_text,
+            content: msg.message_text,
+            user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
+            createdAt: msg.sent_at,
+          }));
+          
+          setMessages(prev => reset ? mappedMessages : [...mappedMessages, ...prev]);
+          
+          if (data.length < 20) { // Assuming 20 is the page size
+            setHasMoreMessages(false);
+          }
+        } else {
+          setHasMoreMessages(false);
+        }
       }
     } catch (err) {
-      console.error("Erro ao carregar mais mensagens", err);
+      console.error("Erro ao carregar mensagens", err);
+      setHasMoreMessages(false);
     } finally {
-      setIsLoadingMessages(false);
+      setLoadingMessages(false);
     }
+  }, [token, selectedContact, username]);
+
+  // Função buscar mais mensagens (rolando para cima)
+  const loadMoreMessages = async () => {
+    if (!hasMoreMessages || loadingMessages) return;
+    const nextPage = messagesPage + 1;
+    setMessagesPage(nextPage);
+    await fetchMessages(nextPage, false);
   };
 
-  // Scroll listeners
-  const contactsRef = useRef<HTMLDivElement | null>(null);
+  // Carregar mensagens quando selecionar um contato
+  useEffect(() => {
+    if (selectedContact) {
+      setMessagesPage(0);
+      setHasMoreMessages(true);
+      fetchMessages(0, true);
+    }
+  }, [selectedContact, fetchMessages]);
+
+  // Scroll contatos -> fim da lista carrega mais
+  const contactsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = contactsRef.current;
     if (!el) return;
+    
     const onScroll = () => {
-      if (isLoadingContacts || !contactsHasMore) return;
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 20) {
         loadMoreContacts();
       }
     };
+    
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contactsPage, isLoadingContacts, contactsHasMore, token]);
+  }, [contactsPage, token, hasMoreContacts, loadingContacts]);
 
+  // Scroll mensagens -> topo carrega mais
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
+    
     const onScroll = () => {
-      if (isLoadingMessages || !messagesHasMore) return;
-      if (el.scrollTop <= 20) {
+      if (el.scrollTop <= 20 && !loadingMessages) {
         loadMoreMessages();
       }
     };
+    
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messagesPage, isLoadingMessages, messagesHasMore, selectedContact, token]);
-
-  // Ao selecionar um contato, carrega página 0 para esse contato (reset)
-  const handleSelectContact = async (contact: any) => {
-    if (!contact) return;
-    if (selectedContact?.id === contact.id) return;
-
-    setSelectedContact(contact);
-    setMessages([]);
-    setMessagesPage(0);
-    setMessagesHasMore(true);
-
-    if (!token) return;
-
-    setIsLoadingMessages(true);
-    try {
-      const phone = contact.number || contact.id || '';
-      const url = `${apiBase}/chat/1/overview/${encodeURIComponent(phone)}?page=0`;
-      console.log("[DEBUG] fetch messages (page 0) for contact:", url);
-      const res = await fetch(url, { headers: createApiHeaders(token), cache: 'no-cache' });
-      if (!res.ok) {
-        console.warn("[DEBUG] fetch messages page0 status:", res.status);
-        setIsLoadingMessages(false);
-        return;
-      }
-      const data: ChatPhoneConfig[] = await res.json();
-      const mapped = (data || []).map((msg) => ({
-        id: `${msg.sent_at}-${msg.from_me}-${msg.message_text}`,
-        text: msg.message_text,
-        content: msg.message_text,
-        user: { name: msg.from_me ? username : contact.name },
-        createdAt: msg.sent_at,
-      }));
-      setMessages(mapped);
-      setMessagesPage(0);
-      // scroll to bottom after DOM paint
-      requestAnimationFrame(() => scrollToBottom());
-    } catch (err) {
-      console.error("Erro ao carregar mensagens do contato:", err);
-    } finally {
-      setIsLoadingMessages(false);
-    }
-  };
+  }, [messagesPage, token, selectedContact, hasMoreMessages, loadingMessages]);
 
   // Enviar mensagem
-  const handleSendMessage = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return;
+  const handleSendMessage = useCallback(async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return;
 
-      try {
-        setIsSending(true);
-        setError(null);
-        sendMessage(newMessage); // envia via websocket/realtime
+    try {
+      setIsSending(true);
+      setError(null);
+      sendMessage(newMessage);
 
-        if (!token) throw new Error('Token de autenticação não encontrado.');
+      if (!token) throw new Error('Token de autenticação não encontrado.');
 
-        const phoneNumber = selectedContact.number.replace(/\D/g, '');
-        const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
-        if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
+      const phoneNumber = selectedContact.number.replace(/\D/g, '');
+      const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
+      if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
 
-        const response = await fetch(`${apiBase}/message/whats-app/send-message`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            clinic_id: 1,
-            message: newMessage,
-            phone_number: formattedNumber,
-          }),
-        });
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'http://blink-be-dev:3003/api/v1'}/message/whats-app/send-message`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          clinic_id: 1,
+          message: newMessage,
+          phone_number: formattedNumber,
+        }),
+      });
 
-        if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-        setNewMessage('');
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Erro desconhecido');
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [newMessage, isConnected, selectedContact, sendMessage, isSending, token, apiBase]
-  );
+      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+      setNewMessage('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+    } finally {
+      setIsSending(false);
+    }
+  }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token]);
+
+  // Scroll automático para novas mensagens
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const container = containerRef.current;
+    const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
+
+    if (isNearBottom) {
+      const timeout = setTimeout(() => scrollToBottom(), 50);
+      return () => clearTimeout(timeout);
+    }
+  }, [allMessages, scrollToBottom]);
 
   return (
     <div className={styles.container}>
@@ -355,39 +296,59 @@ export const RealtimeChat = ({
           </div>
           <div className={styles.search_container}>
             <Search className={styles.searchIcon} size={16} />
-            <input type="text" placeholder="Pesquisar por contato" />
+            <input 
+              type="text" 
+              placeholder="Pesquisar por contato" 
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
           </div>
           <hr />
         </div>
 
-        {contacts.map((contact) => (
-          <div
-            className={styles.contactCard}
-            key={contact.id}
-            onClick={() => { handleSelectContact(contact); if (isMobile) toggleMenu(); }}
-          >
-            <div className={styles.header}>
-              <h3 className={styles.name}>{contact.name}</h3>
-              <Switch className={styles.switch} defaultChecked={contact.scheduled} />
-            </div>
-            <div className={styles.body}>
-              <Image
-                src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
-                alt={contact.name}
-                width={45}
-                height={45}
-                className={styles.photo}
-              />
-              <div className={styles.messageRow}>
-                <p className={styles.lastMessage}>{contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}</p>
-                <p className={styles.sentAt}>{formatDateTime(contact.sentAt)}</p>
+        {contacts
+          .filter(contact => contact.name?.toLowerCase().includes(searchTerm.toLowerCase()))
+          .map(contact => (
+            <div
+              className={styles.contactCard}
+              key={contact.id}
+              onClick={() => { 
+                setSelectedContact(contact); 
+                if (isMobile) toggleMenu(); 
+              }}
+            >
+              <div className={styles.header}>
+                <h3 className={styles.name}>{contact.name}</h3>
+                <Switch className={styles.switch} defaultChecked={contact.scheduled} />
+              </div>
+              <div className={styles.body}>
+                <Image
+                  src={contact.photo || `https://dummyimage.com/100x100/eee/.png&text=${contact.name.charAt(0)}`}
+                  alt={contact.name}
+                  width={45}
+                  height={45}
+                  className={styles.photo}
+                />
+                <div className={styles.messageRow}>
+                  <p className={styles.lastMessage}>{contact.fromMe ? `${contact.lastMessage} ✓` : contact.lastMessage}</p>
+                  <p className={styles.sentAt}>{formatDateTime(contact.sentAt)}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
+          ))
+        }
 
-        {isLoadingContacts && <div style={{ padding: 12, textAlign: 'center' }}>Carregando mais contatos...</div>}
-        {!contactsHasMore && <div style={{ padding: 12, textAlign: 'center', opacity: 0.7 }}>Fim da lista</div>}
+        {loadingContacts && (
+          <div className={styles.loader}>
+            <p>Carregando...</p>
+          </div>
+        )}
+
+        {hasMoreContacts && !loadingContacts && (
+          <div className={styles.loader} onClick={loadMoreContacts}>
+            <p>Carregar mais</p>
+          </div>
+        )}
       </div>
 
       {/* Chat */}
@@ -414,9 +375,18 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
-          {isLoadingMessages && messages.length === 0 && <div className={styles.noMessages}>Carregando mensagens...</div>}
-          {allMessages.length === 0 && !isLoadingMessages && <div className={styles.noMessages}>Sem mensagens por enquanto.</div>}
+          {hasMoreMessages && (
+            <div className={styles.loaderTop}>
+              {loadingMessages ? <p>Carregando mensagens...</p> : <p>Carregar mais</p>}
+            </div>
+          )}
+
+          {allMessages.length === 0 && !loadingMessages && (
+            <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
+          )}
+          
           {error && <div className={styles.errorMessage}>{error}</div>}
+          
           <div className={styles.messageList}>
             {allMessages.map((message, index) => {
               const prevMessage = index > 0 ? allMessages[index - 1] : null;
@@ -433,9 +403,6 @@ export const RealtimeChat = ({
               );
             })}
           </div>
-
-          {isLoadingMessages && messages.length > 0 && <div style={{ padding: 8, textAlign: 'center' }}>Carregando mensagens antigas...</div>}
-          {!messagesHasMore && <div style={{ padding: 8, textAlign: 'center', opacity: 0.7 }}>Topo do histórico</div>}
         </div>
 
         <form onSubmit={handleSendMessage} className={styles.inputContainer}>

@@ -95,21 +95,10 @@ export default async function ChatPage() {
     console.error("[SSR] Erro ao buscar contatos:", err);
   }
 
-  // Busca mensagens iniciais do primeiro contato
-  let messages: ChatPhoneConfig[] = [];
-  if (contacts.length > 0) {
-    try {
-      messages = await getOverviewPhone(token, contacts[0].phone_number, 0);
-    } catch (err) {
-      console.error("[SSR] Erro ao buscar mensagens:", err);
-    }
-  }
-
   return (
     <RealtimeChat
       username={USERNAME}
       initialContacts={contacts}
-      initialMessages={messages}
       token={token}
     />
   );
