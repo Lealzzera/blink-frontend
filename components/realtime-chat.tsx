@@ -165,9 +165,26 @@ export const RealtimeChat = ({
             user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
             createdAt: msg.sent_at,
           }));
-          
-          setMessages(prev => reset ? mappedMessages : [...mappedMessages, ...prev]);
-          
+
+          if (reset) {
+            setMessages(mappedMessages);
+          } else {
+            // manter posição do scroll
+            if (containerRef.current) {
+              const el = containerRef.current;
+              const oldScrollHeight = el.scrollHeight;
+
+              setMessages(prev => [...mappedMessages, ...prev]);
+
+              setTimeout(() => {
+                const newScrollHeight = el.scrollHeight;
+                el.scrollTop = newScrollHeight - oldScrollHeight + el.scrollTop;
+              }, 0);
+            } else {
+              setMessages(prev => [...mappedMessages, ...prev]);
+            }
+          }
+
           if (data.length < 20) {
             setHasMoreMessages(false);
           }
@@ -181,7 +198,7 @@ export const RealtimeChat = ({
     } finally {
       setLoadingMessages(false);
     }
-  }, [token, selectedContact, username]);
+  }, [token, selectedContact, username, containerRef]);
 
   // Função buscar mais mensagens (rolando para cima)
   const loadMoreMessages = async () => {
