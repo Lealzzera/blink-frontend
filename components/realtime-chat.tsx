@@ -197,28 +197,29 @@ export const RealtimeChat = ({
       setMessages([]);
       setMessagesPage(0);
       setHasMoreMessages(true);
-      fetchMessages(0, true);
+      fetchMessages(0, true).then(() => {
+        // garante que vai para o fim ao trocar de contato
+        setTimeout(() => scrollToBottom(), 100);
+      });
     }
-  }, [selectedContact, fetchMessages]);
+  }, [selectedContact, fetchMessages, scrollToBottom]);
 
   // Scroll contatos -> fim da lista carrega mais
-    const contactsRef = useRef<HTMLDivElement>(null);
+  const contactsRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-      const el = contactsRef.current;
-      if (!el) return;
+  useEffect(() => {
+    const el = contactsRef.current;
+    if (!el) return;
 
-      const onScroll = () => {
-        // Carregar mais quando descer um pouco
-        if (el.scrollTop + el.clientHeight >= el.scrollHeight - 600) {
-          loadMoreContacts();
-        }
-      };
+    const onScroll = () => {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 700) {
+        loadMoreContacts();
+      }
+    };
 
-      el.addEventListener("scroll", onScroll);
-      return () => el.removeEventListener("scroll", onScroll);
-    }, [contactsPage, token, hasMoreContacts, loadingContacts]);
-
+    el.addEventListener("scroll", onScroll);
+    return () => el.removeEventListener("scroll", onScroll);
+  }, [contactsPage, token, hasMoreContacts, loadingContacts]);
 
   // Scroll mensagens -> topo carrega mais
   useEffect(() => {
