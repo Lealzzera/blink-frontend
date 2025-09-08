@@ -35,6 +35,7 @@ export default function CalendarioClient({
   const [allowOverbooking] = useState(initialConfig?.allowOverbooking ?? false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
+  const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
   const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
 
@@ -99,7 +100,6 @@ export default function CalendarioClient({
     setShowValorVendaModal(false);
   };
 
-  // Função para adicionar novo evento ao calendário
   const addNewEvent = (newEvent: any) => {
     setEvents((prevEvents) => [...prevEvents, newEvent]);
     setEventStatuses((prev) => ({
@@ -113,7 +113,6 @@ export default function CalendarioClient({
   };
 
   function EventoConteudo({ event, viewType }: { event: any; viewType: string }) {
-    const [isHovered, setIsHovered] = useState(false);
     const [caption, setCaption] = useState("");
     const id = event.extendedProps.id;
     const status = eventStatuses[id] || "AGENDADO";
@@ -122,6 +121,7 @@ export default function CalendarioClient({
       ? new Date(event.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
       : "";
     const displayStatus = hasSales ? "venda" : status.toLowerCase();
+    const isHovered = hoveredEventId === id;
 
     const Buttons = () => (
       <div className={styles.buttonsContainer}>
@@ -174,8 +174,8 @@ export default function CalendarioClient({
     return (
       <div
         className={viewType === "dayGridMonth" ? styles.eventContentMonth : styles.eventContent}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        onMouseEnter={() => setHoveredEventId(id)}
+        onMouseLeave={() => setHoveredEventId(null)}
       >
         <div className={styles.eventHeader}>
           {currentDuration > 30 && (
