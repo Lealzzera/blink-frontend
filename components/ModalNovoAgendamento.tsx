@@ -7,6 +7,8 @@ const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface Props {
   onClose: () => void;
+  onNewEvent: (event: any) => void;
+  token: string;
 }
 
 interface WorkingDay {
@@ -31,7 +33,7 @@ interface ClinicConfig {
   allow_overbooking: boolean;
 }
 
-export default function ModalNovoAgendamento({ onClose }: Props) {
+export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Props) {
   const [patientName, setPatientName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // exibido com máscara
   const [rawPhone, setRawPhone] = useState(""); // apenas os números (para enviar ao backend)
@@ -90,9 +92,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
 
   const fetchClinicConfig = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
       const res = await fetch(`${API_BASE}/configurations/appointments/${clinicId}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -115,9 +114,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
 
   const fetchWorkingDays = async () => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
       const res = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -173,9 +169,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
 
   const checkExceptionAndGenerateOptions = async (selectedDate: string) => {
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
-
       const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -281,9 +274,6 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
         clinic_id: clinicId,
       };
 
-      const { data: sessionData } = await supabase.auth.getSession()
-      const token = sessionData.session?.access_token
-
       const pacientRes = await fetch(`${API_BASE}/patient`, {
         method: "POST",
         headers: {
@@ -301,7 +291,7 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
       }
 
       const appointmentPayload = {
-        patient_number: rawPhone, // idem
+        patient_number: rawPhone, 
         scheduled_time: `${date} ${hour}`,
         notes,
         clinic: clinicId,
@@ -322,6 +312,23 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
       try { responseBody = JSON.parse(text); } catch { responseBody = text; }
 
       if (res.status === 201) {
+        // Criar o evento para adicionar ao calendário
+        const newEvent = {
+          id: responseBody.id || Date.now().toString(),
+          title: patientName,
+          start: `${date}T${hour}:00`,
+          extendedProps: {
+            id: responseBody.id || Date.now().toString(),
+            phone: rawPhone,
+            notes: notes,
+            clinic: clinicId,
+            service_type: serviceType
+          }
+        };
+        
+        // Chamar a função para adicionar o novo evento
+        onNewEvent(newEvent);
+        
         showMessage("Agendamento criado com sucesso!", "success");
         onClose();
       } else if (res.status === 409) {
@@ -340,6 +347,26 @@ export default function ModalNovoAgendamento({ onClose }: Props) {
             });
             
             if (overbookingRes.ok) {
+              const overbookingResponse = await overbookingRes.json();
+              
+              // Criar o evento para adicionar ao calendário (overbooking)
+              const newEvent = {
+                id: overbookingResponse.id || `overbooking-${Date.now()}`,
+                title: patientName,
+                start: `${date}T${hour}:00`,
+                extendedProps: {
+                  id: overbookingResponse.id || `overbooking-${Date.now()}`,
+                  phone: rawPhone,
+                  notes: notes,
+                  clinic: clinicId,
+                  service_type: serviceType,
+                  is_overbooking: true
+                }
+              };
+              
+              // Chamar a função para adicionar o novo evento
+              onNewEvent(newEvent);
+              
               showMessage("Agendamento com overbooking criado com sucesso!", "success");
               onClose();
             } else {

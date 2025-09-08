@@ -99,6 +99,19 @@ export default function CalendarioClient({
     setShowValorVendaModal(false);
   };
 
+  // Função para adicionar novo evento ao calendário
+  const addNewEvent = (newEvent: any) => {
+    setEvents((prevEvents) => [...prevEvents, newEvent]);
+    setEventStatuses((prev) => ({
+      ...prev,
+      [newEvent.extendedProps.id]: "AGENDADO",
+    }));
+    setEventSales((prev) => ({
+      ...prev,
+      [newEvent.extendedProps.id]: [],
+    }));
+  };
+
   function EventoConteudo({ event, viewType }: { event: any; viewType: string }) {
     const [isHovered, setIsHovered] = useState(false);
     const [caption, setCaption] = useState("");
@@ -263,6 +276,8 @@ export default function CalendarioClient({
       {openNewAppointmentModal && (
         <ModalNovoAgendamento
           onClose={() => setOpenNewAppointmentModal(false)}
+          onNewEvent={addNewEvent}
+          token={token}
         />
       )}
       {showValorVendaModal && currentEventId && (
