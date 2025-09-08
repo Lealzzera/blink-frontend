@@ -1,13 +1,12 @@
 import { useState, useEffect } from "react";
 import styles from "./styles/agendamento-modal.module.css";
 import MessageBox from "./MessageBox";
-import { createClient } from "@/lib/client";
-const supabase = createClient();
-const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
+import { createClient } from '@/lib/client'
+const supabase = createClient()
+const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
 interface Props {
   onClose: () => void;
-  onAppointmentCreated?: (newAppointment: any) => void;
 }
 
 interface WorkingDay {
@@ -28,14 +27,14 @@ interface ExceptionDay {
 }
 
 interface ClinicConfig {
-  appointment_duration: number;
+  appointment_duration: number; // em minutos
   allow_overbooking: boolean;
 }
 
-export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: Props) {
+export default function ModalNovoAgendamento({ onClose }: Props) {
   const [patientName, setPatientName] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [rawPhone, setRawPhone] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState(""); // exibido com máscara
+  const [rawPhone, setRawPhone] = useState(""); // apenas os números (para enviar ao backend)
   const [date, setDate] = useState("");
   const [hour, setHour] = useState("");
   const [clinicId, setClinicId] = useState(1);
@@ -49,7 +48,16 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
 
   const [workingDays, setWorkingDays] = useState<WorkingDay[]>([]);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
-  const diasDaSemana = ["DOMINGO","SEGUNDA","TERCA","QUARTA","QUINTA","SEXTA","SABADO"];
+
+  const diasDaSemana = [
+    "SEGUNDA",
+    "TERCA",
+    "QUARTA",
+    "QUINTA",
+    "SEXTA",
+    "SABADO",
+    "DOMINGO",
+  ];
 
   const [messageBox, setMessageBox] = useState<{
     message: string;
@@ -60,12 +68,17 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
     setMessageBox({ message, type });
   };
 
+  // Função para aplicar a máscara
   const formatPhoneNumber = (value: string) => {
-    const numbers = value.replace(/\D/g, "").slice(0, 11);
+    const numbers = value.replace(/\D/g, "").slice(0, 11); // apenas números e máximo 11
     setRawPhone(numbers);
 
-    if (numbers.length <= 2) return numbers.replace(/(\d{0,2})/, "($1");
-    if (numbers.length <= 7) return numbers.replace(/(\d{2})(\d{0,5})/, "($1)$2");
+    if (numbers.length <= 2) {
+      return numbers.replace(/(\d{0,2})/, "($1");
+    }
+    if (numbers.length <= 7) {
+      return numbers.replace(/(\d{2})(\d{0,5})/, "($1)$2");
+    }
     return numbers.replace(/(\d{2})(\d{5})(\d{0,4})/, "($1)$2-$3");
   };
 
@@ -93,6 +106,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
         appointment_duration: data.duration || 60,
         allow_overbooking: data.overbooking || false
       });
+      console.log(data.duration)
     } catch (err) {
       console.error(err);
       showMessage("Erro ao buscar configurações da clínica.", "error");
@@ -143,13 +157,15 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
     const closeMinutes = convertToMinutes(close);
     const breakStartMinutes = convertToMinutes(breakStart);
     const breakEndMinutes = convertToMinutes(breakEnd);
+    const durationMinutes = appointmentDuration;
 
-    for (let minutes = openMinutes; minutes <= closeMinutes - appointmentDuration; minutes += 15) {
+    for (let minutes = openMinutes; minutes <= closeMinutes - durationMinutes; minutes += 15) {
       if (minutes >= breakStartMinutes && minutes < breakEndMinutes) continue;
-      if (minutes < breakStartMinutes && (minutes + appointmentDuration) > breakStartMinutes) continue;
-      if ((minutes + appointmentDuration) > closeMinutes) continue;
+      if (minutes < breakStartMinutes && (minutes + durationMinutes) > breakStartMinutes) continue;
+      if ((minutes + durationMinutes) > closeMinutes) continue;
 
-      options.push(convertMinutesToTime(minutes));
+      const timeStr = convertMinutesToTime(minutes);
+      options.push(timeStr);
     }
 
     return options;
@@ -166,7 +182,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
           "Content-Type": "application/json",
         }
       });
-
+      
       if (!exceptionsRes.ok) throw new Error("Erro ao buscar exceções");
       const exceptions: ExceptionDay[] = await exceptionsRes.json();
 
@@ -180,13 +196,14 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
         }
 
         if (exception.open && exception.close) {
-          setAvailableHours(generateTimeOptions(
+          const options = generateTimeOptions(
             exception.open,
             exception.close,
             exception.break_start || "12:00",
             exception.break_end || "13:00",
             clinicConfig.appointment_duration
-          ));
+          );
+          setAvailableHours(options);
           return;
         }
       }
@@ -202,18 +219,19 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
       });
 
       if (!workingDaysRes.ok) throw new Error("Erro ao buscar dias de trabalho");
-      const workingDaysData: any[] = await workingDaysRes.json();
+      const workingDays: any[] = await workingDaysRes.json();
 
-      const defaultDay = workingDaysData.find(d => d.week_day === diasDaSemana[dayOfWeek]);
-
+      const defaultDay = workingDays.find(d => d.week_day === diasDaSemana[dayOfWeek]);
+      
       if (defaultDay && defaultDay.is_work_day) {
-        setAvailableHours(generateTimeOptions(
+        const options = generateTimeOptions(
           defaultDay.open || "08:00",
           defaultDay.close || "17:00",
           defaultDay.break_start || "12:00",
           defaultDay.break_end || "13:00",
           clinicConfig.appointment_duration
-        ));
+        );
+        setAvailableHours(options);
       } else {
         setAvailableHours([]);
         showMessage("A clínica não funciona neste dia da semana.", "error");
@@ -239,6 +257,7 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (disabled) return;
     setDisabled(true);
 
@@ -256,16 +275,23 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
     }
 
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const token = sessionData.session?.access_token;
+      const patientPayload = {
+        name: patientName,
+        phone_number: rawPhone, // envia somente os números
+        clinic_id: clinicId,
+      };
 
-      // Cria paciente
-      const patientPayload = { name: patientName, phone_number: rawPhone, clinic_id: clinicId };
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
+
       const pacientRes = await fetch(`${API_BASE}/patient`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(patientPayload),
-      });
+      })
 
       if (pacientRes.status !== 201 && pacientRes.status !== 409) {
         const text = await pacientRes.text();
@@ -274,9 +300,8 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
         return;
       }
 
-      // Cria agendamento
       const appointmentPayload = {
-        patient_number: rawPhone,
+        patient_number: rawPhone, // idem
         scheduled_time: `${date} ${hour}`,
         notes,
         clinic: clinicId,
@@ -285,9 +310,12 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
 
       const res = await fetch(`${API_BASE}/appointments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify(appointmentPayload),
-      });
+      })
 
       const text = await res.text();
       let responseBody;
@@ -296,20 +324,24 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
       if (res.status === 201) {
         showMessage("Agendamento criado com sucesso!", "success");
         onClose();
-        if (onAppointmentCreated) onAppointmentCreated(responseBody); // Atualiza calendário sem reload
       } else if (res.status === 409) {
         if (clinicConfig.allow_overbooking) {
           if (window.confirm("Horário já ocupado! Deseja fazer overbooking?")) {
             const overbookingRes = await fetch(`${API_BASE}/appointments`, {
               method: "POST",
-              headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
-              body: JSON.stringify({ ...appointmentPayload, is_overbooking: true }),
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...appointmentPayload,
+                is_overbooking: true
+              }),
             });
+            
             if (overbookingRes.ok) {
               showMessage("Agendamento com overbooking criado com sucesso!", "success");
               onClose();
-              const data = await overbookingRes.json();
-              if (onAppointmentCreated) onAppointmentCreated(data);
             } else {
               showMessage("Erro ao criar agendamento com overbooking.", "error");
             }
@@ -331,7 +363,11 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
   return (
     <>
       {messageBox && (
-        <MessageBox message={messageBox.message} type={messageBox.type} onHide={() => setMessageBox(null)} />
+        <MessageBox
+          message={messageBox.message}
+          type={messageBox.type}
+          onHide={() => setMessageBox(null)}
+        />
       )}
 
       <div className={styles.modalOverlay}>
@@ -339,28 +375,71 @@ export default function ModalNovoAgendamento({ onClose, onAppointmentCreated }: 
           <h2 className={styles.title}>Novo Agendamento</h2>
           <form onSubmit={handleSubmit}>
             <label className={styles.label}>Nome do paciente:</label>
-            <input className={styles.input} value={patientName} onChange={(e) => setPatientName(e.target.value)} required />
+            <input
+              className={styles.input}
+              value={patientName}
+              onChange={(e) => setPatientName(e.target.value)}
+              required
+            />
 
             <label className={styles.label}>Telefone:</label>
-            <input className={styles.input} value={phoneNumber} onChange={handlePhoneChange} required maxLength={15} />
+            <input
+              className={styles.input}
+              value={phoneNumber}
+              onChange={handlePhoneChange}
+              required
+              maxLength={15} // (99)99999-9999 → 14 caracteres, segurança
+            />
 
             <label className={styles.label}>Data:</label>
-            <input className={styles.input} type="date" value={date} onChange={(e) => setDate(e.target.value)} required min={new Date().toISOString().split("T")[0]} />
+            <input
+              className={styles.input}
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+              min={new Date().toISOString().split("T")[0]}
+            />
 
             <label className={styles.label}>Hora:</label>
-            <select className={styles.select} value={hour} onChange={(e) => setHour(e.target.value)} required disabled={!date || availableHours.length === 0}>
+            <select
+              className={styles.select}
+              value={hour}
+              onChange={(e) => setHour(e.target.value)}
+              required
+              disabled={!date || availableHours.length === 0}
+            >
               <option value="">Selecione um horário</option>
-              {availableHours.map((time) => <option key={time} value={time}>{time}</option>)}
+              {availableHours.map((time) => (
+                <option key={time} value={time}>
+                  {time}
+                </option>
+              ))}
             </select>
 
             <label className={styles.label}>Clínica (ID):</label>
-            <input className={styles.input} type="number" value={clinicId} onChange={(e) => setClinicId(Number(e.target.value))} required />
+            <input
+              className={styles.input}
+              type="number"
+              value={clinicId}
+              onChange={(e) => setClinicId(Number(e.target.value))}
+              required
+            />
 
             <label className={styles.label}>Notas:</label>
-            <textarea className={styles.textarea} value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <textarea
+              className={styles.textarea}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
 
             <label className={styles.label}>Tipo de Serviço:</label>
-            <input className={styles.input} type="number" value={serviceType} onChange={(e) => setServiceType(Number(e.target.value))} />
+            <input
+              className={styles.input}
+              type="number"
+              value={serviceType}
+              onChange={(e) => setServiceType(Number(e.target.value))}
+            />
 
             <div className={styles.actions}>
               <button type="submit" className={styles.buttonSubmit} disabled={disabled}>Agendar</button>

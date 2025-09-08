@@ -225,10 +225,6 @@ export default function CalendarioClient({
     });
   };
 
-  const handleAddEvent = (newEvent: any) => {
-    setEvents((prev) => [...prev, newEvent]);
-  };
-
   return (
     <div className={styles.container}>
       <div className={styles.customCalendar}>
@@ -267,7 +263,6 @@ export default function CalendarioClient({
       {openNewAppointmentModal && (
         <ModalNovoAgendamento
           onClose={() => setOpenNewAppointmentModal(false)}
-          onAppointmentCreated={handleAddEvent} // <-- adicionada a prop
         />
       )}
       {showValorVendaModal && currentEventId && (
