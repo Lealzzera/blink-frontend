@@ -8,6 +8,7 @@ import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuIte
 import { LogoutButton } from '@/components/logout-button'
 import { motion } from 'framer-motion';
 
+
 export default function Sidebar() {
   const pathname = usePathname();
   const hideMenu = pathname === '/auth/login' || pathname === '/auth/forgot-password';

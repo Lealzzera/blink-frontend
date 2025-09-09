@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -11,6 +11,7 @@ import ModalDetalhes from "./ModalCalendario";
 import ModalNovoAgendamento from "./ModalNovoAgendamento";
 import ModalValorVenda from "./ModalValorVenda";
 import styles from "./styles/calendario.module.css";
+import UserContext from "@/app/context/UserContext";
 
 export default function CalendarioClient({
   initialConfig,
@@ -25,19 +26,31 @@ export default function CalendarioClient({
   initialSales: Record<string, any[]>;
   token: string;
 }) {
+  // Context
+  const { overbooking, duration } = useContext(UserContext)!;
+
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
   const [eventDetails, setEventDetails] = useState<any | null>(null);
   const [openNewAppointmentModal, setOpenNewAppointmentModal] = useState(false);
   const [events, setEvents] = useState<any[]>(initialEvents);
   const [eventStatuses, setEventStatuses] = useState<Record<string, string>>(initialStatuses);
   const [eventSales, setEventSales] = useState<Record<string, any[]>>(initialSales);
-  const [currentDuration] = useState(initialConfig?.currentDuration ?? 30);
-  const [allowOverbooking] = useState(initialConfig?.allowOverbooking ?? false);
+  const [currentDuration, setCurrentDuration] = useState(initialConfig?.currentDuration ?? 30);
+  const [allowOverbooking, setAllowOverbooking] = useState(initialConfig?.allowOverbooking ?? false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
   const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
+
+  // Atualiza duration e overbooking do state local quando o context muda
+  useEffect(() => {
+    setCurrentDuration(duration ?? currentDuration);
+  }, [duration]);
+
+  useEffect(() => {
+    setAllowOverbooking(overbooking ?? allowOverbooking);
+  }, [overbooking]);
 
   const updateEventStatus = async (id: string, newStatus: string) => {
     try {
