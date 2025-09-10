@@ -441,7 +441,7 @@ export const RealtimeChat = ({
             disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
-            <Button className={styles.sendButton} type="submit" disabled={!isConnected || isSending}>
+            <Button className={styles.sendButton} type="submit" disabled={ isSending}>
               {isSending ? 'Enviando...' : <Send className={styles.sendIcon} />}
             </Button>
           )}
