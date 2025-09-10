@@ -6,7 +6,7 @@ import { useChatScroll } from '@/hooks/use-chat-scroll';
 import { type ChatMessage, useRealtimeChat } from '@/hooks/use-realtime-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Send, Users, Search } from 'lucide-react';
+import { Send, Users, Search, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
@@ -34,6 +34,7 @@ interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
   token?: string;
+  clinicId?: number;
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -53,6 +54,7 @@ export const RealtimeChat = ({
   username,
   initialContacts = [],
   token,
+  clinicId = 1,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
@@ -90,6 +92,7 @@ export const RealtimeChat = ({
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
     username,
+    clinicId,
   });
 
   // Junta mensagens SSR + realtime
@@ -164,6 +167,7 @@ export const RealtimeChat = ({
             content: msg.message_text,
             user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
             createdAt: msg.sent_at,
+            fromMe: msg.from_me,
           }));
 
           setMessages(prev => reset ? mappedMessages : [...mappedMessages, ...prev]);
@@ -253,40 +257,26 @@ export const RealtimeChat = ({
   // Enviar mensagem
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return;
+    if (!newMessage.trim() || !selectedContact || isSending) return;
 
     try {
       setIsSending(true);
       setError(null);
-      sendMessage(newMessage);
 
-      if (!token) throw new Error('Token de autenticação não encontrado.');
+      // Enviar via WebSocket
+      const success = await sendMessage(newMessage);
+      
+      if (!success) {
+        throw new Error('Erro ao enviar mensagem. Verifique a conexão.');
+      }
 
-      const phoneNumber = selectedContact.number.replace(/\D/g, '');
-      const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
-      if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
-
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/message/whats-app/send-message`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          clinic_id: 1,
-          message: newMessage,
-          phone_number: formattedNumber,
-        }),
-      });
-
-      if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
       setNewMessage('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro desconhecido');
+      setError(err instanceof Error ? err.message : 'Erro desconhecido ao enviar mensagem');
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token]);
+  }, [newMessage, selectedContact, sendMessage, isSending]);
 
   // Scroll automático para novas mensagens
   useEffect(() => {
@@ -388,6 +378,13 @@ export const RealtimeChat = ({
                 className={styles.chatPhoto}
               />
               <h3 className={styles.headerTitle}>{selectedContact.name}</h3>
+              <div className={styles.connectionStatus}>
+                {isConnected ? (
+                  <Wifi size={16} className={styles.connected} />
+                ) : (
+                  <WifiOff size={16} className={styles.disconnected} />
+                )}
+              </div>
             </div>
           )}
           <Switch className={styles.switch} defaultChecked={selectedContact?.scheduled} />
@@ -410,12 +407,12 @@ export const RealtimeChat = ({
             {allMessages.map((message, index) => {
               const prevMessage = index > 0 ? allMessages[index - 1] : null;
               const showHeader = !prevMessage || prevMessage.user?.name !== message.user?.name;
-              const displayMessage = message.user?.name === username ? `${message.content} ✓` : message.content;
+              const displayMessage = message.fromMe ? `${message.content} ✓` : message.content;
               return (
                 <div key={message.id} className={styles.messageItem}>
                   <ChatMessageItem
                     message={{ ...message, content: displayMessage, createdAt: formatDateTime(message.createdAt) }}
-                    isOwnMessage={message.user?.name === username}
+                    isOwnMessage={message.fromMe || message.user?.name === username}
                     showHeader={showHeader}
                   />
                 </div>
@@ -430,7 +427,7 @@ export const RealtimeChat = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Digite a mensagem..."
+            placeholder={isConnected ? "Digite a mensagem..." : "Conectando..."}
             disabled={!isConnected || isSending}
           />
           {isConnected && newMessage.trim() && (
