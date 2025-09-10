@@ -27,18 +27,23 @@ const BACKEND_WS_URL =
 export function useRealtimeChat({
   roomName,
   username,
-  clinicId = 1,
+  clinicId = 1, // Default value, consistent with component
 }: UseRealtimeChatProps) {
   const supabase = createClient();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
-
-  // refs para evitar recriação
+  
+  // Novo estado para o status da conexão WebSocket
+  const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected' | 'error'>('disconnected');
+  
+  // Refs para evitar recriação e gerenciar reconexão
   const wsRef = useRef<WebSocket | null>(null);
-  const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const reconnectAttemptsRef = useRef(0); // Para o exponential backoff
   const supabaseChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(
     null
   );
+
+  const MAX_RECONNECT_ATTEMPTS = 20; // Limite de tentativas de reconexão
 
   // Conexão com Supabase
   useEffect(() => {
@@ -55,7 +60,7 @@ export function useRealtimeChat({
       })
       .subscribe((status) => {
         if (status === "SUBSCRIBED") {
-          console.log("Conectado ao Supabase channel");
+          console.log("Conectado ao Supabase channel:", roomName);
         }
       });
 
@@ -68,81 +73,132 @@ export function useRealtimeChat({
   }, [roomName, supabase]);
 
   // Conexão com WebSocket do backend
-  useEffect(() => {
-    if (!roomName) return;
+  const connectWebSocket = useCallback(() => {
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      console.log("WebSocket já está aberto. Ignorando nova conexão.");
+      return;
+    }
+    if (!roomName) {
+      setConnectionStatus('error');
+      console.error("Não é possível conectar ao WebSocket: roomName não definido.");
+      return;
+    }
 
-    const connectWebSocket = () => {
-      try {
-        const ws = new WebSocket(`${BACKEND_WS_URL}/wpp-socket/subscribe`);
-        wsRef.current = ws;
+    setConnectionStatus('connecting'); // Indica que está tentando conectar
+    
+    // Limpa timeout anterior se houver
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
+    try {
+      const ws = new WebSocket(`${BACKEND_WS_URL}/wpp-socket/subscribe`);
+      wsRef.current = ws;
 
-        ws.onopen = () => {
-          console.log("Conectado ao WebSocket do WhatsApp");
-          setIsConnected(true);
+      ws.onopen = () => {
+        console.log("Conectado ao WebSocket do WhatsApp");
+        setConnectionStatus('connected');
+        reconnectAttemptsRef.current = 0; // Reseta tentativas no sucesso
 
-          // Envia subscribe
-          const subscribeMessage = JSON.stringify({
-            type: "subscribe",
-            clinic_id: clinicId,
-          });
-          ws.send(subscribeMessage);
-        };
+        // Envia subscribe
+        const subscribeMessage = JSON.stringify({
+          type: "subscribe",
+          clinic_id: clinicId,
+        });
+        ws.send(subscribeMessage);
+      };
 
-        ws.onmessage = (event) => {
-          try {
-            const data = JSON.parse(event.data);
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
 
-            if (data.type === "message-received") {
-              const message: ChatMessage = {
-                id: `ws-${Date.now()}-${Math.random()}`,
-                text: data.message,
-                content: data.message,
-                user: { name: data.sender },
-                createdAt: new Date().toISOString(),
-                fromMe: false,
-              };
+          if (data.type === "message-received") {
+            // Verifica se a mensagem é para a roomName atual
+            // Assumimos que data.sender é o número de telefone
+            if (data.sender === roomName) {
+                const message: ChatMessage = {
+                    id: `ws-${data.message_id || Date.now()}-${Math.random()}`, // Use message_id se disponível
+                    text: data.message,
+                    content: data.message,
+                    user: { name: data.sender }, // Remetente do WhatsApp
+                    createdAt: new Date().toISOString(),
+                    fromMe: false,
+                };
 
-              setMessages((current) =>
-                current.some((m) => m.id === message.id)
-                  ? current
-                  : [...current, message]
-              );
+                setMessages((current) =>
+                    current.some((m) => m.id === message.id) ? current : [...current, message]
+                );
 
-              // Replicar para Supabase
-              if (supabaseChannelRef.current) {
-                supabaseChannelRef.current.send({
-                  type: "broadcast",
-                  event: SUPABASE_EVENT_MESSAGE_TYPE,
-                  payload: message,
-                });
-              }
+                // Replicar para Supabase para garantir sincronia em outras abas/clientes
+                if (supabaseChannelRef.current) {
+                    supabaseChannelRef.current.send({
+                        type: "broadcast",
+                        event: SUPABASE_EVENT_MESSAGE_TYPE,
+                        payload: message,
+                    });
+                }
+            } else {
+                console.log("Mensagem recebida para outro contato, ignorada:", data.sender);
             }
-          } catch (error) {
-            console.error("Erro ao processar mensagem WebSocket:", error);
           }
-        };
+        } catch (error) {
+          console.error("Erro ao processar mensagem WebSocket:", error);
+        }
+      };
 
-        ws.onclose = () => {
-          console.log("Conexão WebSocket fechada");
-          setIsConnected(false);
+      ws.onclose = () => {
+        console.log("Conexão WebSocket fechada");
+        setConnectionStatus('disconnected');
 
-          // tenta reconectar
-          reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
-        };
+        if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttemptsRef.current++;
+          const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current - 1), 30000); // Exponential backoff up to 30s
+          console.log(`Tentando reconectar em ${delay / 1000}s... (Tentativa ${reconnectAttemptsRef.current}/${MAX_RECONNECT_ATTEMPTS})`);
+          reconnectTimeoutRef.current = setTimeout(connectWebSocket, delay);
+        } else {
+          console.error("Máximo de tentativas de reconexão atingido. Verifique a conexão.");
+          setConnectionStatus('error');
+        }
+      };
 
-        ws.onerror = (error) => {
-          console.error("Erro WebSocket:", error);
-          setIsConnected(false);
-        };
-      } catch (error) {
-        console.error("Erro ao conectar WebSocket:", error);
-        setIsConnected(false);
+      ws.onerror = (error) => {
+        console.error("Erro WebSocket:", error);
+        setConnectionStatus('error'); // Erro explícito de conexão
+        // Fecha a conexão para disparar o onclose e o retry logic
+        wsRef.current?.close(); 
+      };
+    } catch (error) {
+      console.error("Erro ao tentar conectar WebSocket:", error);
+      setConnectionStatus('error');
+      // Tenta reconectar imediatamente se for um erro de setup inicial
+      if (reconnectAttemptsRef.current < MAX_RECONNECT_ATTEMPTS) {
+        reconnectAttemptsRef.current++;
+        reconnectTimeoutRef.current = setTimeout(connectWebSocket, 1000);
       }
-    };
+    }
+  }, [roomName, clinicId]); // Adiciona clinicId às dependências
 
-    connectWebSocket();
+  useEffect(() => {
+    // Quando o roomName muda, reestabelece a conexão WebSocket para o novo quarto
+    if (roomName) {
+      if (wsRef.current) {
+        wsRef.current.close(); // Fecha a conexão antiga para forçar nova conexão
+        wsRef.current = null;
+      }
+      reconnectAttemptsRef.current = 0; // Reseta as tentativas para um novo quarto
+      connectWebSocket();
+    } else {
+      // Se não há roomName selecionado, desconecta
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      setConnectionStatus('disconnected');
+    }
 
     return () => {
+      // Limpa tudo ao desmontar ou antes de um novo useEffect
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
       }
@@ -151,14 +207,15 @@ export function useRealtimeChat({
         wsRef.current = null;
       }
     };
-  }, [roomName, clinicId]);
+  }, [roomName, connectWebSocket]);
+
 
   // Função para enviar mensagem
   const sendMessage = useCallback(
     async (content: string) => {
       const ws = wsRef.current;
       if (!ws || ws.readyState !== WebSocket.OPEN) {
-        console.error("WebSocket não conectado");
+        console.error("WebSocket não conectado ou não está aberto.");
         return false;
       }
 
@@ -174,7 +231,7 @@ export function useRealtimeChat({
 
         setMessages((current) => [...current, localMessage]);
 
-        // Supabase
+        // Broadcast localmente via Supabase para outras abas/clientes
         if (supabaseChannelRef.current) {
           await supabaseChannelRef.current.send({
             type: "broadcast",
@@ -183,13 +240,13 @@ export function useRealtimeChat({
           });
         }
 
-        // Backend
+        // Envia para o backend via WebSocket
         const wsMessage = JSON.stringify({
           type: "send-message",
           sender: username,
           message: content,
           clinic_id: clinicId,
-          phone_number: roomName,
+          phone_number: roomName, // Usa roomName como phone_number
         });
 
         ws.send(wsMessage);
@@ -206,6 +263,7 @@ export function useRealtimeChat({
   return {
     messages,
     sendMessage,
-    isConnected,
+    isConnected: connectionStatus === 'connected', // Compatibilidade
+    connectionStatus, // Novo status granular
   };
 }

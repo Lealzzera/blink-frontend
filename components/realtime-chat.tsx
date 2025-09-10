@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Users, Search, Wifi, WifiOff } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import styles from './styles/realtime-chat.module.css';
+import styles from './styles/realtime-chat.module.css'; // Certifique-se de ter este arquivo CSS
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 
-// Interfaces simplificadas
+// Interfaces simplificadas (mantidas como no original)
 interface ChatConfig {
   phone_number: string;
   picture_url: string;
@@ -34,7 +34,7 @@ interface RealtimeChatProps {
   username: string;
   initialContacts?: ChatConfig[];
   token?: string;
-  clinicId?: number;
+  clinicId?: number; // Usa este clinicId para as chamadas API
 }
 
 const formatDateTime = (dateString?: string | null) => {
@@ -54,7 +54,7 @@ export const RealtimeChat = ({
   username,
   initialContacts = [],
   token,
-  clinicId = 1,
+  clinicId = 1, // Valor padrão para clinicId
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
 
@@ -89,10 +89,16 @@ export const RealtimeChat = ({
   const [showContacts, setShowContacts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-  const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
+  // Use o novo `connectionStatus` do hook
+  const {
+    messages: realtimeMessages,
+    sendMessage,
+    isConnected,
+    connectionStatus, // Novo estado granular de conexão
+  } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
     username,
-    clinicId,
+    clinicId, // Passa o clinicId para o hook
   });
 
   // Junta mensagens SSR + realtime
@@ -112,13 +118,13 @@ export const RealtimeChat = ({
 
   const toggleMenu = () => setShowContacts(prev => !prev);
 
-  // Função buscar mais contatos
+  // Função buscar mais contatos - usa clinicId
   const loadMoreContacts = async () => {
     if (!token || !hasMoreContacts || loadingContacts) return;
     try {
       setLoadingContacts(true);
       const nextPage = contactsPage + 1;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview?page=${nextPage}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/${clinicId}/overview?page=${nextPage}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -149,12 +155,12 @@ export const RealtimeChat = ({
     }
   };
 
-  // Função buscar mensagens ao selecionar contato
+  // Função buscar mensagens ao selecionar contato - usa clinicId
   const fetchMessages = useCallback(async (pageToLoad: number = 0, reset: boolean = false) => {
     if (!token || !selectedContact) return;
     try {
       setLoadingMessages(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview/${selectedContact.number}?page=${pageToLoad}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/${clinicId}/overview/${selectedContact.number}?page=${pageToLoad}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -172,7 +178,7 @@ export const RealtimeChat = ({
 
           setMessages(prev => reset ? mappedMessages : [...mappedMessages, ...prev]);
           
-          if (data.length < 20) {
+          if (data.length < 20) { // Assumindo 20 mensagens por página
             setHasMoreMessages(false);
           }
         } else {
@@ -185,7 +191,7 @@ export const RealtimeChat = ({
     } finally {
       setLoadingMessages(false);
     }
-  }, [token, selectedContact, username]);
+  }, [token, selectedContact, username, clinicId]); // Adiciona clinicId às dependências
 
   // Função buscar mais mensagens (rolando para cima)
   const loadMoreMessages = async () => {
@@ -230,14 +236,14 @@ export const RealtimeChat = ({
     if (!el) return;
 
     const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 700) {
+      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 700) { // Carrega 700px antes do fim
         loadMoreContacts();
       }
     };
 
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-  }, [contactsPage, token, hasMoreContacts, loadingContacts]);
+  }, [contactsPage, token, hasMoreContacts, loadingContacts, loadMoreContacts]); // Adiciona loadMoreContacts às dependências
 
   // Scroll mensagens -> topo carrega mais
   useEffect(() => {
@@ -245,14 +251,14 @@ export const RealtimeChat = ({
     if (!el) return;
     
     const onScroll = () => {
-      if (el.scrollTop <= 20 && !loadingMessages) {
+      if (el.scrollTop <= 20 && !loadingMessages) { // Carrega quando o scroll está a 20px do topo
         loadMoreMessages();
       }
     };
     
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-  }, [messagesPage, token, selectedContact, hasMoreMessages, loadingMessages]);
+  }, [messagesPage, token, selectedContact, hasMoreMessages, loadingMessages, loadMoreMessages]); // Adiciona loadMoreMessages às dependências
 
   // Enviar mensagem
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
@@ -284,11 +290,51 @@ export const RealtimeChat = ({
     const container = containerRef.current;
     const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 150;
 
-    if (isNearBottom) {
+    // Se estiver perto do fim ou se a nova mensagem for minha, rola para baixo
+    // Isso evita rolagem automática se o usuário estiver lendo mensagens antigas
+    const lastMessage = allMessages[allMessages.length - 1];
+    const isMyLastMessage = lastMessage?.fromMe || lastMessage?.user?.name === username;
+
+    if (isNearBottom || isMyLastMessage) {
       const timeout = setTimeout(() => scrollToBottom(), 50);
       return () => clearTimeout(timeout);
     }
-  }, [allMessages, scrollToBottom]);
+  }, [allMessages, scrollToBottom, username]);
+
+  // Função para renderizar o status da conexão
+  const renderConnectionStatus = () => {
+    switch (connectionStatus) {
+      case 'connected':
+        return <Wifi size={16} className={styles.connected}  />;
+      case 'connecting':
+        return <span className={styles.connectingIndicator} ></span>;
+      case 'disconnected':
+        return <WifiOff size={16} className={styles.disconnected} />;
+      case 'error':
+        return <span className={styles.errorIndicator} >!</span>;
+      default:
+        return null;
+    }
+  };
+
+  // Texto do placeholder do input
+  const inputPlaceholder = useMemo(() => {
+    switch (connectionStatus) {
+      case 'connected':
+        return "Digite a mensagem...";
+      case 'connecting':
+        return "Conectando...";
+      case 'disconnected':
+        return "Desconectado, tentando reconectar...";
+      case 'error':
+        return "Erro de conexão. Não é possível enviar.";
+      default:
+        return "Carregando...";
+    }
+  }, [connectionStatus]);
+
+  // Desabilita o input e o botão de enviar se não estiver conectado ou estiver enviando
+  const isInputDisabled = !isConnected || isSending || connectionStatus === 'error';
 
   return (
     <div className={styles.container}>
@@ -379,11 +425,7 @@ export const RealtimeChat = ({
               />
               <h3 className={styles.headerTitle}>{selectedContact.name}</h3>
               <div className={styles.connectionStatus}>
-                {isConnected ? (
-                  <Wifi size={16} className={styles.connected} />
-                ) : (
-                  <WifiOff size={16} className={styles.disconnected} />
-                )}
+                {renderConnectionStatus()} {/* Usa o novo renderConnectionStatus */}
               </div>
             </div>
           )}
@@ -398,7 +440,9 @@ export const RealtimeChat = ({
           )}
 
           {allMessages.length === 0 && !loadingMessages && (
-            <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
+            <div className={styles.noMessages}>
+              {selectedContact ? 'Sem mensagens por enquanto.' : 'Selecione um contato para iniciar o chat.'}
+            </div>
           )}
           
           {error && <div className={styles.errorMessage}>{error}</div>}
@@ -427,11 +471,11 @@ export const RealtimeChat = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder={isConnected ? "Digite a mensagem..." : "Conectando..."}
-            disabled={!isConnected || isSending}
+            placeholder={inputPlaceholder} // Usa o novo placeholder dinâmico
+            disabled={isInputDisabled} // Usa o novo estado de desabilitação
           />
-          {isConnected && newMessage.trim() && (
-            <Button className={styles.sendButton} type="submit" disabled={!isConnected || isSending}>
+          {isConnected && newMessage.trim() && ( // Mostra o botão de enviar apenas se conectado e houver mensagem
+            <Button className={styles.sendButton} type="submit" disabled={isInputDisabled}>
               {isSending ? 'Enviando...' : <Send className={styles.sendIcon} />}
             </Button>
           )}
