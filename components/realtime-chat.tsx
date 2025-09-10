@@ -1,3 +1,5 @@
+// realtime-chat.tsx
+
 'use client'
 
 import { cn } from '@/lib/utils';
@@ -87,9 +89,12 @@ export const RealtimeChat = ({
   const [showContacts, setShowContacts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
+  // WebSocket STOMP (usando hook adaptado)
   const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
     roomName: selectedContact?.roomName || '',
     username,
+    token,
+    clinicId: 1,
   });
 
   // Junta mensagens SSR + realtime
@@ -258,6 +263,8 @@ export const RealtimeChat = ({
     try {
       setIsSending(true);
       setError(null);
+
+      // Atualiza UI imediatamente
       sendMessage(newMessage);
 
       if (!token) throw new Error('Token de autenticação não encontrado.');
