@@ -1,5 +1,3 @@
-// realtime-chat.tsx
-
 'use client'
 
 import { cn } from '@/lib/utils';
@@ -13,6 +11,10 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
+import SockJS from 'sockjs-client';
+import { Client } from '@stomp/stompjs';
+
+
 
 // Interfaces simplificadas
 interface ChatConfig {
@@ -57,6 +59,68 @@ export const RealtimeChat = ({
   token,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
+
+
+useEffect(() => {
+  const socket = new SockJS('https://be.blinkdentalmarketing.com.br/api/v1/wpp-socket')
+  socket.onopen = () => {
+    console.log('Conectado no websocket')
+  }
+  socket.onmessage = (msg) => console.log('recebido', msg)
+   /* 
+        const client = new Client({
+        // Se o backend usa SockJS
+        webSocketFactory: () => new SockJS("https://be.blinkdentalmarketing.com.br/api/v1/wpp-socket"),
+        
+        // Se for WS puro:
+        // brokerURL: "ws://localhost:8080/ws",
+
+        connectHeaders: {
+          Authorization: `Bearer ${token}`, // 👈 manda o token aqui
+        },
+
+         onConnect: () => {
+           console.log("✅ Conectado com token!");
+           client.subscribe("/wpp-socket/notify/message-received", (msg) => {
+             console.log("📩", msg.body);
+           });
+         },
+      });
+
+      client.publish({
+        destination
+      })
+
+      */
+
+
+    /*stompClient = over(socket);
+
+
+    stompClient.connect({}, () => {
+      console.log("✅ Conectado ao STOMP WebSocket");
+
+      // Se inscreve em um tópico
+      stompClient.subscribe("/topic/messages", (message: any) => {
+        const body = JSON.parse(message.body);
+        console.log("📩 Recebido:", body);
+        messagesRef.current.push(body.content);
+      });
+
+      // Envia uma mensagem para o backend
+      stompClient.send("/app/sendMessage", {}, JSON.stringify({ content: "Hello from Next.js!" }));
+    });
+
+    return () => {
+      if (stompClient) {
+        stompClient.disconnect(() => console.log("🔌 Desconectado"));
+      }
+    };*/
+  }, []);
+
+
+
+
 
   // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({

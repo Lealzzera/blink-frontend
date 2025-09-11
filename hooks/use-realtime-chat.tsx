@@ -22,7 +22,7 @@ export interface ChatMessage {
   createdAt: string;
 }
 
-const sanitize = (v?: string) => (v || "").toString().replace(/\D/g, "");
+
 
 export function useRealtimeChat({
   roomName,
