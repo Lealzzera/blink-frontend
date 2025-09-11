@@ -45,7 +45,7 @@ export function useRealtimeChat({
     const isHttps = base.startsWith("https://");
     const protocol = isHttps ? "wss://" : "ws://";
     const withoutProtocol = base.replace(/^https?:\/\//, "");
-    return `${protocol}${withoutProtocol}/wpp-socket/notify/message-received`;
+    return `${protocol}${withoutProtocol}/wpp-socket`;
   };
 
   useEffect(() => {
