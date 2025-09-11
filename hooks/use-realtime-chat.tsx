@@ -6,10 +6,10 @@ import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
 
 interface UseRealtimeChatProps {
-  roomName: string;   // normalmente o número do contato (ex: 5599999999999)
-  username: string;   // nome do agente/logado
-  token?: string;     // token para Authorization
-  clinicId?: number;  // clinica para filtrar mensagens recebidas
+  roomName: string;
+  username: string;
+  token?: string;
+  clinicId?: number;
 }
 
 export interface ChatMessage {
@@ -24,20 +24,27 @@ export interface ChatMessage {
 
 const sanitize = (v?: string) => (v || "").toString().replace(/\D/g, "");
 
-export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: UseRealtimeChatProps) {
+export function useRealtimeChat({
+  roomName,
+  username,
+  token,
+  clinicId = 1,
+}: UseRealtimeChatProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
 
   const clientRef = useRef<Client | null>(null);
-  const subsRef = useRef<Array<() => void>>([]);
+  const unsubRef = useRef<() => void>(() => {});
 
   // Constrói URL WebSocket
   const buildWsUrl = () => {
-    const base = ("https://be.blinkdentalmarketing.com.br/api/v1").replace(/\/+$/, "");
+    const base = "https://be.blinkdentalmarketing.com.br/api/v1".replace(
+      /\/+$/,
+      ""
+    );
     const isHttps = base.startsWith("https://");
     const protocol = isHttps ? "wss://" : "ws://";
     const withoutProtocol = base.replace(/^https?:\/\//, "");
-    // endpoint websocket STOMP
     return `${protocol}${withoutProtocol}/wpp-socket`;
   };
 
@@ -47,7 +54,7 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
     const wsUrl = buildWsUrl();
 
     const client = new Client({
-      brokerURL: wsUrl, // WebSocket nativo (sem SockJS)
+      brokerURL: wsUrl,
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
@@ -55,6 +62,7 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
       onConnect: () => {
         setIsConnected(true);
 
+        // callback para mensagens recebidas
         const onMessage = (frame: IMessage) => {
           try {
             const payload = JSON.parse(frame.body) as {
@@ -64,8 +72,13 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
               createdAt?: string;
             };
 
+            // filtra por contato e clínica
             if (sanitize(payload.sender) !== sanitize(roomName)) return;
-            if (payload.clinic_id != null && Number(payload.clinic_id) !== Number(clinicId)) return;
+            if (
+              payload.clinic_id != null &&
+              Number(payload.clinic_id) !== Number(clinicId)
+            )
+              return;
 
             const msg: ChatMessage = {
               id: crypto.randomUUID(),
@@ -75,48 +88,35 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
               createdAt: payload.createdAt || new Date().toISOString(),
             };
 
-            setMessages((current) => {
-              if (current.some((m) => m.id === msg.id)) return current;
-              return [...current, msg];
-            });
-          } catch {
-            const raw = frame.body || "";
-            if (!raw) return;
-            const msg: ChatMessage = {
-              id: crypto.randomUUID(),
-              text: raw,
-              content: raw,
-              user: { name: "Contato" },
-              createdAt: new Date().toISOString(),
-            };
             setMessages((current) => [...current, msg]);
+          } catch (err) {
+            console.error("Erro ao parsear mensagem STOMP:", err, frame.body);
           }
         };
 
-        const sub1 = client.subscribe("/wpp-socket/notify/message-received", onMessage);
-        const sub2 = client.subscribe("/wpp-socket/subscribe", onMessage);
+        // ✅ Assina somente o tópico que realmente envia mensagens
+        const subscription = client.subscribe(
+          "/wpp-socket/notify/message-received",
+          onMessage
+        );
 
-        subsRef.current = [
-          () => sub1.unsubscribe(),
-          () => sub2.unsubscribe(),
-        ];
+        unsubRef.current = () => {
+          try {
+            subscription.unsubscribe();
+          } catch {}
+        };
       },
-      onStompError: () => {
-        setIsConnected(false);
-      },
-      onWebSocketClose: () => {
-        setIsConnected(false);
-      },
+      onStompError: () => setIsConnected(false),
+      onWebSocketClose: () => setIsConnected(false),
     });
 
     clientRef.current = client;
     client.activate();
 
     return () => {
-      subsRef.current.forEach((fn) => {
-        try { fn(); } catch {}
-      });
-      subsRef.current = [];
+      try {
+        unsubRef.current();
+      } catch {}
       try {
         client.deactivate();
       } catch {}
@@ -138,18 +138,20 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
 
       setMessages((current) => [...current, message]);
 
-      // Se quiser publicar via STOMP também:
-      // try {
-      //   clientRef.current?.publish({
-      //     destination: "/wpp-socket/subscribe",
-      //     body: JSON.stringify({
-      //       sender: sanitize(roomName),
-      //       message: content,
-      //       clinic_id: clinicId,
-      //     }),
-      //     headers: { Authorization: `Bearer ${token}` },
-      //   });
-      // } catch {}
+      // ✅ Publicar no tópico correto
+      try {
+        clientRef.current?.publish({
+          destination: "/wpp-socket/subscribe",
+          body: JSON.stringify({
+            sender: sanitize(roomName),
+            message: content,
+            clinic_id: clinicId,
+          }),
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      } catch (err) {
+        console.error("Erro ao enviar mensagem STOMP:", err);
+      }
     },
     [username, roomName, clinicId, token]
   );
