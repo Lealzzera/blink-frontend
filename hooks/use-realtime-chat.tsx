@@ -4,12 +4,11 @@
 
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Client, IMessage } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 
 interface UseRealtimeChatProps {
   roomName: string;   // normalmente o número do contato (ex: 5599999999999)
   username: string;   // nome do agente/logado
-  token?: string;     // token para Authorization se necessário
+  token?: string;     // token para Authorization
   clinicId?: number;  // clinica para filtrar mensagens recebidas
 }
 
@@ -32,33 +31,30 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
   const clientRef = useRef<Client | null>(null);
   const subsRef = useRef<Array<() => void>>([]);
 
-  // Constrói URL WebSocket a partir da base HTTP
+  // Constrói URL WebSocket
   const buildWsUrl = () => {
     const base = ("https://be.blinkdentalmarketing.com.br/api/v1").replace(/\/+$/, "");
     const isHttps = base.startsWith("https://");
     const protocol = isHttps ? "wss://" : "ws://";
-    // remove http(s)://
     const withoutProtocol = base.replace(/^https?:\/\//, "");
-    // endpoint websocket STOMP (com SockJS) - ajustado para "/wpp-socket"
+    // endpoint websocket STOMP
     return `${protocol}${withoutProtocol}/wpp-socket`;
   };
 
-  // Conecta no STOMP e assina tópicos
   useEffect(() => {
-    // Se não há sala (contato selecionado), não conectar
-    if (!roomName) return;
+    if (!roomName || !token) return;
 
     const wsUrl = buildWsUrl();
 
     const client = new Client({
-      // SockJS para compatibilidade
-      webSocketFactory: () => new SockJS(wsUrl),
-      connectHeaders: token ? { Authorization: `Bearer ${token}` } : {},
+      brokerURL: wsUrl, // WebSocket nativo (sem SockJS)
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
       reconnectDelay: 5000,
       onConnect: () => {
         setIsConnected(true);
 
-        // Função para tratar mensagens recebidas
         const onMessage = (frame: IMessage) => {
           try {
             const payload = JSON.parse(frame.body) as {
@@ -68,10 +64,7 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
               createdAt?: string;
             };
 
-            // filtra por contato/sala
             if (sanitize(payload.sender) !== sanitize(roomName)) return;
-
-            // filtra por clínica se vier no payload
             if (payload.clinic_id != null && Number(payload.clinic_id) !== Number(clinicId)) return;
 
             const msg: ChatMessage = {
@@ -83,12 +76,10 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
             };
 
             setMessages((current) => {
-              // evita duplicar se por algum motivo o mesmo id já existir (pouco provável com randomUUID)
               if (current.some((m) => m.id === msg.id)) return current;
               return [...current, msg];
             });
-          } catch (e) {
-            // se o servidor enviar texto simples
+          } catch {
             const raw = frame.body || "";
             if (!raw) return;
             const msg: ChatMessage = {
@@ -102,12 +93,9 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
           }
         };
 
-        // Assina os destinos informados pelo backend
         const sub1 = client.subscribe("/wpp-socket/notify/message-received", onMessage);
-        // Em caso de o backend também publicar neste destino:
         const sub2 = client.subscribe("/wpp-socket/subscribe", onMessage);
 
-        // guarda unsubscribers
         subsRef.current = [
           () => sub1.unsubscribe(),
           () => sub2.unsubscribe(),
@@ -125,7 +113,6 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
     client.activate();
 
     return () => {
-      // limpa subscrições e desconecta
       subsRef.current.forEach((fn) => {
         try { fn(); } catch {}
       });
@@ -137,11 +124,8 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
       setMessages([]);
       setIsConnected(false);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomName, token, clinicId]);
 
-  // Envia mensagem: atualiza localmente para feedback imediato
-  // O envio real para WhatsApp continua sendo via REST no componente
   const sendMessage = useCallback(
     (content: string) => {
       const message: ChatMessage = {
@@ -154,17 +138,16 @@ export function useRealtimeChat({ roomName, username, token, clinicId = 1 }: Use
 
       setMessages((current) => [...current, message]);
 
-      // Opcional: caso queira publicar via STOMP também (se o backend tratar):
-      // Descomentando abaixo, envia para o destino fornecido.
+      // Se quiser publicar via STOMP também:
       // try {
       //   clientRef.current?.publish({
       //     destination: "/wpp-socket/subscribe",
       //     body: JSON.stringify({
-      //       sender: sanitize(roomName), // ou username, conforme regra do backend
+      //       sender: sanitize(roomName),
       //       message: content,
       //       clinic_id: clinicId,
       //     }),
-      //     headers: token ? { Authorization: `Bearer ${token}` } : {},
+      //     headers: { Authorization: `Bearer ${token}` },
       //   });
       // } catch {}
     },
