@@ -62,7 +62,7 @@ export const RealtimeChat = ({
 
 
 useEffect(() => {
-  const socket = new SockJS('https://be.blinkdentalmarketing.com.br/api/v1/wpp-socket')
+  const socket = new SockJS(`https://be.blinkdentalmarketing.com.br/api/v1/wpp-socket?token=${token}`)
   socket.onopen = () => {
     console.log('Conectado no websocket')
   }
