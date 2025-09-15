@@ -44,7 +44,7 @@ const formatDateTime = (dateString?: string | null) => {
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
-    year: '2-digit', // corrigido para yy
+    year: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
@@ -64,7 +64,7 @@ export const RealtimeChat = ({
       console.log('Conectado no websocket')
     }
     socket.onmessage = (msg) => console.log('recebido', msg)
-  }, []);
+  }, [token]);
 
   // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
@@ -84,10 +84,8 @@ export const RealtimeChat = ({
 
   // Estado mensagens
   const [selectedContact, setSelectedContact] = useState<any>(contacts[0] || null);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [messagesPage, setMessagesPage] = useState(0);
-  const [hasMoreMessages, setHasMoreMessages] = useState(true);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [messagesByContact, setMessagesByContact] = useState<Record<string, ChatMessage[]>>({});
+  const [paginationByContact, setPaginationByContact] = useState<Record<string, { page: number; hasMore: boolean; loading: boolean }>>({});
 
   // Novo estado
   const [newMessage, setNewMessage] = useState('');
@@ -107,10 +105,11 @@ export const RealtimeChat = ({
 
   // Junta mensagens SSR + realtime
   const allMessages = useMemo(() => {
-    const merged = [...messages, ...realtimeMessages];
+    const msgs = messagesByContact[selectedContact?.number || ''] || [];
+    const merged = [...msgs, ...realtimeMessages];
     const unique = merged.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [messages, realtimeMessages]);
+  }, [messagesByContact, realtimeMessages, selectedContact]);
 
   // Detecta mobile
   useEffect(() => {
@@ -160,11 +159,15 @@ export const RealtimeChat = ({
   };
 
   // Função buscar mensagens ao selecionar contato
-  const fetchMessages = useCallback(async (pageToLoad: number = 0, reset: boolean = false) => {
-    if (!token || !selectedContact) return;
+  const fetchMessages = useCallback(async (contactNumber: string, pageToLoad: number = 0, reset: boolean = false) => {
+    if (!token || !contactNumber) return;
     try {
-      setLoadingMessages(true);
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview/${selectedContact.number}?page=${pageToLoad}`, {
+      setPaginationByContact(prev => ({
+        ...prev,
+        [contactNumber]: { ...(prev[contactNumber] || { page: 0, hasMore: true, loading: false }), loading: true }
+      }));
+
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview/${contactNumber}?page=${pageToLoad}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -172,46 +175,55 @@ export const RealtimeChat = ({
         const data: ChatPhoneConfig[] = await res.json();
         if (data.length > 0) {
           const mappedMessages = data.map(msg => ({
-            id: `${selectedContact.number}-${msg.sent_at}-${msg.from_me}`,
+            id: `${contactNumber}-${msg.sent_at}-${msg.from_me}`,
             text: msg.message_text,
             content: msg.message_text,
-            user: { name: msg.from_me ? username : (selectedContact?.name || 'Contato') },
+            user: { name: msg.from_me ? username : contactNumber },
             createdAt: msg.sent_at,
           }));
 
-          setMessages(prev =>
-            reset ? mappedMessages : [...mappedMessages, ...prev] // 👈 corrigido: prepend mensagens novas
-          );
+          setMessagesByContact(prev => ({
+            ...prev,
+            [contactNumber]: reset ? mappedMessages : [...mappedMessages, ...(prev[contactNumber] || [])]
+          }));
 
-          if (data.length < 20) {
-            setHasMoreMessages(false);
-          } else {
-            if (!reset) setMessagesPage(pageToLoad); // só aumenta se não for reset
-          }
+          setPaginationByContact(prev => ({
+            ...prev,
+            [contactNumber]: {
+              page: reset ? 0 : pageToLoad,
+              hasMore: data.length >= 20,
+              loading: false,
+            }
+          }));
         } else {
-          setHasMoreMessages(false);
+          setPaginationByContact(prev => ({
+            ...prev,
+            [contactNumber]: { ...(prev[contactNumber] || { page: 0, hasMore: false, loading: false }), hasMore: false, loading: false }
+          }));
         }
       }
     } catch (err) {
       console.error("Erro ao carregar mensagens", err);
-      setHasMoreMessages(false);
-    } finally {
-      setLoadingMessages(false);
+      setPaginationByContact(prev => ({
+        ...prev,
+        [contactNumber]: { ...(prev[contactNumber] || { page: 0, hasMore: false, loading: false }), hasMore: false, loading: false }
+      }));
     }
-  }, [token, selectedContact, username]);
+  }, [token, username]);
 
   // Função buscar mais mensagens (rolando para cima)
   const loadMoreMessages = async () => {
-    if (!hasMoreMessages || loadingMessages || !containerRef.current) return;
+    if (!selectedContact) return;
+    const { page, hasMore, loading } = paginationByContact[selectedContact.number] || { page: 0, hasMore: true, loading: false };
+    if (!hasMore || loading || !containerRef.current) return;
 
     const el = containerRef.current;
     const prevScrollHeight = el.scrollHeight;
     const prevScrollTop = el.scrollTop;
 
-    const nextPage = messagesPage + 1;
-    await fetchMessages(nextPage, false);
+    const nextPage = page + 1;
+    await fetchMessages(selectedContact.number, nextPage, false);
 
-    // restaura posição do scroll
     requestAnimationFrame(() => {
       if (el) {
         const newScrollHeight = el.scrollHeight;
@@ -223,10 +235,7 @@ export const RealtimeChat = ({
   // Carregar mensagens quando selecionar um contato
   useEffect(() => {
     if (selectedContact) {
-      setMessages([]);
-      setMessagesPage(0);
-      setHasMoreMessages(true);
-      fetchMessages(0, true).then(() => {
+      fetchMessages(selectedContact.number, 0, true).then(() => {
         setTimeout(() => scrollToBottom(), 100);
       });
     }
@@ -252,17 +261,18 @@ export const RealtimeChat = ({
   // Scroll mensagens -> topo carrega mais
   useEffect(() => {
     const el = containerRef.current;
-    if (!el) return;
+    if (!el || !selectedContact) return;
     
     const onScroll = () => {
-      if (el.scrollTop <= 20 && !loadingMessages) {
+      const { loading } = paginationByContact[selectedContact.number] || { loading: false };
+      if (el.scrollTop <= 20 && !loading) {
         loadMoreMessages();
       }
     };
     
     el.addEventListener("scroll", onScroll);
     return () => el.removeEventListener("scroll", onScroll);
-  }, [messagesPage, token, selectedContact, hasMoreMessages, loadingMessages]);
+  }, [paginationByContact, selectedContact]);
 
   // Enviar mensagem
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
@@ -315,6 +325,8 @@ export const RealtimeChat = ({
       return () => clearTimeout(timeout);
     }
   }, [allMessages, scrollToBottom]);
+
+  const selectedPagination = selectedContact ? paginationByContact[selectedContact.number] || { hasMore: true, loading: false } : { hasMore: false, loading: false };
 
   return (
     <div className={styles.container}>
@@ -410,13 +422,13 @@ export const RealtimeChat = ({
         </div>
 
         <div ref={containerRef} className={styles.messages}>
-          {hasMoreMessages && (
+          {selectedPagination.hasMore && (
             <div className={styles.loaderTop} onClick={loadMoreMessages}>
-              {loadingMessages ? <p>Carregando mensagens...</p> : <p>Carregar mais</p>}
+              {selectedPagination.loading ? <p>Carregando mensagens...</p> : <p>Carregar mais</p>}
             </div>
           )}
 
-          {allMessages.length === 0 && !loadingMessages && (
+          {allMessages.length === 0 && !selectedPagination.loading && (
             <div className={styles.noMessages}>Sem mensagens por enquanto.</div>
           )}
           
