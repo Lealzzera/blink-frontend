@@ -1,5 +1,6 @@
   "use client";
   import React, { useState, useEffect } from 'react';
+  import { useRouter } from 'next/navigation';
   import styles from './config.module.css';
   import Notification from '@/components/Notification';
   import { AppointmentSettings } from '../../components/appointments/AppointmentSettings';
@@ -34,6 +35,7 @@
   );
 
   export default function Config() {
+    const router = useRouter();
     // Authentication
     const { getAuthToken } = useAuth();
     const { notification, showNotification, hideNotification } = useNotification();
@@ -257,6 +259,7 @@
         });
 
         showNotification("Exceção adicionada com sucesso!", "success");
+        router.refresh();
       } catch (err) {
         console.error("Erro ao adicionar exceção:", err);
         showNotification("Exceção adicionada com sucesso!", "success");
@@ -274,6 +277,7 @@
 
         setExceptions(prev => prev.filter(ex => ex.id !== id));
         showNotification("Exceção removida com sucesso!", "success");
+        router.refresh();
       } catch (err) {
         console.error("Erro ao remover exceção:", err);
         if (err instanceof Error && err.message.includes('autenticação')) {
@@ -329,6 +333,7 @@
         const token = await getAuthToken();
         await availabilityService.updateAvailability(token, allDays);
         showNotification("Configurações salvas com sucesso!", "success");
+        router.refresh();
       } catch (err) {
         console.error("Erro ao salvar configurações:", err);
         setError(err instanceof Error ? err.message : "Erro desconhecido ao salvar configurações");
@@ -357,6 +362,7 @@
         });
 
         showNotification("Configurações de agendamento atualizadas!", "success");
+        router.refresh();
       } catch (err) {
         console.error("Erro ao salvar configurações de agendamento:", err);
         setAppointmentConfigError(

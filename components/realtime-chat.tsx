@@ -3,7 +3,6 @@
 import { cn } from '@/lib/utils';
 import { ChatMessageItem } from '@/components/chat-message';
 import { useChatScroll } from '@/hooks/use-chat-scroll';
-import { type ChatMessage, useRealtimeChat } from '@/hooks/use-realtime-chat';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Send, Users, Search } from 'lucide-react';
@@ -13,6 +12,15 @@ import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
+
+// A interface ChatMessage foi movida para cá para desacoplar do hook.
+export interface ChatMessage {
+  id: string;
+  text: string;
+  content: string;
+  user: { name: string };
+  createdAt: string;
+}
 
 // Interfaces simplificadas
 interface ChatConfig {
@@ -30,6 +38,7 @@ interface ChatPhoneConfig {
   from_me: boolean;
   sent_at: string;
   ack: string;
+  id?: string;
 }
 
 interface RealtimeChatProps {
@@ -51,20 +60,20 @@ const formatDateTime = (dateString?: string | null) => {
   }).format(date);
 };
 
+const generateTempId = () => {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return `temp-${(crypto as any).randomUUID()}`;
+  }
+  return `temp-${Date.now()}-${Math.floor(Math.random() * 100000)}`;
+};
+
 export const RealtimeChat = ({
   username,
   initialContacts = [],
   token,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
-
-  useEffect(() => {
-    const socket = new SockJS(`https://be.blinkdentalmarketing.com.br/api/v1/wpp-socket?token=${token}`)
-    socket.onopen = () => {
-      console.log('Conectado no websocket')
-    }
-    socket.onmessage = (msg) => console.log('recebido', msg)
-  }, [token]);
+  const stompClientRef = useRef<Client | null>(null);
 
   // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
@@ -94,22 +103,105 @@ export const RealtimeChat = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConnected, setIsConnected] = useState(false);
 
-  // WebSocket STOMP (usando hook adaptado)
-  const { messages: realtimeMessages, sendMessage, isConnected } = useRealtimeChat({
-    roomName: selectedContact?.roomName || '',
-    username,
-    token,
-    clinicId: 1,
-  });
+  // Lógica do WebSocket STOMP movida para o componente
+  useEffect(() => {
+    if (!token || !selectedContact) {
+      if (stompClientRef.current?.active) {
+        console.log('STOMP: Desconectando cliente por falta de token ou contato selecionado.');
+        stompClientRef.current.deactivate();
+      }
+      setIsConnected(false);
+      return;
+    }
 
-  // Junta mensagens SSR + realtime
+    console.log(`STOMP: Configurando cliente para a sala: ${selectedContact.roomName}`);
+    
+    const client = new Client({
+      webSocketFactory: () => new SockJS(`https://be.blinkdentalmarketing.com.br/wpp-socket/subscribe`),
+      debug: (str) => {
+        console.log('STOMP DEBUG:', str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+      onConnect: () => {
+        console.log('STOMP: Conectado com sucesso!');
+        setIsConnected(true);
+        setError(null);
+
+        //const clinicId = 1;
+        //const roomName = selectedContact.roomName;
+        const destination = `/wpp-socket/notify/message-received`;
+
+        console.log(`STOMP: Inscrevendo no tópico: ${destination}`);
+        client.subscribe(destination, (message) => {
+          try {
+            console.log('STOMP: Mensagem recebida no tópico:', message);
+            const receivedMessage: ChatPhoneConfig = JSON.parse(message.body);
+
+            const newChatMessage: ChatMessage = {
+              id: receivedMessage.id || `${selectedContact.number}-${receivedMessage.sent_at}-${Math.random()}`,
+              text: receivedMessage.message_text,
+              content: receivedMessage.message_text,
+              user: { name: receivedMessage.from_me ? username : selectedContact.name },
+              createdAt: receivedMessage.sent_at,
+            };
+
+            setMessagesByContact(prev => {
+              const currentMessages = prev[selectedContact.number] || [];
+              // evitar duplicatas por id
+              if (currentMessages.some(m => m.id === newChatMessage.id)) {
+                console.log('STOMP: Mensagem duplicada recebida, ignorando.', newChatMessage.id);
+                return prev;
+              }
+              console.log('STOMP: Adicionando nova mensagem ao estado.');
+              return {
+                ...prev,
+                [selectedContact.number]: [...currentMessages, newChatMessage],
+              };
+            });
+
+          } catch (e) {
+            console.error('STOMP: Erro ao processar mensagem recebida:', e, message.body);
+          }
+        });
+      },
+      onStompError: (frame) => {
+        console.error('STOMP: Erro do broker. Cabeçalho:', frame?.headers?.['message'], 'Corpo:', frame?.body);
+        setError('Erro de conexão com o chat em tempo real. Tentando reconectar...');
+        setIsConnected(false);
+      },
+      onWebSocketError: (event) => {
+        console.error('STOMP: Erro de WebSocket.', event);
+        setError('Erro na conexão WebSocket. Verifique o console para detalhes.');
+        setIsConnected(false);
+      },
+      onWebSocketClose: () => {
+        console.log('STOMP: Conexão WebSocket fechada. Tentando reconectar...');
+        setIsConnected(false);
+      },
+    });
+
+    console.log('STOMP: Ativando cliente...');
+    client.activate();
+    stompClientRef.current = client;
+
+    return () => {
+      if (client.active) {
+        console.log('STOMP: Desativando cliente na limpeza do efeito.');
+        client.deactivate();
+      }
+    };
+  }, [token, selectedContact, username]);
+
+  // Junta mensagens e ordena
   const allMessages = useMemo(() => {
     const msgs = messagesByContact[selectedContact?.number || ''] || [];
-    const merged = [...msgs, ...realtimeMessages];
-    const unique = merged.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
+    const unique = msgs.filter((m, i, self) => i === self.findIndex(msg => msg.id === m.id));
     return unique.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  }, [messagesByContact, realtimeMessages, selectedContact]);
+  }, [messagesByContact, selectedContact]);
 
   // Detecta mobile
   useEffect(() => {
@@ -174,7 +266,7 @@ export const RealtimeChat = ({
       if (res.ok) {
         const data: ChatPhoneConfig[] = await res.json();
         if (data.length > 0) {
-          const mappedMessages = data.map(msg => ({
+          const mappedMessages: ChatMessage[] = data.map(msg => ({
             id: `${contactNumber}-${msg.sent_at}-${msg.from_me}`,
             text: msg.message_text,
             content: msg.message_text,
@@ -274,17 +366,14 @@ export const RealtimeChat = ({
     return () => el.removeEventListener("scroll", onScroll);
   }, [paginationByContact, selectedContact]);
 
-  // Enviar mensagem
+  // Enviar mensagem (corrigido: não depende exclusivamente de isConnected; faz envio otimista)
   const handleSendMessage = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !isConnected || !selectedContact || isSending) return;
+    if (!newMessage.trim() || !selectedContact || isSending) return;
 
     try {
       setIsSending(true);
       setError(null);
-
-      // Atualiza UI imediatamente
-      sendMessage(newMessage);
 
       if (!token) throw new Error('Token de autenticação não encontrado.');
 
@@ -292,6 +381,22 @@ export const RealtimeChat = ({
       const formattedNumber = phoneNumber.startsWith('55') ? phoneNumber : `55${phoneNumber}`;
       if (formattedNumber.length < 12) throw new Error('Número de telefone inválido.');
 
+      // Mensagem otimista (aparece imediatamente)
+      const optimisticId = generateTempId();
+      const optimisticMessage: ChatMessage = {
+        id: optimisticId,
+        text: newMessage,
+        content: newMessage,
+        user: { name: username },
+        createdAt: new Date().toISOString(),
+      };
+
+      setMessagesByContact(prev => {
+        const curr = prev[selectedContact.number] || [];
+        return { ...prev, [selectedContact.number]: [...curr, optimisticMessage] };
+      });
+
+      // Requisição para enviar a mensagem
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/message/whats-app/send-message`, {
         method: 'POST',
         headers: {
@@ -306,13 +411,34 @@ export const RealtimeChat = ({
       });
 
       if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+
+      // tenta ler resposta e, caso retorne id, substitui o id temporário
+      let resData: any = null;
+      try { resData = await response.json(); } catch { resData = null; }
+
+      if (resData && resData.id) {
+        setMessagesByContact(prev => {
+          const list = prev[selectedContact.number] || [];
+          return {
+            ...prev,
+            [selectedContact.number]: list.map(m => m.id === optimisticId ? { ...m, id: resData.id, createdAt: resData.sent_at ?? m.createdAt } : m)
+          };
+        });
+      }
+
       setNewMessage('');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido');
+
+      // remove mensagens temporárias ao falhar
+      setMessagesByContact(prev => {
+        const list = prev[selectedContact.number] || [];
+        return { ...prev, [selectedContact.number]: list.filter(m => !String(m.id).startsWith('temp-')) };
+      });
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, isConnected, selectedContact, sendMessage, isSending, token]);
+  }, [newMessage, selectedContact, isSending, token, username]);
 
   // Scroll automático para novas mensagens
   useEffect(() => {
@@ -327,6 +453,9 @@ export const RealtimeChat = ({
   }, [allMessages, scrollToBottom]);
 
   const selectedPagination = selectedContact ? paginationByContact[selectedContact.number] || { hasMore: true, loading: false } : { hasMore: false, loading: false };
+
+  // botão aparece quando temos token, contato e texto
+  const canSend = Boolean(token && selectedContact && newMessage.trim());
 
   return (
     <div className={styles.container}>
@@ -458,11 +587,11 @@ export const RealtimeChat = ({
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Digite a mensagem..."
-            disabled={!isConnected || isSending}
+            placeholder={!selectedContact ? "Selecione um contato para começar" : (!token ? "Token ausente" : "Digite a mensagem...")}
+            disabled={!selectedContact || isSending}
           />
-          {isConnected && newMessage.trim() && (
-            <Button className={styles.sendButton} type="submit" disabled={ isSending}>
+          {canSend && (
+            <Button className={styles.sendButton} type="submit" disabled={ isSending }>
               {isSending ? 'Enviando...' : <Send className={styles.sendIcon} />}
             </Button>
           )}

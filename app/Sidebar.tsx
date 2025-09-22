@@ -3,14 +3,27 @@ import Image from 'next/image'
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
 import styles from "./styles/layout.module.css"; 
-import { FaComments, FaChartBar, FaCalendarAlt, FaCog, FaUser, FaPaperPlane } from 'react-icons/fa';
+import { FaComments, FaChartBar, FaCalendarAlt, FaCog, FaUser, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { LogoutButton } from '@/components/logout-button'
 import { motion } from 'framer-motion';
+import { useState, useEffect } from 'react';
 
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const [loadingPath, setLoadingPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLoadingPath(null);
+  }, [pathname]);
+
+  const handleLinkClick = (path: string) => {
+    if (pathname !== path) {
+      setLoadingPath(path);
+    }
+  };
+
   const hideMenu = pathname === '/auth/login' || pathname === '/auth/forgot-password';
 
   if (hideMenu) return null;
@@ -40,6 +53,13 @@ export default function Sidebar() {
     }
   };
 
+  const renderIcon = (path: string, icon: React.ReactNode) => {
+    if (loadingPath === path) {
+      return <FaSpinner className="animate-spin text-customCyan text-[24px] 2xl:text-[32px]" />;
+    }
+    return icon;
+  };
+
   return (
     <motion.div 
       className="bigContainer"
@@ -62,33 +82,33 @@ export default function Sidebar() {
       
       <motion.div className={styles.container} variants={sidebarVariants}>
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="/">
-            <FaComments className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
+          <Link href="/" onClick={() => handleLinkClick('/')}>
+            {renderIcon('/', <FaComments className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />)}
           </Link>
         </motion.div>
         
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="/dashboard">
-            <FaChartBar className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
+          <Link href="/dashboard" onClick={() => handleLinkClick('/dashboard')}>
+            {renderIcon('/dashboard', <FaChartBar className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />)}
           </Link>
         </motion.div>
         
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="/calendar">
-            <FaCalendarAlt className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
+          <Link href="/calendar" onClick={() => handleLinkClick('/calendar')}>
+            {renderIcon('/calendar', <FaCalendarAlt className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />)}
           </Link>
         </motion.div>
         
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="/messageShot">
-            <FaPaperPlane className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
+          <Link href="/messageShot" onClick={() => handleLinkClick('/messageShot')}>
+            {renderIcon('/messageShot', <FaPaperPlane className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />)}
           </Link>
         </motion.div>
     
         
         <motion.div className={styles.iconWrapper} variants={iconVariants} whileHover="hover" whileTap="tap">
-          <Link href="/config">
-            <FaCog className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />
+          <Link href="/config" onClick={() => handleLinkClick('/config')}>
+            {renderIcon('/config', <FaCog className="text-[#0f172a] text-[24px] 2xl:text-[32px] hover:text-customCyan transition-colors duration-300" />)}
           </Link>
         </motion.div>      
         
@@ -101,7 +121,9 @@ export default function Sidebar() {
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-48 border border-white bg-slate-200 text-black rounded ms-2">
               <DropdownMenuItem>
-                <Link href="/update-password">Redefinir senha</Link>
+                <Link href="/update-password" onClick={() => handleLinkClick('/update-password')}>
+                  {renderIcon('/update-password', <span>Redefinir senha</span>)}
+                </Link>
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <LogoutButton />
