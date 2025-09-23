@@ -10,8 +10,8 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import styles from './styles/realtime-chat.module.css';
 import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
-import SockJS from 'sockjs-client';
 import { Client } from '@stomp/stompjs';
+import SockJS from 'sockjs-client';
 
 // A interface ChatMessage foi movida para cá para desacoplar do hook.
 export interface ChatMessage {
@@ -73,7 +73,6 @@ export const RealtimeChat = ({
   token,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
-  const stompClientRef = useRef<Client | null>(null);
 
   // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
@@ -103,63 +102,64 @@ export const RealtimeChat = ({
   const [isMobile, setIsMobile] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
+
+  const stompClientRef = useRef<Client | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
-  // Lógica do WebSocket STOMP movida para o componente
   useEffect(() => {
-    if (!token || !selectedContact) {
-      if (stompClientRef.current?.active) {
-        console.log('STOMP: Desconectando cliente por falta de token ou contato selecionado.');
-        stompClientRef.current.deactivate();
-      }
-      setIsConnected(false);
+    if (!token || !username) {
       return;
     }
 
-    console.log(`STOMP: Configurando cliente para a sala: ${selectedContact.roomName}`);
-    
+    const socket = new SockJS(`https://be.blinkdentalmarketing.com.br/wpp-socket/subscribe?token=Bearer%20${token}`);
     const client = new Client({
-      webSocketFactory: () => new SockJS(`https://be.blinkdentalmarketing.com.br/wpp-socket/subscribe`),
+      webSocketFactory: () => socket,
+      connectHeaders: {
+        Authorization: `Bearer ${token}`,
+      },
       debug: (str) => {
-        console.log('STOMP DEBUG:', str);
+        console.log('STOMP DEBUG: ' + str);
       },
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
       onConnect: () => {
-        console.log('STOMP: Conectado com sucesso!');
+        console.log('STOMP: Successfully connected!');
         setIsConnected(true);
         setError(null);
 
-        //const clinicId = 1;
-        //const roomName = selectedContact.roomName;
-        const destination = `/wpp-socket/notify/message-received`;
+        const subscriptionTopic = `/user/${username}/notify/message-received`;
+        console.log(`STOMP: Subscribing to topic: "${subscriptionTopic}"`);
 
-        console.log(`STOMP: Inscrevendo no tópico: ${destination}`);
-        client.subscribe(destination, (message) => {
+        client.subscribe(subscriptionTopic, (message) => {
+          console.log('STOMP: Raw message received:', message);
           try {
-            console.log('STOMP: Mensagem recebida no tópico:', message);
-            const receivedMessage: ChatPhoneConfig = JSON.parse(message.body);
+            const receivedMessage = JSON.parse(message.body);
+            console.log('STOMP: Parsed message body:', receivedMessage);
+
+            const contactNumber = receivedMessage.phone_number; 
+            if (!contactNumber) {
+                console.error("Received message without phone_number", receivedMessage);
+                return;
+            }
 
             const newChatMessage: ChatMessage = {
-              id: receivedMessage.id || `${selectedContact.number}-${receivedMessage.sent_at}-${Math.random()}`,
+              id: receivedMessage.id || `${contactNumber}-${receivedMessage.sent_at}-${Math.random()}`,
               text: receivedMessage.message_text,
               content: receivedMessage.message_text,
-              user: { name: receivedMessage.from_me ? username : selectedContact.name },
+              user: { name: receivedMessage.from_me ? username : contactNumber },
               createdAt: receivedMessage.sent_at,
             };
 
             setMessagesByContact(prev => {
-              const currentMessages = prev[selectedContact.number] || [];
-              // evitar duplicatas por id
+              const currentMessages = prev[contactNumber] || [];
               if (currentMessages.some(m => m.id === newChatMessage.id)) {
-                console.log('STOMP: Mensagem duplicada recebida, ignorando.', newChatMessage.id);
                 return prev;
               }
-              console.log('STOMP: Adicionando nova mensagem ao estado.');
               return {
                 ...prev,
-                [selectedContact.number]: [...currentMessages, newChatMessage],
+                [contactNumber]: [...currentMessages, newChatMessage],
               };
             });
 
@@ -184,17 +184,19 @@ export const RealtimeChat = ({
       },
     });
 
-    console.log('STOMP: Ativando cliente...');
-    client.activate();
     stompClientRef.current = client;
+    client.activate();
 
     return () => {
       if (client.active) {
-        console.log('STOMP: Desativando cliente na limpeza do efeito.');
         client.deactivate();
       }
     };
-  }, [token, selectedContact, username]);
+  }, [token, username]);
+
+
+
+
 
   // Junta mensagens e ordena
   const allMessages = useMemo(() => {
@@ -600,3 +602,4 @@ export const RealtimeChat = ({
     </div>
   );
 };
+
