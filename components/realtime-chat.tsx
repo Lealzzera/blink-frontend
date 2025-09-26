@@ -103,100 +103,198 @@ export const RealtimeChat = ({
   const [showContacts, setShowContacts] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
 
-
   const stompClientRef = useRef<Client | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Função para atualizar a lista de contatos quando uma nova mensagem chega
+  const updateContactsList = useCallback((contactNumber: string, newMessageText: string, isFromMe: boolean, sentAt: string) => {
+    setContacts(prevContacts => {
+      // Verifica se o contato já existe na lista
+      const existingContactIndex = prevContacts.findIndex(contact => contact.number === contactNumber);
+      
+      if (existingContactIndex >= 0) {
+        // Contato existe - move para o topo e atualiza a última mensagem
+        const updatedContacts = [...prevContacts];
+        const contactToUpdate = { ...updatedContacts[existingContactIndex] };
+        
+        // Atualiza os dados do contato
+        contactToUpdate.lastMessage = newMessageText;
+        contactToUpdate.sentAt = sentAt;
+        contactToUpdate.fromMe = isFromMe;
+        
+        // Remove da posição atual e adiciona no início
+        updatedContacts.splice(existingContactIndex, 1);
+        return [contactToUpdate, ...updatedContacts];
+      } else {
+        // Contato novo - adiciona no topo
+        const newContact = {
+          id: contactNumber,
+          name: contactNumber, // Usa o número como nome padrão
+          number: contactNumber,
+          scheduled: false,
+          photo: '',
+          lastMessage: newMessageText,
+          sentAt: sentAt,
+          fromMe: isFromMe,
+          roomName: contactNumber,
+        };
+        
+        return [newContact, ...prevContacts];
+      }
+    });
+  }, []);
+
   useEffect(() => {
+    console.log("[WebSocket useEffect] Inicializando...");
+
     if (!token || !username) {
+      console.warn("[WebSocket useEffect] Token ou username ausente:", { token, username });
       return;
     }
 
-    const socket = new SockJS(`https://be.blinkdentalmarketing.com.br/wpp-socket/subscribe?token=Bearer%20${token}`);
-    const client = new Client({
-      webSocketFactory: () => socket,
-      connectHeaders: {
-        Authorization: `Bearer ${token}`,
-      },
-      debug: (str) => {
-        console.log('STOMP DEBUG: ' + str);
-      },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-      onConnect: () => {
-        console.log('STOMP: Successfully connected!');
-        setIsConnected(true);
-        setError(null);
+    try {
+      console.log("[WebSocket useEffect] Criando conexão SockJS...");
+      const socket = new SockJS(`https://be.blinkdentalmarketing.com.br/wpp-socket/subscribe?token=Bearer%20${token}`);
 
-        const subscriptionTopic = `/user/${username}/notify/message-received`;
-        console.log(`STOMP: Subscribing to topic: "${subscriptionTopic}"`);
+      console.log("[WebSocket useEffect] Criando cliente STOMP...");
+      const client = new Client({
+        webSocketFactory: () => {
+          console.log("[WebSocket useEffect] Chamando webSocketFactory...");
+          return socket;
+        },
+        connectHeaders: {
+          Authorization: `Bearer ${token}`,
+        },
+        debug: (str) => {
+          console.log("[STOMP DEBUG]", str);
+        },
+        reconnectDelay: 5000,
+        heartbeatIncoming: 4000,
+        heartbeatOutgoing: 4000,
 
-        client.subscribe(subscriptionTopic, (message) => {
-          console.log('STOMP: Raw message received:', message);
+        onConnect: () => {
+          console.log("[WebSocket useEffect] ✅ STOMP conectado com sucesso!");
+          setIsConnected(true);
+          setError(null);
+
+          const subscriptionTopic = `/user/${username}/notify/message-received`;
+          console.log("[WebSocket useEffect] Tentando se inscrever no tópico:", subscriptionTopic);
+
           try {
-            const receivedMessage = JSON.parse(message.body);
-            console.log('STOMP: Parsed message body:', receivedMessage);
+            client.subscribe(subscriptionTopic, (message) => {
+              console.log("[STOMP Subscription] Mensagem bruta recebida:", message);
 
-            const contactNumber = receivedMessage.phone_number; 
-            if (!contactNumber) {
-                console.error("Received message without phone_number", receivedMessage);
-                return;
-            }
+              try {
+                const receivedMessage = JSON.parse(message.body);
+                console.log("[STOMP Subscription] Mensagem parseada:", receivedMessage);
 
-            const newChatMessage: ChatMessage = {
-              id: receivedMessage.id || `${contactNumber}-${receivedMessage.sent_at}-${Math.random()}`,
-              text: receivedMessage.message_text,
-              content: receivedMessage.message_text,
-              user: { name: receivedMessage.from_me ? username : contactNumber },
-              createdAt: receivedMessage.sent_at,
-            };
+                // Compatibilidade: tenta pegar os campos em ambos os formatos
+                const contactNumber =
+                  receivedMessage.phone_number || receivedMessage.sender;
 
-            setMessagesByContact(prev => {
-              const currentMessages = prev[contactNumber] || [];
-              if (currentMessages.some(m => m.id === newChatMessage.id)) {
-                return prev;
+                const text =
+                  receivedMessage.message_text || receivedMessage.message;
+
+                const sentAt =
+                  receivedMessage.sent_at || new Date().toISOString();
+
+                const isFromMe = receivedMessage.from_me || false;
+
+                if (!contactNumber || !text) {
+                  console.error(
+                    "[STOMP Subscription] ❌ Mensagem recebida sem campos essenciais:",
+                    receivedMessage
+                  );
+                  return;
+                }
+
+                const newChatMessage: ChatMessage = {
+                  id:
+                    receivedMessage.id ||
+                    `${contactNumber}-${Date.now()}-${Math.random()}`,
+                  text,
+                  content: text,
+                  user: {
+                    name: isFromMe ? username : contactNumber,
+                  },
+                  createdAt: sentAt,
+                };
+
+                console.log(
+                  "[STOMP Subscription] Criando nova mensagem no estado:",
+                  newChatMessage
+                );
+
+                // Atualiza a lista de contatos (move para o topo e atualiza última mensagem)
+                updateContactsList(contactNumber, text, isFromMe, sentAt);
+
+                // Adiciona a mensagem ao estado de mensagens
+                setMessagesByContact((prev) => {
+                  const currentMessages = prev[contactNumber] || [];
+
+                  // evitar duplicados
+                  if (currentMessages.some((m) => m.id === newChatMessage.id)) {
+                    console.warn(
+                      "[STOMP Subscription] ⚠️ Mensagem duplicada detectada, ignorando:",
+                      newChatMessage.id
+                    );
+                    return prev;
+                  }
+
+                  return {
+                    ...prev,
+                    [contactNumber]: [...currentMessages, newChatMessage],
+                  };
+                });
+              } catch (err) {
+                console.error(
+                  "[STOMP Subscription] ❌ Erro ao parsear/processar mensagem:",
+                  err,
+                  message.body
+                );
               }
-              return {
-                ...prev,
-                [contactNumber]: [...currentMessages, newChatMessage],
-              };
             });
 
-          } catch (e) {
-            console.error('STOMP: Erro ao processar mensagem recebida:', e, message.body);
+          } catch (subErr) {
+            console.error("[WebSocket useEffect] ❌ Erro ao tentar se inscrever no tópico:", subErr);
           }
-        });
-      },
-      onStompError: (frame) => {
-        console.error('STOMP: Erro do broker. Cabeçalho:', frame?.headers?.['message'], 'Corpo:', frame?.body);
-        setError('Erro de conexão com o chat em tempo real. Tentando reconectar...');
-        setIsConnected(false);
-      },
-      onWebSocketError: (event) => {
-        console.error('STOMP: Erro de WebSocket.', event);
-        setError('Erro na conexão WebSocket. Verifique o console para detalhes.');
-        setIsConnected(false);
-      },
-      onWebSocketClose: () => {
-        console.log('STOMP: Conexão WebSocket fechada. Tentando reconectar...');
-        setIsConnected(false);
-      },
-    });
+        },
 
-    stompClientRef.current = client;
-    client.activate();
+        onStompError: (frame) => {
+          console.error("[WebSocket useEffect] ❌ Erro do broker STOMP:", {
+            headers: frame?.headers,
+            body: frame?.body,
+          });
+          setError("Erro de conexão com o chat em tempo real. Tentando reconectar...");
+          setIsConnected(false);
+        },
+
+        onWebSocketError: (event) => {
+          console.error("[WebSocket useEffect] ❌ Erro no WebSocket:", event);
+          setError("Erro na conexão WebSocket. Verifique o console para detalhes.");
+          setIsConnected(false);
+        },
+
+        onWebSocketClose: () => {
+          console.warn("[WebSocket useEffect] ⚠️ Conexão WebSocket fechada. Tentando reconectar...");
+          setIsConnected(false);
+        },
+      });
+
+      stompClientRef.current = client;
+      console.log("[WebSocket useEffect] Ativando cliente STOMP...");
+      client.activate();
+    } catch (err) {
+      console.error("[WebSocket useEffect] ❌ Erro ao inicializar STOMP:", err);
+    }
 
     return () => {
-      if (client.active) {
-        client.deactivate();
+      console.log("[WebSocket useEffect] Cleanup executado. Desativando cliente STOMP...");
+      if (stompClientRef.current?.active) {
+        stompClientRef.current.deactivate();
       }
     };
-  }, [token, username]);
-
-
-
-
+  }, [token, username, updateContactsList]);
 
   // Junta mensagens e ordena
   const allMessages = useMemo(() => {
@@ -393,6 +491,9 @@ export const RealtimeChat = ({
         createdAt: new Date().toISOString(),
       };
 
+      // Atualiza a lista de contatos quando o usuário envia uma mensagem
+      updateContactsList(selectedContact.number, newMessage, true, new Date().toISOString());
+
       setMessagesByContact(prev => {
         const curr = prev[selectedContact.number] || [];
         return { ...prev, [selectedContact.number]: [...curr, optimisticMessage] };
@@ -440,7 +541,7 @@ export const RealtimeChat = ({
     } finally {
       setIsSending(false);
     }
-  }, [newMessage, selectedContact, isSending, token, username]);
+  }, [newMessage, selectedContact, isSending, token, username, updateContactsList]);
 
   // Scroll automático para novas mensagens
   useEffect(() => {
@@ -602,4 +703,3 @@ export const RealtimeChat = ({
     </div>
   );
 };
-
