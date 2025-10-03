@@ -407,28 +407,6 @@
   }
 }
 
-/*
-@media(min-width: 800px) and (max-width: 1024px) {
-  .chat {
-    margin-left: 0;
-    max-height: 97%;
-  }
-
-  .contacts {
-    position: static;
-    width: 30%;
-  }
-
-  .headerTitle {
-    margin-left: 3.125rem;
-  }
-
-  .contactTitle {
-    text-align: center;
-  }
-}
-
-*/
 @media(max-width: 1024px) {
   .container {
     margin-top: 3vh;
@@ -521,4 +499,28 @@
   0% { opacity: 0.6; }
   50% { opacity: 1; }
   100% { opacity: 0.6; }
+}
+
+.loaderContainer {
+  text-align: center;
+  padding: 1rem;
+}
+
+.loaderText {
+  font-weight: bold;
+  color: #01ddf5;
+}
+
+.loaderLink {
+  font-weight: bold;
+  color: #01ddf5;
+  cursor: pointer;
+}
+
+.loaderTop {
+  text-align: center;
+  padding: 1rem;
+  font-weight: bold;
+  color: #01ddf5;
+  cursor: pointer;
 }

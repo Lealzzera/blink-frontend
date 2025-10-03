@@ -618,14 +618,14 @@ export const RealtimeChat = ({
         }
 
         {loadingContacts && (
-          <div className={styles.loader}>
-            <p>Carregando...</p>
+          <div className={styles.loaderContainer}>
+            <span className={styles.loaderText}>Carregando...</span>
           </div>
         )}
 
         {hasMoreContacts && !loadingContacts && (
-          <div className={styles.loader} onClick={loadMoreContacts}>
-            <p>Carregar mais</p>
+          <div className={styles.loaderContainer} onClick={loadMoreContacts}>
+            <span className={styles.loaderLink}>Carregar mais</span>
           </div>
         )}
       </div>
