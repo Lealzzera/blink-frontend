@@ -10,7 +10,7 @@ type MyContextType = {
 const MyContext = createContext<MyContextType | undefined>(undefined);
 
 export function MyProvider({ children }: { children: ReactNode }) {
-  const [value, setValue] = useState(1); //Aqui vai mudar conforme o back-end. Este 1 sera dinamico.
+  const [value, setValue] = useState(1); 
 
   return (
     <MyContext.Provider value={{ value, setValue }}>

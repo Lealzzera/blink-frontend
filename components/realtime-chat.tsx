@@ -12,6 +12,7 @@ import { Switch } from '@/components/ui/switch';
 import Image from 'next/image';
 import { Client } from '@stomp/stompjs';
 import SockJS from 'sockjs-client';
+import { useMyContext } from "../app/context/context";
 
 // A interface ChatMessage foi movida para cá para desacoplar do hook.
 export interface ChatMessage {
@@ -73,6 +74,10 @@ export const RealtimeChat = ({
   token,
 }: RealtimeChatProps) => {
   const { containerRef, scrollToBottom } = useChatScroll();
+
+  // Context
+  const {value} = useMyContext()
+
 
   // Estado contatos
   const [contacts, setContacts] = useState<any[]>(initialContacts.map(c => ({
@@ -319,7 +324,7 @@ export const RealtimeChat = ({
     try {
       setLoadingContacts(true);
       const nextPage = contactsPage + 1;
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview?page=${nextPage}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/${value}/overview?page=${nextPage}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -359,7 +364,7 @@ export const RealtimeChat = ({
         [contactNumber]: { ...(prev[contactNumber] || { page: 0, hasMore: true, loading: false }), loading: true }
       }));
 
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || 'https://be.blinkdentalmarketing.com.br/api/v1'}/chat/1/overview/${contactNumber}?page=${pageToLoad}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE || `https://be.blinkdentalmarketing.com.br/api/v1`}/chat/${value}/overview/${contactNumber}?page=${pageToLoad}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

@@ -7,13 +7,13 @@ export const createApiHeaders = (token: string) => ({
 });
 
 export const apiEndpoints = {
-  whatsappStatus: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/1/status`,
-  whatsappQrCode: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/1/qr-code`,
-  availability: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1`,
+  whatsappStatus: (value: number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/${value}/status`,
+  whatsappQrCode: (value: number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/${value}/qr-code`,
+  availability: (value: number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/${value}`,
   availabilityConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability`,
-  appointments: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments/1`,
+  appointments: (value: number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments/${value}`,
   appointmentsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/appointments`,
-  exceptions: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/1/exception`,
+  exceptions: (value:number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/${value}/exception`,
   exceptionsConfig: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/availability/exception`,
-  dashboardInfo: `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/1`
+  dashboardInfo: (value:number) => `${NEXT_PUBLIC_BLINK_BE_BASE_URL}/dashboards/${value}`,
 };

@@ -27,11 +27,12 @@ export default async function CalendarioServer() {
   let allowOverbooking = false;
 
   try {
-    const configRes = await fetch(`${API_BASE}/configurations/appointments/1`, {
+    const configRes = await fetch(`${API_BASE}/configurations/appointments/1`, { 
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
 
+    
     console.log({configRes})
 
     if (configRes.ok) {

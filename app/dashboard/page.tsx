@@ -8,6 +8,7 @@ import { dashboardService, DashboardConfig } from '../services/dashboardService'
 import { useAuth } from '../hooks/useAuth';
 import { useNotification } from '../hooks/useNotification';
 import Notification from '@/components/Notification';
+import { useMyContext } from "../context/context";
 
 // Definindo os tipos para os períodos
 type Period = 'Hoje' | 'Semana' | 'Mês';
@@ -50,7 +51,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const { getAuthToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
-
+  const {value, setValue} = useMyContext()
+  
   // Buscar dados quando o período mudar
   useEffect(() => {
     const fetchData = async () => {
@@ -60,7 +62,7 @@ export default function Dashboard() {
       const { startDate, endDate } = getDateRange(selectedPeriod);
 
       try {
-        const response = await dashboardService.getDashboard(token, startDate, endDate)
+        const response = await dashboardService.getDashboard(token, startDate, endDate, value)
         setData(response)
       } catch (err: any) {
         console.error("Erro ao buscar dados do dashboard:", err)
