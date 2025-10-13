@@ -370,6 +370,7 @@ export const RealtimeChat = ({
       
       if (res.ok) {
         const data: ChatPhoneConfig[] = await res.json();
+        console.log("Dados recebidos da API de mensagens:", data);
         if (data.length > 0) {
           const mappedMessages: ChatMessage[] = data.map(msg => ({
             id: `${contactNumber}-${msg.sent_at}-${msg.from_me}`,

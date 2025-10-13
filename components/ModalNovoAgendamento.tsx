@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import styles from "./styles/agendamento-modal.module.css";
 import MessageBox from "./MessageBox";
 import { createClient } from '@/lib/client'
+import { useMyContext } from "../app/context/context";
+
 const supabase = createClient()
 const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
 
@@ -48,6 +50,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
     allow_overbooking: false
   });
 
+  const {value} = useMyContext()
   const [workingDays, setWorkingDays] = useState<WorkingDay[]>([]);
   const [availableHours, setAvailableHours] = useState<string[]>([]);
 
@@ -92,7 +95,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const fetchClinicConfig = async () => {
     try {
-      const res = await fetch(`${API_BASE}/configurations/appointments/${clinicId}`, {
+      const res = await fetch(`${API_BASE}/configurations/appointments/${value}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -114,7 +117,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const fetchWorkingDays = async () => {
     try {
-      const res = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
+      const res = await fetch(`${API_BASE}/configurations/availability/${value}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -169,7 +172,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const checkExceptionAndGenerateOptions = async (selectedDate: string) => {
     try {
-      const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
+      const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${value}/exception`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -204,7 +207,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
       const dateObj = new Date(selectedDate);
       const dayOfWeek = dateObj.getDay();
 
-      const workingDaysRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}`, {
+      const workingDaysRes = await fetch(`${API_BASE}/configurations/availability/${value}`, {
         headers: {
           "Authorization": `Bearer ${token}`,
           "Content-Type": "application/json",
@@ -271,7 +274,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
       const patientPayload = {
         name: patientName,
         phone_number: rawPhone, // envia somente os números
-        clinic_id: clinicId,
+        clinic_id: value,
       };
 
       const pacientRes = await fetch(`${API_BASE}/patient`, {
@@ -294,7 +297,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
         patient_number: rawPhone, 
         scheduled_time: `${date} ${hour}`,
         notes,
-        clinic: clinicId,
+        clinic: value,
         service_type: serviceType,
       };
 
@@ -321,7 +324,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
             id: responseBody.id || Date.now().toString(),
             phone: rawPhone,
             notes: notes,
-            clinic: clinicId,
+            clinic: value,
             service_type: serviceType
           }
         };
@@ -358,7 +361,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
                   id: overbookingResponse.id || `overbooking-${Date.now()}`,
                   phone: rawPhone,
                   notes: notes,
-                  clinic: clinicId,
+                  clinic: value,
                   service_type: serviceType,
                   is_overbooking: true
                 }
@@ -445,13 +448,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
             </select>
 
             <label className={styles.label}>Clínica (ID):</label>
-            <input
-              className={styles.input}
-              type="number"
-              value={clinicId}
-              onChange={(e) => setClinicId(Number(e.target.value))}
-              required
-            />
+            <span className={styles.spanValue}>{value}</span>
 
             <label className={styles.label}>Notas:</label>
             <textarea
@@ -460,16 +457,25 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
               onChange={(e) => setNotes(e.target.value)}
             />
 
+
             <label className={styles.label}>Tipo de Serviço:</label>
-            <input
-              className={styles.input}
-              type="number"
-              value={serviceType}
-              onChange={(e) => setServiceType(Number(e.target.value))}
-            />
+            <div className={styles.serviceTypeButtons}>
+              {[1, 2, 3, 4].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  className={`${styles.botaoService} ${
+                    serviceType === num ? styles.active : ""
+                  }`}
+                  onClick={() => setServiceType(num)}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
 
             <div className={styles.actions}>
-              <button type="submit" className={styles.buttonSubmit} disabled={disabled}>Agendar</button>
+              <button type="submit" className={styles.buttonSubmit} disabled={disabled} onClick={() => setClinicId(value)}>Agendar</button>
               <button type="button" onClick={onClose} className={styles.buttonCancel}>Cancelar</button>
             </div>
           </form>

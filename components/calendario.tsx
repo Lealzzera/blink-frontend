@@ -239,7 +239,7 @@ export default function CalendarioClient({
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} onMouseEnter={() => setHoveredEventId(null)}>
       <div className={styles.customCalendar}>
         <FullCalendar
           locale={ptBrLocale}

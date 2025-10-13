@@ -51,7 +51,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(false)
   const { getAuthToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
-  const {value, setValue} = useMyContext()
+  const {value} = useMyContext()
   
   // Buscar dados quando o período mudar
   useEffect(() => {

@@ -2,7 +2,7 @@
 import { RealtimeChat } from "@/components/realtime-chat";
 import { createClient } from "@/lib/server";
 
-const USERNAME = "teste@teste.com";
+const USERNAME = "teste@teste.com"; // Recebe o user (email) do login
 
 // Interfaces
 interface ChatConfig {
