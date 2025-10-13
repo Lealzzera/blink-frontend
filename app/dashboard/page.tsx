@@ -46,38 +46,43 @@ const getDateRange = (period: Period): { startDate: string, endDate: string } =>
 };
 
 export default function Dashboard() {
-  const [selectedPeriod, setSelectedPeriod] = useState<Period>('Hoje')
-  const [data, setData] = useState<DashboardConfig | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [selectedPeriod, setSelectedPeriod] = useState<Period>('Hoje');
+  const [data, setData] = useState<DashboardConfig | null>(null);
+  const [loading, setLoading] = useState(false);
   const { getAuthToken } = useAuth();
   const { notification, showNotification, hideNotification } = useNotification();
-  const {value} = useMyContext()
+  const { value } = useMyContext();
   
   // Buscar dados quando o período mudar
   useEffect(() => {
     const fetchData = async () => {
-      setLoading(true)
-      setData(null) // limpar dados antigos antes da nova requisição
+      setLoading(true);
+      setData(null); // limpar dados antigos antes da nova requisição
       const token = await getAuthToken();
       const { startDate, endDate } = getDateRange(selectedPeriod);
 
       try {
-        const response = await dashboardService.getDashboard(token, startDate, endDate, value)
-        setData(response)
+        const response = await dashboardService.getDashboard(token, startDate, endDate, value);
+        setData(response);
       } catch (err: any) {
-        console.error("Erro ao buscar dados do dashboard:", err)
+        console.error("Erro ao buscar dados do dashboard:", err);
         showNotification("Erro ao carregar dados do dashboard.", "error");
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
+    };
 
-    fetchData()
-  }, [selectedPeriod])
+    fetchData();
+  }, [selectedPeriod]);
 
   const handlePeriodChange = (period: Period) => {
-    setSelectedPeriod(period)
-  }
+    setSelectedPeriod(period);
+  };
+
+  // Cálculo da taxa de comparecimento (evita divisão por zero)
+  const attendanceRate = data && data.appointments_count_total > 0
+    ? ((data.show_ups_count_total / data.appointments_count_total) * 100).toFixed(1)
+    : "0";
 
   return (
     <div className={styles.container}>
@@ -136,12 +141,25 @@ export default function Dashboard() {
         }
       </div>
 
+      {/* Gráficos e Taxas */}
       <div className={styles.charts}>
-        <div className={styles.chart}>Taxa de Agendamento x Comparecimentos</div>
-        <div className={styles.chart}>Vendas por período</div>
-        <div className={styles.chart}>ROI</div>
+        <div className={styles.chart}>
+          <h3>Taxa de Agendamentos x Comparecimentos</h3>
+          {loading ? (
+            <div className={styles.valueSkeleton}></div>
+          ) : (
+            <p className={styles.chartValue}>{attendanceRate} <span>%</span> </p>
+          )}
+        </div>
+
+        <div className={styles.chart}>
+          <h3>Vendas por Período</h3>
+        </div>
+
+        <div className={styles.chart}>
+          <h3>ROI</h3>
+        </div>
       </div>
     </div>
-  )
+  );
 }
-
