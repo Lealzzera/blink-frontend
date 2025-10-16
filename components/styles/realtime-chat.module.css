@@ -83,6 +83,7 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  max-width: 200px;
 }
 
 .body {
@@ -103,11 +104,11 @@
 }
 
 .lastMessage {
-  max-width: 80%;      /* limita a largura em relação ao container */
-  white-space: nowrap; /* impede quebrar linha */
-  overflow: hidden;    /* esconde o que ultrapassa */
-  text-overflow: ellipsis; /* adiciona "..." no final */
-  display: block;      /* garante que funcione bem */
+  max-width: 200px;     
+  white-space: nowrap; 
+  overflow: hidden; 
+  text-overflow: ellipsis; 
+  display: block;   
   font-weight: 500;
   color: #535353;
 }

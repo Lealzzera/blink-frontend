@@ -442,19 +442,12 @@ export const RealtimeChat = ({
   // Scroll contatos -> fim da lista carrega mais
   const contactsRef = useRef<HTMLDivElement>(null);
 
+  // Carrega contatos sequencialmente ao iniciar
   useEffect(() => {
-    const el = contactsRef.current;
-    if (!el) return;
-
-    const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 700) {
-        loadMoreContacts();
-      }
-    };
-
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [contactsPage, token, hasMoreContacts, loadingContacts]);
+    if (hasMoreContacts && !loadingContacts) {
+      loadMoreContacts();
+    }
+  }, [hasMoreContacts, loadingContacts]);
 
   // Scroll mensagens -> topo carrega mais
   useEffect(() => {
