@@ -437,13 +437,27 @@
     transition: transform 0.3s ease;
   }
 
+
   .contactTitle {
     text-align: center;
     margin-top: 5vh;
   }
 
+  .chatHeaderContact{
+    display: flex;
+    align-items: center;
+  }
+
   .chatHeader {
     margin-top: 2vh;
+  }
+
+  .headerTitle{
+    font-size: 23px;
+    width: 200px;  
+    white-space: nowrap;
+    overflow: hidden;  
+    text-overflow: ellipsis;  
   }
 
   .spanContainer {
