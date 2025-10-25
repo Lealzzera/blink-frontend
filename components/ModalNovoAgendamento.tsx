@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import styles from "./styles/agendamento-modal.module.css";
 import MessageBox from "./MessageBox";
-import { createClient } from '@/lib/client'
-const supabase = createClient()
-const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
+import { createClient } from "@/lib/client";
+const supabase = createClient();
+const API_BASE = "http://localhost:3003/api/v1";
 
 interface Props {
   onClose: () => void;
@@ -33,7 +33,11 @@ interface ClinicConfig {
   allow_overbooking: boolean;
 }
 
-export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Props) {
+export default function ModalNovoAgendamento({
+  onClose,
+  onNewEvent,
+  token,
+}: Props) {
   const [patientName, setPatientName] = useState("");
   const [phoneNumber, setPhoneNumber] = useState(""); // exibido com máscara
   const [rawPhone, setRawPhone] = useState(""); // apenas os números (para enviar ao backend)
@@ -45,7 +49,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
   const [disabled, setDisabled] = useState(false);
   const [clinicConfig, setClinicConfig] = useState<ClinicConfig>({
     appointment_duration: 30,
-    allow_overbooking: false
+    allow_overbooking: false,
   });
 
   const [workingDays, setWorkingDays] = useState<WorkingDay[]>([]);
@@ -92,20 +96,23 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const fetchClinicConfig = async () => {
     try {
-      const res = await fetch(`${API_BASE}/configurations/appointments/${clinicId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${API_BASE}/configurations/appointments/${clinicId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (!res.ok) throw new Error("Erro ao buscar configurações da clínica");
       const data = await res.json();
       setClinicConfig({
         appointment_duration: data.duration || 60,
-        allow_overbooking: data.overbooking || false
+        allow_overbooking: data.overbooking || false,
       });
-      console.log(data.duration)
+      console.log(data.duration);
     } catch (err) {
       console.error(err);
       showMessage("Erro ao buscar configurações da clínica.", "error");
@@ -114,13 +121,16 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const fetchWorkingDays = async () => {
     try {
-      const res = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const res = await fetch(
+        `${API_BASE}/configurations/availability/${clinicId}/exception`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (!res.ok) throw new Error("Erro ao buscar dias de trabalho");
       const data = await res.json();
       setWorkingDays(data);
@@ -155,10 +165,18 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
     const breakEndMinutes = convertToMinutes(breakEnd);
     const durationMinutes = appointmentDuration;
 
-    for (let minutes = openMinutes; minutes <= closeMinutes - durationMinutes; minutes += 15) {
+    for (
+      let minutes = openMinutes;
+      minutes <= closeMinutes - durationMinutes;
+      minutes += 15
+    ) {
       if (minutes >= breakStartMinutes && minutes < breakEndMinutes) continue;
-      if (minutes < breakStartMinutes && (minutes + durationMinutes) > breakStartMinutes) continue;
-      if ((minutes + durationMinutes) > closeMinutes) continue;
+      if (
+        minutes < breakStartMinutes &&
+        minutes + durationMinutes > breakStartMinutes
+      )
+        continue;
+      if (minutes + durationMinutes > closeMinutes) continue;
 
       const timeStr = convertMinutesToTime(minutes);
       options.push(timeStr);
@@ -169,22 +187,30 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
 
   const checkExceptionAndGenerateOptions = async (selectedDate: string) => {
     try {
-      const exceptionsRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}/exception`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const exceptionsRes = await fetch(
+        `${API_BASE}/configurations/availability/${clinicId}/exception`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
-      
+      );
+
       if (!exceptionsRes.ok) throw new Error("Erro ao buscar exceções");
       const exceptions: ExceptionDay[] = await exceptionsRes.json();
 
-      const exception = exceptions.find((e) => e.exception_day === selectedDate);
+      const exception = exceptions.find(
+        (e) => e.exception_day === selectedDate
+      );
 
       if (exception) {
         if (!exception.is_working_day) {
           setAvailableHours([]);
-          showMessage("A clínica estará fechada neste dia por exceção.", "error");
+          showMessage(
+            "A clínica estará fechada neste dia por exceção.",
+            "error"
+          );
           return;
         }
 
@@ -204,18 +230,24 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
       const dateObj = new Date(selectedDate);
       const dayOfWeek = dateObj.getDay();
 
-      const workingDaysRes = await fetch(`${API_BASE}/configurations/availability/${clinicId}`, {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
+      const workingDaysRes = await fetch(
+        `${API_BASE}/configurations/availability/${clinicId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
-      if (!workingDaysRes.ok) throw new Error("Erro ao buscar dias de trabalho");
+      if (!workingDaysRes.ok)
+        throw new Error("Erro ao buscar dias de trabalho");
       const workingDays: any[] = await workingDaysRes.json();
 
-      const defaultDay = workingDays.find(d => d.week_day === diasDaSemana[dayOfWeek]);
-      
+      const defaultDay = workingDays.find(
+        (d) => d.week_day === diasDaSemana[dayOfWeek]
+      );
+
       if (defaultDay && defaultDay.is_work_day) {
         const options = generateTimeOptions(
           defaultDay.open || "08:00",
@@ -278,10 +310,10 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(patientPayload),
-      })
+      });
 
       if (pacientRes.status !== 201 && pacientRes.status !== 409) {
         const text = await pacientRes.text();
@@ -291,7 +323,7 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
       }
 
       const appointmentPayload = {
-        patient_number: rawPhone, 
+        patient_number: rawPhone,
         scheduled_time: `${date} ${hour}`,
         notes,
         clinic: clinicId,
@@ -302,14 +334,18 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(appointmentPayload),
-      })
+      });
 
       const text = await res.text();
       let responseBody;
-      try { responseBody = JSON.parse(text); } catch { responseBody = text; }
+      try {
+        responseBody = JSON.parse(text);
+      } catch {
+        responseBody = text;
+      }
 
       if (res.status === 201) {
         // Criar o evento para adicionar ao calendário
@@ -322,13 +358,13 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
             phone: rawPhone,
             notes: notes,
             clinic: clinicId,
-            service_type: serviceType
-          }
+            service_type: serviceType,
+          },
         };
-        
+
         // Chamar a função para adicionar o novo evento
         onNewEvent(newEvent);
-        
+
         showMessage("Agendamento criado com sucesso!", "success");
         onClose();
       } else if (res.status === 409) {
@@ -338,17 +374,17 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${token}`,
+                Authorization: `Bearer ${token}`,
               },
               body: JSON.stringify({
                 ...appointmentPayload,
-                is_overbooking: true
+                is_overbooking: true,
               }),
             });
-            
+
             if (overbookingRes.ok) {
               const overbookingResponse = await overbookingRes.json();
-              
+
               // Criar o evento para adicionar ao calendário (overbooking)
               const newEvent = {
                 id: overbookingResponse.id || `overbooking-${Date.now()}`,
@@ -360,24 +396,36 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
                   notes: notes,
                   clinic: clinicId,
                   service_type: serviceType,
-                  is_overbooking: true
-                }
+                  is_overbooking: true,
+                },
               };
-              
+
               // Chamar a função para adicionar o novo evento
               onNewEvent(newEvent);
-              
-              showMessage("Agendamento com overbooking criado com sucesso!", "success");
+
+              showMessage(
+                "Agendamento com overbooking criado com sucesso!",
+                "success"
+              );
               onClose();
             } else {
-              showMessage("Erro ao criar agendamento com overbooking.", "error");
+              showMessage(
+                "Erro ao criar agendamento com overbooking.",
+                "error"
+              );
             }
           }
         } else {
-          showMessage("Horário já ocupado! Verifique se o overbooking está habilitado.", "error");
+          showMessage(
+            "Horário já ocupado! Verifique se o overbooking está habilitado.",
+            "error"
+          );
         }
       } else {
-        showMessage(`Erro inesperado: ${JSON.stringify(responseBody)}`, "error");
+        showMessage(
+          `Erro inesperado: ${JSON.stringify(responseBody)}`,
+          "error"
+        );
       }
     } catch (err) {
       console.error("Erro ao criar agendamento:", err);
@@ -469,8 +517,20 @@ export default function ModalNovoAgendamento({ onClose, onNewEvent, token }: Pro
             />
 
             <div className={styles.actions}>
-              <button type="submit" className={styles.buttonSubmit} disabled={disabled}>Agendar</button>
-              <button type="button" onClick={onClose} className={styles.buttonCancel}>Cancelar</button>
+              <button
+                type="submit"
+                className={styles.buttonSubmit}
+                disabled={disabled}
+              >
+                Agendar
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className={styles.buttonCancel}
+              >
+                Cancelar
+              </button>
             </div>
           </form>
         </div>

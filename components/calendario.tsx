@@ -17,7 +17,7 @@ export default function CalendarioClient({
   initialEvents,
   initialStatuses,
   initialSales,
-  token
+  token,
 }: {
   initialConfig: { currentDuration: number; allowOverbooking: boolean };
   initialEvents: any[];
@@ -29,15 +29,17 @@ export default function CalendarioClient({
   const [eventDetails, setEventDetails] = useState<any | null>(null);
   const [openNewAppointmentModal, setOpenNewAppointmentModal] = useState(false);
   const [events, setEvents] = useState<any[]>(initialEvents);
-  const [eventStatuses, setEventStatuses] = useState<Record<string, string>>(initialStatuses);
-  const [eventSales, setEventSales] = useState<Record<string, any[]>>(initialSales);
+  const [eventStatuses, setEventStatuses] =
+    useState<Record<string, string>>(initialStatuses);
+  const [eventSales, setEventSales] =
+    useState<Record<string, any[]>>(initialSales);
   const [currentDuration] = useState(initialConfig?.currentDuration ?? 30);
   const [allowOverbooking] = useState(initialConfig?.allowOverbooking ?? false);
   const [showValorVendaModal, setShowValorVendaModal] = useState(false);
   const [currentEventId, setCurrentEventId] = useState<string | null>(null);
   const [hoveredEventId, setHoveredEventId] = useState<string | null>(null);
 
-  const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
+  const API_BASE = "http://localhost:3003/api/v1";
 
   const updateEventStatus = async (id: string, newStatus: string) => {
     try {
@@ -47,7 +49,10 @@ export default function CalendarioClient({
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ appointment_id: Number(id), new_status: newStatus }),
+        body: JSON.stringify({
+          appointment_id: Number(id),
+          new_status: newStatus,
+        }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar status do agendamento");
       return true;
@@ -57,7 +62,10 @@ export default function CalendarioClient({
     }
   };
 
-  const handleStatusToggle = async (id: string, action: "confirm" | "attend" | "sale") => {
+  const handleStatusToggle = async (
+    id: string,
+    action: "confirm" | "attend" | "sale"
+  ) => {
     const currentStatus = eventStatuses[id];
 
     if (action === "confirm") {
@@ -112,13 +120,22 @@ export default function CalendarioClient({
     }));
   };
 
-  function EventoConteudo({ event, viewType }: { event: any; viewType: string }) {
+  function EventoConteudo({
+    event,
+    viewType,
+  }: {
+    event: any;
+    viewType: string;
+  }) {
     const [caption, setCaption] = useState("");
     const id = event.extendedProps.id;
     const status = eventStatuses[id] || "AGENDADO";
     const hasSales = eventSales[id] && eventSales[id].length > 0;
     const horaConsulta = event.start
-      ? new Date(event.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      ? new Date(event.start).toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        })
       : "";
     const displayStatus = hasSales ? "venda" : status.toLowerCase();
     const isHovered = hoveredEventId === id;
@@ -128,7 +145,9 @@ export default function CalendarioClient({
         <div className={styles.tooltipWrapper}>
           <button
             className={`${styles.checkButton} ${
-              status === "CONFIRMADO" || status === "COMPARECEU" ? styles.checked : ""
+              status === "CONFIRMADO" || status === "COMPARECEU"
+                ? styles.checked
+                : ""
             }`}
             onClick={(e) => {
               e.stopPropagation();
@@ -142,7 +161,9 @@ export default function CalendarioClient({
         </div>
         <div className={styles.tooltipWrapper}>
           <button
-            className={`${styles.checkButton} ${status === "COMPARECEU" ? styles.checked : ""}`}
+            className={`${styles.checkButton} ${
+              status === "COMPARECEU" ? styles.checked : ""
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               handleStatusToggle(id, "attend");
@@ -155,7 +176,9 @@ export default function CalendarioClient({
         </div>
         <div className={styles.tooltipWrapper}>
           <button
-            className={`${styles.checkButton} ${hasSales ? styles.checked : ""}`}
+            className={`${styles.checkButton} ${
+              hasSales ? styles.checked : ""
+            }`}
             onClick={(e) => {
               e.stopPropagation();
               handleStatusToggle(id, "sale");
@@ -169,11 +192,19 @@ export default function CalendarioClient({
       </div>
     );
 
-    const StatusText = () => <div className={styles.statusContainer}>{displayStatus.toUpperCase()}</div>;
+    const StatusText = () => (
+      <div className={styles.statusContainer}>
+        {displayStatus.toUpperCase()}
+      </div>
+    );
 
     return (
       <div
-        className={viewType === "dayGridMonth" ? styles.eventContentMonth : styles.eventContent}
+        className={
+          viewType === "dayGridMonth"
+            ? styles.eventContentMonth
+            : styles.eventContent
+        }
         onMouseEnter={() => setHoveredEventId(id)}
         onMouseLeave={() => setHoveredEventId(null)}
       >
@@ -185,8 +216,12 @@ export default function CalendarioClient({
             </>
           )}
         </div>
-        <div className={styles.eventFooterTop}>{isHovered ? <Buttons /> : <StatusText />}</div>
-        {caption ? <span className={styles.statusCaption}>{caption.toUpperCase()}</span> : null}
+        <div className={styles.eventFooterTop}>
+          {isHovered ? <Buttons /> : <StatusText />}
+        </div>
+        {caption ? (
+          <span className={styles.statusCaption}>{caption.toUpperCase()}</span>
+        ) : null}
       </div>
     );
   }
@@ -214,7 +249,8 @@ export default function CalendarioClient({
           "Content-Type": "application/json",
         },
       });
-      if (!res.ok) throw new Error(`Erro ao buscar detalhes do agendamento ${id}`);
+      if (!res.ok)
+        throw new Error(`Erro ao buscar detalhes do agendamento ${id}`);
       const details = await res.json();
       setEventDetails(details);
     } catch (error) {
@@ -270,7 +306,10 @@ export default function CalendarioClient({
           onEventRemoved={handleEventRemoved}
         />
       )}
-      <button className={styles.fab} onClick={() => setOpenNewAppointmentModal(true)}>
+      <button
+        className={styles.fab}
+        onClick={() => setOpenNewAppointmentModal(true)}
+      >
         +
       </button>
       {openNewAppointmentModal && (

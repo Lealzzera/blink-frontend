@@ -2,10 +2,10 @@
 
 import { useState } from "react";
 import styles from "./styles/calendario.module.css";
-import { createClient } from '@/lib/client'
+import { createClient } from "@/lib/client";
 
-const supabase = createClient()
-const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"
+const supabase = createClient();
+const API_BASE = "http://localhost:3003/api/v1";
 
 interface ModalValorVendaProps {
   onClose: () => void;
@@ -13,14 +13,18 @@ interface ModalValorVendaProps {
   appointmentId: number;
 }
 
-export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: ModalValorVendaProps) {
+export default function ModalValorVenda({
+  onClose,
+  onConfirm,
+  appointmentId,
+}: ModalValorVendaProps) {
   const [valor, setValor] = useState("");
 
   const formatDate = (date: Date) => {
     const pad = (num: number) => num.toString().padStart(2, "0");
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(
-      date.getHours()
-    )}:${pad(date.getMinutes())}`;
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+      date.getDate()
+    )} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,14 +32,14 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
 
     if (valor) {
       try {
-          const { data: sessionData } = await supabase.auth.getSession()
-          const token = sessionData.session?.access_token
-          
-          const res = await fetch(`${API_BASE}/sales`, {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+
+        const res = await fetch(`${API_BASE}/sales`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
             appointment_id: appointmentId,
@@ -44,11 +48,11 @@ export default function ModalValorVenda({ onClose, onConfirm, appointmentId }: M
             registered_by_user: 1,
             registered_at: formatDate(new Date()),
           }),
-        })
-        
-        const data = await res.json()
-        console.log(data)
-        console.log('Venda registrada no componente modal! 100 aqui')
+        });
+
+        const data = await res.json();
+        console.log(data);
+        console.log("Venda registrada no componente modal! 100 aqui");
         if (!res.ok) throw new Error("Erro ao registrar venda");
       } catch (error) {
         console.error("Erro ao registrar venda:", error);

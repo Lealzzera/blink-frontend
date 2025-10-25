@@ -13,14 +13,18 @@ export default async function CalendarioServer() {
     return <div>Erro ao criar Supabase client</div>;
   }
 
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  if (sessionError) console.error("Erro ao recuperar sessão Supabase:", sessionError);
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+  if (sessionError)
+    console.error("Erro ao recuperar sessão Supabase:", sessionError);
 
   const token = session?.access_token;
-  console.log({token})
+  console.log({ token });
   if (!token) return <div>Usuário não autenticado</div>;
 
-  const API_BASE = "http://blink-be-dev:3003/api/v1"; 
+  const API_BASE = "http://localhost:3003/api/v1";
 
   // --- BUSCA CONFIG ---
   let currentDuration = 30;
@@ -32,7 +36,7 @@ export default async function CalendarioServer() {
       cache: "no-store",
     });
 
-    console.log({configRes})
+    console.log({ configRes });
 
     if (configRes.ok) {
       const config = await configRes.json();
@@ -48,7 +52,9 @@ export default async function CalendarioServer() {
   // --- BUSCA AVAILABILITY ---
   const today = new Date();
   const startDate = today.toISOString().split("T")[0];
-  const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const endDate = new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
 
   let availability: any[] = [];
   try {
@@ -91,7 +97,12 @@ export default async function CalendarioServer() {
         title: ag.name,
         start: key,
         end: `${day.date}T${calcEnd(ag.time, currentDuration)}`,
-        extendedProps: { paciente: ag.name, phone: ag.phone, tipo: "Consulta", id: ag.id },
+        extendedProps: {
+          paciente: ag.name,
+          phone: ag.phone,
+          tipo: "Consulta",
+          id: ag.id,
+        },
       };
 
       grouped[key].push(event);
@@ -100,8 +111,9 @@ export default async function CalendarioServer() {
     }
   }
 
-  const finalEvents = Object.values(grouped).flatMap(list => allowOverbooking ? list.slice(0, 2) : list.slice(0, 1));
-
+  const finalEvents = Object.values(grouped).flatMap((list) =>
+    allowOverbooking ? list.slice(0, 2) : list.slice(0, 1)
+  );
 
   return (
     <CalendarioClient
