@@ -2,6 +2,7 @@ import './globals.css';
 import type { Metadata } from 'next';
 import { ThemeProvider } from "@/components/theme-provider";
 import Sidebar from './Sidebar';
+import ClientLayout from "./clientLayout";
 
 export const metadata: Metadata = {
   title: 'blink',
@@ -22,7 +23,9 @@ export default function RootLayout({
       <body className="font-sans antialiased">
         <ThemeProvider attribute="class" enableSystem={false}>
               <Sidebar />
-              {children}
+            <ClientLayout>
+                {children}
+            </ClientLayout>
         </ThemeProvider>
       </body>
     </html>

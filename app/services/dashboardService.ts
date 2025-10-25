@@ -9,16 +9,16 @@ export interface DashboardConfig {
 }
 
 export const dashboardService = {
-  async getDashboard(token: string, startDate: string, endDate: string): Promise<DashboardConfig> {
-    const url = `${apiEndpoints.dashboardInfo}?startDate=${startDate}&endDate=${endDate}`
+  async getDashboard(token: string, startDate: string, endDate: string, value: number): Promise<DashboardConfig> {
+    const url = `${apiEndpoints.dashboardInfo(value)}?startDate=${startDate}&endDate=${endDate}`
 
     const response = await fetch(url, {
       mode: "cors",
       headers: createApiHeaders(token)
-    })
+    }) 
 
     if (!response.ok) {
-      throw new Error(`Erro ao buscar overview: ${response.status}`)
+      throw new Error(`Erro ao buscar dados: ${response.status}`)
     }
 
     const data: DashboardConfig = await response.json()

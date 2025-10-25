@@ -2,7 +2,7 @@
 import { RealtimeChat } from "@/components/realtime-chat";
 import { createClient } from "@/lib/server";
 
-const USERNAME = "blink";
+const USERNAME = "teste@teste.com"; // Recebe o user (email) do login
 
 // Interfaces
 interface ChatConfig {
@@ -24,7 +24,7 @@ function createApiHeaders(token: string) {
 }
 
 // Endpoints
-const API_BASE = "http://blink-be-dev:3003/api/v1";
+const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1";
 const apiEndpoints = {
   overview: `${API_BASE}/chat/1/overview`,
 };

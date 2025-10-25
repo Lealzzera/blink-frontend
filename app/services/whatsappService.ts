@@ -6,8 +6,8 @@ export interface WhatsAppStatus {
 }
 
 export const whatsappService = {
-  async getStatus(token: string): Promise<WhatsAppStatus> {
-    const response = await fetch(apiEndpoints.whatsappStatus, {
+  async getStatus(token: string, value: number): Promise<WhatsAppStatus> {
+    const response = await fetch(apiEndpoints.whatsappStatus(value), {
       mode: "cors",
       headers: createApiHeaders(token),
     });
@@ -19,8 +19,8 @@ export const whatsappService = {
     return response.json();
   },
 
-  async getQrCode(token: string): Promise<Blob> {
-    const response = await fetch(apiEndpoints.whatsappQrCode, {
+  async getQrCode(token: string, value: number): Promise<Blob> {
+    const response = await fetch(apiEndpoints.whatsappQrCode(value), {
       mode: "cors",
       headers: {
         'Accept': 'image/png',

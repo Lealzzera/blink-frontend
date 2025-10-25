@@ -7,6 +7,19 @@ interface ChatMessageItemProps {
   showHeader: boolean
 }
 
+const hoje = new Date();
+
+const dia = String(hoje.getDate()).padStart(2, "0");
+const mes = String(hoje.getMonth() + 1).padStart(2, "0");
+const ano = String(hoje.getFullYear()).slice(-2);
+const horas = String(hoje.getHours()).padStart(2, "0");
+const minutos = String(hoje.getMinutes()).padStart(2, "0");
+
+const dataFormatada = `${dia}/${mes}/${ano}, ${horas}:${minutos}`;
+
+console.log(dataFormatada);
+
+
 export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessageItemProps) => {
   return (
     <div className={`flex mt-2 ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
@@ -26,11 +39,7 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
           >
             <span className={'font-medium'}>{message.user.name}</span>
             <span className="text-foreground/50 text-lg min-[1441px]:text-xl">
-              {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
-                hour: '2-digit',
-                minute: '2-digit',
-                hour12: true,
-              })}
+              {message.createdAt}  {/*  === dataFormatada ? "Hoje" : message.createdAt / A alteracao foi aqui, estava so message.createdAt. O problema eh que isso so vai dar certo se ate o horario for igual */}
             </span>
           </div>
         )}
@@ -48,3 +57,14 @@ export const ChatMessageItem = ({ message, isOwnMessage, showHeader }: ChatMessa
     </div>
   )
 }
+
+
+/**
+ 
+  .toLocaleTimeString('pt-BR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true,
+  })\
+
+ */

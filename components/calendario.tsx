@@ -11,7 +11,7 @@ import ModalDetalhes from "./ModalCalendario";
 import ModalNovoAgendamento from "./ModalNovoAgendamento";
 import ModalValorVenda from "./ModalValorVenda";
 import styles from "./styles/calendario.module.css";
-
+	
 export default function CalendarioClient({
   initialConfig,
   initialEvents,
@@ -239,7 +239,7 @@ export default function CalendarioClient({
   };
 
   return (
-    <div className={styles.container}>
+    <div className={styles.container} onMouseEnter={() => setHoveredEventId(null)}>
       <div className={styles.customCalendar}>
         <FullCalendar
           locale={ptBrLocale}

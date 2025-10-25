@@ -24,8 +24,8 @@ export interface ExceptionFormData {
 }
 
 export const exceptionService = {
-  async getExceptions(token: string): Promise<Exception[]> {
-    const response = await fetch(apiEndpoints.exceptions, {
+  async getExceptions(token: string, value: number): Promise<Exception[]> {
+    const response = await fetch(apiEndpoints.exceptions(value), {
       mode: "cors",
       headers: createApiHeaders(token)
     });

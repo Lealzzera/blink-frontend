@@ -3,11 +3,12 @@ import { apiEndpoints, createApiHeaders } from './api';
 export interface AppointmentConfig {
   duration: number;
   overbooking: boolean;
+  value: number  // Adicionei aqui
 }
 
 export const appointmentService = {
-  async getConfig(token: string): Promise<AppointmentConfig> {
-    const response = await fetch(apiEndpoints.appointments, {
+  async getConfig(token: string, value: number): Promise<AppointmentConfig> {  // Aqui tb
+    const response = await fetch(apiEndpoints.appointments(value), {
       mode: "cors",
       headers: createApiHeaders(token)
     });

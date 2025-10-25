@@ -1,6 +1,5 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import Image from "next/image";
 import styles from "./styles/login-form.module.css";
+import { useMyContext } from "../app/context/context";
 
 export function LoginForm({
   className,
@@ -27,6 +27,7 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
+  const {setEmailLogin} = useMyContext()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +49,11 @@ export function LoginForm({
       setIsLoading(false);
     }
   };
+
+  function handleEmail(e: React.ChangeEvent<HTMLInputElement>){
+    setEmail(e.target.value)
+    setEmailLogin(e.target.value)  // ISTO SERÁ ENVIADO PARA O CHAT (PAGE.TSX) QUE NO MOMENTO É SSR.
+  }
 
   return (
     <div className={styles.container} {...props}>
@@ -75,7 +81,7 @@ export function LoginForm({
                   placeholder="email@exemplo.com"
                   required
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={handleEmail}
                   className={styles.inputs}
                 />
               </div>

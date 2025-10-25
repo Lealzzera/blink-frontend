@@ -10,16 +10,34 @@ interface ModalProps {
   onEventRemoved: (eventId: string) => void; // para atualizar calendário
 }
 
-
-
 export default function ModalDetalhes({ event, eventDetails, onClose, onEventRemoved }: ModalProps) {
   const { start, end, extendedProps } = event;
 
   // Usa os detalhes específicos se disponíveis, senão extendedProps do evento
-  const paciente = eventDetails?.patient?.name ?? eventDetails?.paciente ?? extendedProps?.paciente ?? "Desconhecido";
-  const telefone = eventDetails?.patient?.phone_number ?? eventDetails?.phone ?? extendedProps?.phone ?? "Desconhecido";
-  const tipo = eventDetails?.service_type ?? eventDetails?.tipo ?? extendedProps?.tipo ?? "Desconhecido";
-  const notas = eventDetails.notes
+  const paciente =
+    eventDetails?.patient?.name ??
+    eventDetails?.paciente ??
+    extendedProps?.paciente ??
+    "Desconhecido";
+
+  const telefone =
+    eventDetails?.patient?.phone_number ??
+    eventDetails?.phone ??
+    extendedProps?.phone ??
+    "Desconhecido";
+
+  const tipo =
+    eventDetails?.service_type ??
+    eventDetails?.tipo ??
+    extendedProps?.tipo ??
+    "Desconhecido";
+
+  const notas =
+    eventDetails?.notes ??
+    eventDetails?.observacoes ??
+    extendedProps?.notes ??
+    extendedProps?.observacoes ??
+    "Sem observações";
 
   const handleDelete = async () => {
     if (!extendedProps || !extendedProps.id) {
@@ -30,8 +48,8 @@ export default function ModalDetalhes({ event, eventDetails, onClose, onEventRem
     const url = `https://be.blinkdentalmarketing.com.br/api/v1/appointments/status`;
 
     try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        const token = sessionData.session?.access_token
+      const { data: sessionData } = await supabase.auth.getSession()
+      const token = sessionData.session?.access_token
 
       const res = await fetch(url, {
         method: "PUT",

@@ -16,6 +16,7 @@
   import { exceptionService } from '../services/exceptionService';
   import { formatDate, formatTime } from '../utils/dateUtils';
   import { validateWorkDays, validateExceptions } from '../utils/validationUtils';
+  import { useMyContext } from "../context/context";
 
   const DAYS_OF_WEEK = [
     "SEGUNDA", "TERCA", "QUARTA", "QUINTA", "SEXTA", "SABADO", "DOMINGO"
@@ -85,7 +86,8 @@
     const [appointmentConfigError, setAppointmentConfigError] = useState<string | null>(null);
     const [initialLoad, setInitialLoad] = useState(true);
 
-
+    //Context
+    const {value, setValue} = useMyContext()
 
 
     // Load initial data
@@ -97,7 +99,7 @@
           console.log(token)
           // Load WhatsApp status
           try {
-            const whatsappData = await whatsappService.getStatus(token);
+            const whatsappData = await whatsappService.getStatus(token, value);
             setWhatsappStatus(whatsappData.status);
             setPhoneNumber(whatsappData.connected_phone_number);
           } catch (error) {
@@ -107,7 +109,7 @@
 
           // Load availability
           try {
-            const availabilityData = await availabilityService.getAvailability(token);
+            const availabilityData = await availabilityService.getAvailability(token, value);
             const newWorkDays = { ...initialWorkDaysState };
 
             if (Array.isArray(availabilityData)) {
@@ -133,7 +135,7 @@
 
           // Load appointment settings
           try {
-            const appointmentData = await appointmentService.getConfig(token);
+            const appointmentData = await appointmentService.getConfig(token, value);
             setDefaultDuration(appointmentData.duration || 30);
             setAllowDoubleBooking(appointmentData.overbooking || false);
           } catch (error) {
@@ -143,7 +145,7 @@
 
           // Load exceptions
           try {
-            const exceptionsData = await exceptionService.getExceptions(token);
+            const exceptionsData = await exceptionService.getExceptions(token, value);
             if (exceptionsData.length > 0) {
               const formattedExceptions = exceptionsData.map((ex) => ({
                 id: ex.id,
@@ -385,7 +387,7 @@
       
       try {
         const token = await getAuthToken();
-        const blob = await whatsappService.getQrCode(token);
+        const blob = await whatsappService.getQrCode(token, value);
         const url = URL.createObjectURL(blob);
         setQrCodeUrl(url);
       } catch (err) {

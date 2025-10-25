@@ -20,18 +20,19 @@ export default async function CalendarioServer() {
   console.log({token})
   if (!token) return <div>Usuário não autenticado</div>;
 
-  const API_BASE = "http://blink-be-dev:3003/api/v1"; 
+  const API_BASE = "https://be.blinkdentalmarketing.com.br/api/v1"; 
 
   // --- BUSCA CONFIG ---
   let currentDuration = 30;
   let allowOverbooking = false;
 
   try {
-    const configRes = await fetch(`${API_BASE}/configurations/appointments/1`, {
+    const configRes = await fetch(`${API_BASE}/configurations/appointments/1`, { 
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
 
+    
     console.log({configRes})
 
     if (configRes.ok) {
