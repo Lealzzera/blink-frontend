@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ThemeProvider } from "@/components/theme-provider";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
+import { UserProvider } from "./context/userContext";
 
 export const metadata: Metadata = {
   title: "blink",
@@ -35,11 +36,9 @@ export default function RootLayout({
       lang="pt-BR"
       className={`${ibm_plex_sans.variable} ${ibm_plex_mono.variable}`}
     >
-      <body className="font-sans antialiased">
-        <ThemeProvider attribute="class" enableSystem={false}>
-          {children}
-        </ThemeProvider>
-      </body>
+      <UserProvider>
+        <body className="font-sans antialiased">{children}</body>
+      </UserProvider>
     </html>
   );
 }

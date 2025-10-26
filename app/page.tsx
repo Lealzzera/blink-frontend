@@ -1,4 +1,3 @@
-// app/chat/page.tsx
 import { LoginPage } from "./components/LoginPage/LoginPage";
 
 export default async function Page() {

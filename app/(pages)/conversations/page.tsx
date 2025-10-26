@@ -1,3 +1,5 @@
+"use client";
+
 import style from "./style.module.css";
 import ChatListComponent from "./components/ChatListComponent";
 

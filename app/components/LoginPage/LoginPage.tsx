@@ -6,6 +6,7 @@ import styles from "./styles.module.css";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import { login } from "@/app/actions/login";
 import { useRouter } from "next/navigation";
+import { useUser } from "@/app/context/userContext";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
 
   const router = useRouter();
+  const { handleSetUser } = useUser();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,6 +28,11 @@ export function LoginPage() {
     if (response?.error !== null) {
       setError(true);
       return;
+    }
+
+    const userData = response?.data.user;
+    if (userData && userData.email && userData.id) {
+      handleSetUser({ email: userData.email, id: userData.id });
     }
 
     router.push("/conversations");
