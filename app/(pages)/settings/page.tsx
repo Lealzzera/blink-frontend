@@ -11,8 +11,8 @@ export default function Settings() {
   const { clinicId } = useUser();
 
   useEffect(() => {
+    if (!clinicId) return;
     const handleGetQrCode = async () => {
-      if (!clinicId) return;
       setIsLoading(true);
       const response = await getQrCode({ clinicId });
       const imageUrl = `data:image/png;base64,${response}`;

@@ -9,6 +9,7 @@ import {
 } from "react";
 import { getClinicId } from "../actions/getClinicId";
 import { usePathname } from "next/navigation";
+import axios from "axios";
 
 type User = {
   id: string;
@@ -33,8 +34,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (response) {
       setClinicId(response);
     }
-
-    console.log({ response });
   };
 
   function handleSetUser(data: User) {
@@ -48,9 +47,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (pathname && pathname !== "/") {
-      handleGetClinicId();
+    if (pathname === "/") return;
+    handleGetClinicId();
+    async function loadUser() {
+      if (pathname === "/") return;
+      const res = await axios.get("/api/me", {
+        headers: {
+          "Content-Type": "application/json",
+          "Cache-Control": "no-store",
+        },
+      });
+
+      if (res.status === 200) {
+        handleSetUser({ id: res.data.user.id, email: res.data.user.email });
+        return;
+      }
+
+      handleClearUser();
     }
+
+    loadUser();
   }, [pathname]);
 
   return (

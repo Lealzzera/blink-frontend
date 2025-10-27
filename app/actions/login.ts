@@ -1,25 +1,44 @@
-import { createClient } from "@/lib/client";
-import { storeToken } from "../utils/storeToken";
+"use server";
+import { createClient } from "@/utils/supabase/server";
 
-interface loginData {
+type LoginData = {
   email: string;
   password: string;
-}
+};
 
-export async function login({ email, password }: loginData) {
-  const supabase = createClient();
-  try {
-    const response = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+export async function login({ email, password }: LoginData) {
+  const supabase = await createClient();
 
-    const userAccessToken = response.data.session?.access_token;
+  const data = {
+    email,
+    password,
+  };
 
-    if (userAccessToken) storeToken(userAccessToken);
+  const { error } = await supabase.auth.signInWithPassword(data);
 
-    return { data: response.data, error: response.error };
-  } catch (err) {
-    console.error({ err });
+  if (error) {
+    return { error: error.message, user: null };
   }
+
+  return { error: null, data };
 }
+
+// TODO: IMPLEMENT SIGNUP FUNCTION LATER
+
+// export async function signup(formData: FormData) {
+//   const supabase = await createClient();
+
+//   const data = {
+//     email: formData.get("email") as string,
+//     password: formData.get("password") as string,
+//   };
+
+//   const { error } = await supabase.auth.signUp(data);
+
+//   if (error) {
+//     redirect("/error");
+//   }
+
+//   revalidatePath("/", "layout");
+//   redirect("/");
+// }
