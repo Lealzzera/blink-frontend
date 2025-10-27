@@ -75,8 +75,8 @@
 .tooltip {
   position: absolute;
   left: 72px;
-  background: hsl(var(--card));
-  color: hsl(var(--card-foreground));
+  background: var(--gray-600);
+  color: var(--white);
   padding: 6px 10px;
   border-radius: 6px;
   white-space: nowrap;
