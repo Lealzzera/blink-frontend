@@ -5,6 +5,7 @@ import ChatCardComponent from "../ChatCardComponent/ChatCardComponent";
 import style from "./style.module.css";
 import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
 import { useRouter } from "next/navigation";
+import formatChatDate from "@/utils/formatChatDate";
 
 type ChatListItem = {
   ai_answer: boolean;
@@ -87,7 +88,7 @@ export default function ChatListComponent({
                     cardSelected={cardSelected}
                     lastMessage={item.last_message}
                     phoneNumber={item.phone_number}
-                    sentAt={item.sent_at}
+                    sentAt={formatChatDate(item.sent_at)}
                   />
                 </li>
               );
