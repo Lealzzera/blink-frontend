@@ -38,7 +38,16 @@ export default function Conversations() {
           setHasMore(false);
           return;
         }
-        setChatList((prev) => [...prev, ...response]);
+        setChatList((prev) => {
+          const merged = [...prev, ...response];
+          const unique = merged.filter(
+            (value, index, list) =>
+              list.findIndex(
+                (item) => item.phone_number === value.phone_number
+              ) === index
+          );
+          return unique;
+        });
         setPage(pageNum);
       } catch (err) {
         console.error("Erro ao buscar conversas:", err);
