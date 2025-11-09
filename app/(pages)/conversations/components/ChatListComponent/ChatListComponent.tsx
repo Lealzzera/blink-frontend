@@ -32,26 +32,30 @@ export default function ChatListComponent({
   numberNotConnected,
 }: ChatListComponentProps) {
   const [cardSelected, setCardSelected] = useState<string | undefined>();
-  const observer = useRef<IntersectionObserver | null>(null);
   const router = useRouter();
+  const observer = useRef<IntersectionObserver | null>(null);
 
   const lastListItem = useCallback(
     (node: HTMLLIElement | null) => {
       if (loading.firstLoading || loading.loading) return;
       if (observer.current) observer.current.disconnect();
-
-      observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          fetchMore();
-        }
-      });
-
+      observer.current = new IntersectionObserver(
+        (entries) => {
+          const [entry] = entries;
+          if (entry.isIntersecting && hasMore) fetchMore();
+        },
+        { threshold: 0.5 }
+      );
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore, fetchMore]
+    [fetchMore, hasMore, loading.firstLoading, loading.loading]
   );
 
   const handleCardClick = (value: string) => setCardSelected(value);
+
+  useEffect(() => {
+    setCardSelected(undefined);
+  }, [chatList]);
 
   return (
     <div className={style.chatListContainer}>
@@ -68,35 +72,28 @@ export default function ChatListComponent({
         </div>
       )}
       <ul className={style.chatListUl}>
-        {chatList.map((item, index) => {
-          const isLast = index === chatList.length - 1;
-          return (
-            <li ref={isLast ? lastListItem : null} key={item.phone_number}>
-              <ChatCardComponent
-                cardClick={() => handleCardClick(item.phone_number)}
-                contactName={item.whats_app_name}
-                imageUrl={item.picture_url}
-                cardSelected={cardSelected}
-                lastMessage={item.last_message}
-                phoneNumber={item.phone_number}
-                sentAt={item.sent_at}
-              />
-            </li>
-          );
-        })}
+        {loading.firstLoading
+          ? Array.from({ length: 20 }).map((_, i) => (
+              <li key={`skeleton-${i}`} className={style.skeletonCard}></li>
+            ))
+          : chatList.map((item, index) => {
+              const isLast = index === chatList.length - 1;
+              return (
+                <li ref={isLast ? lastListItem : null} key={item.phone_number}>
+                  <ChatCardComponent
+                    cardClick={() => handleCardClick(item.phone_number)}
+                    contactName={item.whats_app_name}
+                    imageUrl={item.picture_url}
+                    cardSelected={cardSelected}
+                    lastMessage={item.last_message}
+                    phoneNumber={item.phone_number}
+                    sentAt={item.sent_at}
+                  />
+                </li>
+              );
+            })}
       </ul>
 
-      {loading.firstLoading && (
-        <ul className={style.chatListUl}>
-          {Array(20)
-            .fill(null)
-            .map((_, index) => (
-              <li key={index}>
-                <div className={style.skeletonCard}></div>
-              </li>
-            ))}
-        </ul>
-      )}
       {loading.loading && (
         <div className={style.dots}>
           <span></span>

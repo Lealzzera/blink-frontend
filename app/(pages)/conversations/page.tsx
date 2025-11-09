@@ -2,7 +2,7 @@
 
 import style from "./style.module.css";
 import ChatListComponent from "./components/ChatListComponent/ChatListComponent";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getConversations } from "@/app/actions/getConversations";
 import { useUser } from "@/app/context/userContext";
 import { useWhatsApp } from "@/app/hooks/useWhatsApp";
@@ -28,31 +28,32 @@ export default function Conversations() {
   });
   const { whatsAppStatus } = useWhatsApp(clinicId);
 
-  const fetchConversationsList = async (pageNum: number) => {
-    if (!clinicId || loading.loading) return;
-    setLoading({ firstLoading: pageNum === 0, loading: pageNum > 0 });
-    try {
-      const response = await getConversations({ clinicId, page: pageNum });
-      if (!response || response.length == 0) {
-        setHasMore(false);
-        return;
+  const fetchConversationsList = useCallback(
+    async (pageNum: number) => {
+      if (!clinicId || loading.loading) return;
+      setLoading({ firstLoading: pageNum === 0, loading: pageNum > 0 });
+      try {
+        const response = await getConversations({ clinicId, page: pageNum });
+        if (!response?.length) {
+          setHasMore(false);
+          return;
+        }
+        setChatList((prev) => [...prev, ...response]);
+        setPage(pageNum);
+      } catch (err) {
+        console.error("Erro ao buscar conversas:", err);
+      } finally {
+        setLoading({ loading: false, firstLoading: false });
       }
-      setChatList((prev: ChatListData[]) => [...prev, ...response]);
-      setPage(pageNum);
-    } catch (err) {
-      return err;
-    } finally {
-      setLoading({ firstLoading: false, loading: false });
-    }
-  };
+    },
+    [clinicId, loading]
+  );
 
-  const showWhatsAppIsNotConnected = () => {
-    return (
-      whatsAppStatus?.status !== "CONNECTED" &&
-      !loading.firstLoading &&
-      !loading.loading
-    );
-  };
+  const showWhatsAppIsNotConnected =
+    whatsAppStatus?.status !== "CONNECTED" &&
+    !loading.firstLoading &&
+    !loading.loading;
+
   useEffect(() => {
     if (!clinicId) return;
     setChatList([]);
@@ -61,17 +62,17 @@ export default function Conversations() {
     fetchConversationsList(0);
   }, [clinicId]);
 
-  const fetchMore = () => {
+  const handleFetchMore = useCallback(() => {
     if (!hasMore || loading.loading) return;
     fetchConversationsList(page + 1);
-  };
+  }, [hasMore, loading, page, fetchConversationsList]);
 
   return (
     <section className={style.conversationPageContainer}>
       <ChatListComponent
-        numberNotConnected={showWhatsAppIsNotConnected()}
+        numberNotConnected={showWhatsAppIsNotConnected}
         chatList={chatList}
-        fetchMore={fetchMore}
+        fetchMore={handleFetchMore}
         hasMore={hasMore}
         loading={loading}
       />
