@@ -30,11 +30,7 @@ export default function ChatCardComponent({
       <div className={styles.pictureContainer}>
         <Image
           alt="Imagem de perfil do contato"
-          src={
-            imageUrl
-              ? imageUrl
-              : "https://images.google.com/images/branding/googlelogo/1x/googlelogo_light_color_272x92dp.png"
-          }
+          src={imageUrl ? imageUrl : "/images/avatar.png"}
           width={50}
           height={50}
           className={styles.imageComponent}
