@@ -94,21 +94,19 @@ export default function ChatComponent({
         );
 
         if (page === 0) {
-          const normalized = sortedResponse.map(withStableId);
-
-          setMessageList(normalized);
+          setMessageList(sortedResponse);
         }
 
         if (page > 0) {
           setMessageList((prev) => {
-            const existingIds = new Set(prev.map((m: any) => m._id));
-            const incoming = sortedResponse
-              .map(withStableId)
-              .filter((m) => !existingIds.has(m._id));
+            const merged = [...sortedResponse, ...prev];
 
-            const merged = [...incoming, ...prev];
+            const unique = merged.filter(
+              (msg, index, arr) =>
+                arr.findIndex((m) => m.sent_at === msg.sent_at) === index
+            );
 
-            return merged.sort(
+            return unique.sort(
               (a, b) =>
                 new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
             );
@@ -195,7 +193,7 @@ export default function ChatComponent({
           const isFirst = index === 0;
           return (
             <li
-              key={message._id}
+              key={index}
               ref={isFirst ? firstListItem : null}
               className={message.from_me ? style.fromMe : style.fromPatient}
             >
@@ -204,6 +202,7 @@ export default function ChatComponent({
           );
         })}
       </ul>
+
       <div className={style.textAreaContainer}>
         <textarea
           ref={textareaRef}
