@@ -1,6 +1,9 @@
-"use client";
-import { RealtimeChat } from "@/components/realtime-chat";
+import { LoginPage } from "./components/LoginPage/LoginPage";
 
-export default function ChatPage() {
-  return <RealtimeChat roomName="my-chat-room" username="Você" />;
+export default async function Page() {
+  return (
+    <div>
+      <LoginPage />
+    </div>
+  );
 }
