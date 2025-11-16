@@ -1,0 +1,12 @@
+.conversationPageContainer {
+  background-color: var(--gray-700);
+  display: flex;
+  height: 100vh;
+}
+
+.containerText {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
