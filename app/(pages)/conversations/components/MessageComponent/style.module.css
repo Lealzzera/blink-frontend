@@ -1,0 +1,15 @@
+.messageBaloonContainer {
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+  max-width: 700px;
+  overflow-wrap: break-word;
+  white-space: normal;
+}
+
+.fromMe {
+  background-color: var(--green-500);
+}
+
+.fromPatient {
+  background-color: var(--blue-500);
+}

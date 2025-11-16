@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getConversations } from "@/app/actions/getConversations";
 import { useUser } from "@/app/context/userContext";
 import { useWhatsApp } from "@/app/hooks/useWhatsApp";
+import ChatComponent from "./components/ChatComponent/ChatComponent";
 
 type ChatListData = {
   ai_answer: boolean;
@@ -18,7 +19,7 @@ type ChatListData = {
 };
 
 export default function Conversations() {
-  const { clinicId } = useUser();
+  const { clinicId, numberSelected } = useUser();
   const [chatList, setChatList] = useState<ChatListData[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -50,7 +51,7 @@ export default function Conversations() {
         });
         setPage(pageNum);
       } catch (err) {
-        console.error("Erro ao buscar conversas:", err);
+        console.error("Error fetching chat list:", err);
       } finally {
         setLoading({ loading: false, firstLoading: false });
       }
@@ -85,9 +86,15 @@ export default function Conversations() {
         hasMore={hasMore}
         loading={loading}
       />
-      <div>
-        <p>conversation page</p>
-      </div>
+      {numberSelected ? (
+        <ChatComponent phoneNumber={numberSelected} clinicId={clinicId} />
+      ) : (
+        <div className={style.containerText}>
+          <p>
+            Crie uma conversa e comece agora mesmo a enviar e receber mensagens
+          </p>
+        </div>
+      )}
     </section>
   );
 }

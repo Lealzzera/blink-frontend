@@ -1,5 +1,5 @@
 .chatListContainer {
-  width: 390px;
+  width: 590px;
   border-right: 2px solid var(--gray-600);
   overflow-y: auto;
   scrollbar-width: thin;

@@ -6,6 +6,7 @@ import style from "./style.module.css";
 import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
 import { useRouter } from "next/navigation";
 import formatChatDate from "@/utils/formatChatDate";
+import { useUser } from "@/app/context/userContext";
 
 type ChatListItem = {
   ai_answer: boolean;
@@ -33,6 +34,7 @@ export default function ChatListComponent({
   numberNotConnected,
 }: ChatListComponentProps) {
   const [cardSelected, setCardSelected] = useState<string | undefined>();
+  const { handleSetNumberSelected } = useUser();
   const router = useRouter();
   const observer = useRef<IntersectionObserver | null>(null);
 
@@ -52,7 +54,10 @@ export default function ChatListComponent({
     [fetchMore, hasMore, loading.firstLoading, loading.loading]
   );
 
-  const handleCardClick = (value: string) => setCardSelected(value);
+  const handleCardClick = (value: string) => {
+    setCardSelected(value);
+    handleSetNumberSelected(value);
+  };
 
   useEffect(() => {
     setCardSelected(undefined);

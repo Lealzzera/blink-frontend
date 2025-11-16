@@ -15,8 +15,10 @@ type User = { id: string; email: string };
 type UserContextType = {
   user: User | null;
   clinicId: number | null;
+  numberSelected: string | null;
   handleSetUser: (data: User) => void;
   handleClearUser: () => void;
+  handleSetNumberSelected: (number: string) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -24,6 +26,7 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [clinicId, setClinicId] = useState<number | null>(null);
+  const [numberSelected, setNumberSelected] = useState<string | null>(null);
 
   function handleSetUser(data: User) {
     setUserInfo(data);
@@ -31,6 +34,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   function handleClearUser() {
     setUserInfo(null);
+  }
+
+  function handleSetNumberSelected(number: string) {
+    setNumberSelected(number);
   }
 
   useEffect(() => {
@@ -56,7 +63,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   return (
     <UserContext.Provider
-      value={{ user: userInfo, clinicId, handleSetUser, handleClearUser }}
+      value={{
+        user: userInfo,
+        clinicId,
+        handleSetUser,
+        handleClearUser,
+        numberSelected,
+        handleSetNumberSelected,
+      }}
     >
       {children}
     </UserContext.Provider>

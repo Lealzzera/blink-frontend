@@ -3,15 +3,17 @@
 import { createClient } from "@/utils/supabase/server";
 import axios from "axios";
 
-type GetConversationsType = {
+type GetConversationMessagesType = {
   clinicId?: number | null;
   page?: number;
+  phoneNumber: string;
 };
 
-export async function getConversations({
+export async function getConversationMessages({
   clinicId,
   page = 0,
-}: GetConversationsType) {
+  phoneNumber,
+}: GetConversationMessagesType) {
   const supabase = await createClient();
 
   const {
@@ -26,7 +28,7 @@ export async function getConversations({
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/${clinicId}/overview?page=${page}`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/${clinicId}/overview/${phoneNumber}?page=${page}`,
       {
         headers: {
           "Content-Type": "application/json",
@@ -37,6 +39,6 @@ export async function getConversations({
 
     return response.data;
   } catch (err) {
-    console.error("Error fetching conversations:", err);
+    console.error("Error fetching conversation messages:", err);
   }
 }
