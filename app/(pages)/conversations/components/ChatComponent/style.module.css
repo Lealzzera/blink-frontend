@@ -24,7 +24,7 @@
 }
 
 .chatUl::-webkit-scrollbar {
-  width: 6px;
+  width: 0px;
 }
 .chatUl::-webkit-scrollbar-track {
   background: transparent;
