@@ -1,6 +1,5 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { ThemeProvider } from "@/components/theme-provider";
 import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
 import { UserProvider } from "./context/userContext";
 
