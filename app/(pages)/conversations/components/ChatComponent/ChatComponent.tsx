@@ -148,11 +148,9 @@ export default function ChatComponent({
 
     setMessageList((prev) => [...prev, newMessage]);
 
-    setTimeout(() => {
-      if (ulRef.current) {
-        ulRef.current.scrollTop = ulRef.current.scrollHeight;
-      }
-    }, 0);
+    if (ulRef.current) {
+      ulRef.current.scrollTop = ulRef.current.scrollHeight;
+    }
 
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
