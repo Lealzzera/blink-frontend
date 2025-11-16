@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import MessageComponent from "../MessageComponent/MessageComponent";
 import style from "./style.module.css";
 import { Send } from "lucide-react";
+import { postMessage } from "@/app/actions/postMessage";
 
 type ChatComponentProps = {
   phoneNumber: string | null;
@@ -132,14 +133,32 @@ export default function ChatComponent({
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
   };
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
+    if (!phoneNumber || message.length === 0) return;
     if (!message.trim()) return;
-    console.log("Mensagem enviada:", message);
+
     setMessage("");
+    await postMessage({ clinicId, message, phoneNumber });
+
+    const newMessage = {
+      message_text: message,
+      from_me: true,
+      sent_at: new Date().toISOString(),
+    };
+
+    setMessageList((prev) => [...prev, newMessage]);
+
+    setTimeout(() => {
+      if (ulRef.current) {
+        ulRef.current.scrollTop = ulRef.current.scrollHeight;
+      }
+    }, 0);
+
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
     }
   };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && e.shiftKey) return;
     if (e.key === "Enter") {
