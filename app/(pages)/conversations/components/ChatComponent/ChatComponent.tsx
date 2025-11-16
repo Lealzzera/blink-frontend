@@ -59,6 +59,13 @@ export default function ChatComponent({
     [loading, hasMore]
   );
 
+  const withStableId = (msg: any) => ({
+    ...msg,
+    _id: `${msg.sent_at}-${msg.from_me ? "me" : "them"}-${
+      msg.body ?? msg.text ?? ""
+    }`,
+  });
+
   const fetchMessageList = useCallback(
     async (page: number) => {
       if (!clinicId || !phoneNumber || loading) return;
@@ -75,6 +82,7 @@ export default function ChatComponent({
           phoneNumber,
           page,
         });
+
         if (!response || response.length === 0) {
           setHasMore(false);
           return;
@@ -86,10 +94,25 @@ export default function ChatComponent({
         );
 
         if (page === 0) {
-          setMessageList(sortedResponse);
+          const normalized = sortedResponse.map(withStableId);
+
+          setMessageList(normalized);
         }
+
         if (page > 0) {
-          setMessageList((prev) => [...sortedResponse, ...prev]);
+          setMessageList((prev) => {
+            const existingIds = new Set(prev.map((m: any) => m._id));
+            const incoming = sortedResponse
+              .map(withStableId)
+              .filter((m) => !existingIds.has(m._id));
+
+            const merged = [...incoming, ...prev];
+
+            return merged.sort(
+              (a, b) =>
+                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            );
+          });
         }
 
         setPageNumber(page);
@@ -161,14 +184,18 @@ export default function ChatComponent({
   return (
     <div ref={chatRef} className={style.chatContainer}>
       {loading && pageNumber > 0 && (
-        <p className={style.loadingTop}>Carregando mensagens...</p>
+        <div className={style.dots}>
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
       )}
       <ul ref={ulRef} className={style.chatUl}>
         {messageList.map((message, index) => {
           const isFirst = index === 0;
           return (
             <li
-              key={message.id || index}
+              key={message._id}
               ref={isFirst ? firstListItem : null}
               className={message.from_me ? style.fromMe : style.fromPatient}
             >
