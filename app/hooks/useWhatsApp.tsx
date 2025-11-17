@@ -14,7 +14,7 @@ export function useWhatsApp(clinicId?: number | null) {
     null
   );
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
   const fetchStatus = async () => {
@@ -31,6 +31,7 @@ export function useWhatsApp(clinicId?: number | null) {
   };
 
   const fetchQrCode = async () => {
+    setLoading(true);
     if (!clinicId) return;
     try {
       const res = await getQrCode({ clinicId });
@@ -50,6 +51,7 @@ export function useWhatsApp(clinicId?: number | null) {
   }, [clinicId]);
 
   useEffect(() => {
+    setLoading(true);
     if (whatsAppStatus?.status === "CONNECTED") {
       setQrCode(null);
       setLoading(false);
