@@ -1,5 +1,4 @@
-"use server";
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 
 type LoginData = {
   email: string;
@@ -7,7 +6,7 @@ type LoginData = {
 };
 
 export async function login({ email, password }: LoginData) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const data = {
     email,

@@ -1,11 +1,7 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
 export async function logout() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const { error } = await supabase.auth.signOut();
 
@@ -13,6 +9,11 @@ export async function logout() {
     return { error: error.message };
   }
 
-  revalidatePath("/", "layout");
-  redirect("/");
+  // On client, perform a full navigation to the homepage to emulate
+  // the previous server-side redirect and reload session state.
+  if (typeof window !== "undefined") {
+    window.location.href = "/";
+  }
+
+  return { error: null };
 }

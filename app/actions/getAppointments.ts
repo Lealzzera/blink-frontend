@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type GetAppointmentsType = {
@@ -14,7 +12,7 @@ export async function getAppointments({
   startDate,
   endDate,
 }: GetAppointmentsType) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { session },

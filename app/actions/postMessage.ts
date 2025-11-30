@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type PostMessageType = {
@@ -16,7 +14,7 @@ export async function postMessage({
   phoneNumber,
   wait,
 }: PostMessageType) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { session },

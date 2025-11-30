@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type PutAppointmentStatusType = {
@@ -12,7 +10,7 @@ export async function putAppointmentStatus({
   appointmentId,
   status,
 }: PutAppointmentStatusType) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { session },

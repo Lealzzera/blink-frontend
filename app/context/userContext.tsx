@@ -7,6 +7,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
+import { usePathname } from "next/navigation";
 import { getClinicId } from "../actions/getClinicId";
 import axios from "axios";
 
@@ -40,7 +41,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setNumberSelected(number);
   }
 
+  const pathname = usePathname();
+
   useEffect(() => {
+    // don't call /api/me when on the login page (root path)
+    if (pathname === "/") return;
     const loadUser = async () => {
       try {
         const res = await axios.get("/api/me", {
@@ -58,8 +63,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         handleClearUser();
       }
     };
-    loadUser();
-  }, []);
+    // only trigger loadUser when pathname is defined and not root
+    if (typeof window !== "undefined") loadUser();
+  }, [pathname]);
 
   return (
     <UserContext.Provider

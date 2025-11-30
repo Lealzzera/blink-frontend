@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type GetConversationsType = {
@@ -12,7 +10,7 @@ export async function getConversations({
   clinicId,
   page = 0,
 }: GetConversationsType) {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { session },

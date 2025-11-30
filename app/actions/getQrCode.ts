@@ -1,6 +1,4 @@
-"use server";
-
-import { createClient } from "@/utils/supabase/server";
+import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type GetQrCodeType = {
@@ -8,7 +6,7 @@ type GetQrCodeType = {
 };
 
 export async function getQrCode() {
-  const supabase = await createClient();
+  const supabase = createClient();
 
   const {
     data: { session },
@@ -32,6 +30,18 @@ export async function getQrCode() {
       }
     );
 
+    // Convert ArrayBuffer to base64 in browser
+    if (typeof window !== "undefined") {
+      const bytes = new Uint8Array(response.data as ArrayBuffer);
+      let binary = "";
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return btoa(binary);
+    }
+
+    // Fallback for non-browser (shouldn't be used after this change)
+    // @ts-ignore
     return Buffer.from(response.data).toString("base64");
   } catch (err) {
     console.error("Error fetching QR code:", err);
