@@ -30,7 +30,7 @@ export default function SidebarComponent() {
           </Link>
         </li>
 
-        <li className={styles.item}>
+        {/* <li className={styles.item}>
           <Link
             href="/dashboard"
             className={`${styles.link} ${
@@ -40,7 +40,7 @@ export default function SidebarComponent() {
             <ChartColumnBig className={styles.icon} />
             <span className={styles.tooltip}>Dashboard</span>
           </Link>
-        </li>
+        </li> */}
         <li className={styles.item}>
           <Link
             href="/schedules"
