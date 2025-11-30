@@ -1,3 +1,302 @@
+"use client";
+import ptBr from "@fullcalendar/core/locales/pt-br";
+import React, { useEffect, useState, useCallback } from "react";
+import styles from "./style.module.css";
+import Calendar from "@fullcalendar/react";
+import { EventInput } from "@fullcalendar/core";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
+import InputComponent from "@/app/components/InputComponent/InputComponent";
+import EventDetailsComponent from "@/app/components/EventDetailsComponent/EventDetailsComponent";
+import { useUser } from "@/app/context/userContext";
+import { getAppointments } from "@/app/actions/getAppointments";
+import { putAppointmentStatus } from "@/app/actions/putAppointmentStatus";
+import { postAppointment } from "@/app/actions/postAppointment";
 export default function Schedules() {
-  return <div>Agendamentos</div>;
+  const { clinicId } = useUser();
+
+  const [events, setEvents] = useState<EventInput[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formTelephone, setFormTelephone] = useState<string>("");
+  const [formDate, setFormDate] = useState<string>("");
+  const [formTime, setFormTime] = useState<string>("");
+  const [formDescription, setFormDescription] = useState<string>("");
+  const [selectedEvent, setSelectedEvent] = useState<EventInput | null>(null);
+  const [dataRange, setDateRange] = useState<{ start: string; end: string }>({
+    start: "",
+    end: "",
+  });
+  const [error, setError] = useState<string>("");
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setFormDate("");
+    setFormTime("");
+    setFormDescription("");
+    setError("");
+  };
+
+  const handleCreate = async () => {
+    if (!clinicId) return;
+    if (!formTelephone || !formDate || !formTime) {
+      setError("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+    const formattedTelephone = formTelephone.replace(/\D/g, "");
+    const [day, month, year] = formDate.split("/");
+    const dateFormatted = `${year}-${month}-${day} ${formTime}`;
+    try {
+      setError("");
+      await postAppointment({
+        clinicId,
+        notes: formDescription,
+        patientNumber: formattedTelephone,
+        scheduledTime: dateFormatted,
+      });
+
+      // close modal and refresh appointments
+      handleCloseModal();
+      await fetchAppointments();
+    } catch (err: any) {
+      setError(
+        err?.message || "Erro ao criar agendamento. Tente novamente mais tarde."
+      );
+    }
+  };
+
+  const handleChangeTelephone = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, "");
+
+    let formatted = "";
+
+    if (digits.length > 0) {
+      formatted += "(" + digits.substring(0, 2);
+    }
+    if (digits.length >= 3) {
+      formatted += ")" + digits.substring(2, 7);
+    }
+    if (digits.length >= 8) {
+      formatted += "-" + digits.substring(7, 11);
+    }
+
+    setFormTelephone(formatted);
+  };
+
+  const handleChangeDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, "");
+
+    let formatted = "";
+
+    if (digits.length > 0) {
+      formatted += digits.substring(0, 2);
+    }
+    if (digits.length >= 3) {
+      formatted += "/" + digits.substring(2, 4);
+    }
+    if (digits.length >= 5) {
+      formatted += "/" + digits.substring(4, 8);
+    }
+
+    setFormDate(formatted);
+  };
+
+  const handleChangeTime = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target.value;
+    const digits = input.replace(/\D/g, "");
+
+    let formatted = "";
+
+    if (digits.length > 0) {
+      formatted += digits.substring(0, 2);
+    }
+    if (digits.length >= 3) {
+      formatted += ":" + digits.substring(2, 4);
+    }
+
+    setFormTime(formatted);
+  };
+
+  const handleFormatDateSet = (dateInfo: any) => {
+    const startDateIso = new Date(dateInfo.startStr)
+      .toISOString()
+      .split("T")[0];
+    const endDateIso = new Date(dateInfo.endStr).toISOString().split("T")[0];
+    setDateRange({ start: startDateIso, end: endDateIso });
+  };
+
+  const handlePresenterAppointmentsList = (appointmentsData: any[]) => {
+    return appointmentsData.flatMap((appointment: any) => {
+      const date = appointment.date;
+      return (appointment.appointments || []).map((appt: any) => {
+        const time = appt.time || "00:00";
+        const isoTime = `${date}T${time}:00`;
+
+        return {
+          id: String(appt.id),
+          title: appt.name,
+          start: new Date(isoTime).toISOString(),
+          extendedProps: {
+            phone: appt.phone,
+            duration: appt.duration,
+            status: appt.status,
+            sales: appt.sales,
+            dayInfo: {
+              open: appointment.open,
+              close: appointment.close,
+              break_start: appointment.break_start,
+              break_end: appointment.break_end,
+            },
+          },
+        };
+      });
+    });
+  };
+
+  const fetchAppointments = useCallback(async () => {
+    if (!clinicId) return;
+    try {
+      const appointments = await getAppointments({
+        clinicId,
+        startDate: dataRange.start,
+        endDate: dataRange.end,
+      });
+
+      const appointmentsFormatted =
+        handlePresenterAppointmentsList(appointments);
+
+      setEvents(appointmentsFormatted);
+    } catch (err) {
+      console.error("Erro ao buscar appointments:", err);
+    }
+  }, [clinicId, dataRange]);
+
+  useEffect(() => {
+    fetchAppointments();
+  }, [fetchAppointments]);
+
+  const handleUpdateStatus = useCallback(
+    async (payload: { id?: string; status: string }) => {
+      setSelectedEvent(null);
+      await putAppointmentStatus({
+        appointmentId: String(payload.id),
+        status: payload.status,
+      });
+      await fetchAppointments();
+    },
+    [fetchAppointments]
+  );
+  return (
+    <div className={styles.schedulesContainer}>
+      <h1>Agendamentos</h1>
+      <div className={styles.buttonContainer}>
+        <button className={styles.newScheduleButton} onClick={handleOpenModal}>
+          Novo agendamento
+        </button>
+      </div>
+      <div className={styles.calendarContainer}>
+        {selectedEvent && (
+          <EventDetailsComponent
+            handleUpdateStatus={(event) => handleUpdateStatus(event)}
+            event={selectedEvent}
+            onClose={() => setSelectedEvent(null)}
+          />
+        )}
+        <Calendar
+          datesSet={(info) => {
+            handleFormatDateSet(info);
+          }}
+          eventClick={(info) => {
+            const ev: EventInput = {
+              id: info.event.id,
+              title: info.event.title,
+              start: info.event.start
+                ? info.event.start.toISOString()
+                : info.event.startStr,
+              extendedProps: (info.event as any).extendedProps,
+            };
+            setSelectedEvent(ev);
+          }}
+          eventTimeFormat={{
+            hour: "2-digit",
+            minute: "2-digit",
+            hour12: false,
+          }}
+          plugins={[dayGridPlugin]}
+          locale={ptBr}
+          initialView="dayGridWeek"
+          headerToolbar={{
+            left: "prev,next today",
+            center: "title",
+            right: "dayGridWeek,dayGridMonth",
+          }}
+          events={events}
+          eventClassNames={(arg) => {
+            const status = (arg.event.extendedProps as any)?.status;
+            const key = `status_${String(status || "").toUpperCase()}`;
+            const statusClass = (styles as any)[key];
+            return [styles.scheduleItem, statusClass].filter(
+              Boolean
+            ) as string[];
+          }}
+          dayCellClassNames={(arg) => {
+            if (arg.isToday) {
+              return [styles.dayCellCustom];
+            }
+            return [];
+          }}
+          buttonText={{ month: "Mês", week: "Semana" }}
+          height={"100%"}
+        />
+      </div>
+      {isModalOpen && (
+        <div className={styles.scheduleModal}>
+          <div className={styles.modalContent}>
+            <h2>Novo Agendamento</h2>
+            <InputComponent
+              label="Telefone"
+              placeholder="(00)00000-0000"
+              value={formTelephone}
+              handleChangeInput={handleChangeTelephone}
+            />
+            <InputComponent
+              label="Data"
+              placeholder="DD/MM/AAAA"
+              value={formDate}
+              handleChangeInput={handleChangeDate}
+            />
+            <InputComponent
+              label="Horário"
+              placeholder="00:00"
+              value={formTime}
+              handleChangeInput={handleChangeTime}
+            />
+            <InputComponent
+              type="text"
+              value={formDescription}
+              handleChangeInput={(e) => setFormDescription(e.target.value)}
+              placeholder="Descrição do agendamento"
+            />
+            {error && <p className={styles.errorText}>{error}</p>}
+            <div className={styles.modalButtons}>
+              <ButtonComponent
+                text="Cancelar"
+                handleClickButton={handleCloseModal}
+                style={{
+                  background: "transparent",
+                  color: "var(--red-300)",
+                  border: "2px solid var(--red-300)",
+                }}
+              />
+              <ButtonComponent text="Criar" handleClickButton={handleCreate} />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }
