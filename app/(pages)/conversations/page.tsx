@@ -90,7 +90,9 @@ export default function Conversations() {
         <ChatComponent phoneNumber={numberSelected} clinicId={clinicId} />
       ) : (
         <div className={style.containerText}>
-          <p>Crie uma conversa e a enviar e receber mensagens agora mesmo!</p>
+          <p>
+            Crie uma conversa e começe a enviar e receber mensagens agora mesmo!
+          </p>
         </div>
       )}
     </section>
