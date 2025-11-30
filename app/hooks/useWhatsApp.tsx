@@ -20,7 +20,7 @@ export function useWhatsApp(clinicId?: number | null) {
   const fetchStatus = async () => {
     if (!clinicId) return;
     try {
-      const res = await getWhatsAppStatus({ clinicId });
+      const res = await getWhatsAppStatus();
       setWhatsAppStatus({
         status: res.status,
         connectedPhoneNumber: res.connected_phone_number,
@@ -32,9 +32,8 @@ export function useWhatsApp(clinicId?: number | null) {
 
   const fetchQrCode = async () => {
     setLoading(true);
-    if (!clinicId) return;
     try {
-      const res = await getQrCode({ clinicId });
+      const res = await getQrCode();
       if (res) setQrCode(`data:image/png;base64,${res}`);
     } catch {
       setError(true);

@@ -2,13 +2,8 @@
 
 import { createClient } from "@/utils/supabase/server";
 import axios from "axios";
-import { connected } from "process";
 
-type GetQrCodeType = {
-  clinicId?: number;
-};
-
-export async function getWhatsAppStatus({ clinicId }: GetQrCodeType) {
+export async function getWhatsAppStatus() {
   const supabase = await createClient();
 
   const {
@@ -23,7 +18,7 @@ export async function getWhatsAppStatus({ clinicId }: GetQrCodeType) {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/${clinicId}/status`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/status`,
       {
         headers: {
           "Content-Type": "application/json",
