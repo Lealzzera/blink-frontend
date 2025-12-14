@@ -19,7 +19,6 @@ export default function ForgotPassword() {
     event.preventDefault();
     setLoading(true);
     const response = await forgotPassword(email);
-    console.log(response);
 
     if (response.error) {
       toast("Ocorreu um erro ao enviar o e-mail. Tente novamente mais tarde!", {
