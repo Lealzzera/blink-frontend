@@ -31,15 +31,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage = request.nextUrl.pathname === "/";
+  const pathname = request.nextUrl.pathname;
+  const isAuthPage = pathname === "/";
+  const isForgotPage = pathname.startsWith("/forgot-password");
 
-  if (!user && !isAuthPage) {
+  if (!user && !isAuthPage && !isForgotPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  if (user && (isAuthPage || isForgotPage)) {
     const url = request.nextUrl.clone();
     url.pathname = "/conversations";
     return NextResponse.redirect(url);
