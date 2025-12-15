@@ -7,6 +7,7 @@ import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
 import { useRouter } from "next/navigation";
 import formatChatDate from "@/utils/formatChatDate";
 import { useUser } from "@/app/context/userContext";
+import { useChat } from "@/app/context/chatContext";
 
 type ChatListItem = {
   ai_answer: boolean;
@@ -39,6 +40,7 @@ export default function ChatListComponent({
   );
   const router = useRouter();
   const observer = useRef<IntersectionObserver | null>(null);
+  const { lastMessageByPhone } = useChat();
 
   const lastListItem = useCallback(
     (node: HTMLLIElement | null) => {
@@ -82,6 +84,9 @@ export default function ChatListComponent({
             ))
           : chatList.map((item, index) => {
               const isLast = index === chatList.length - 1;
+              const lastMessage = lastMessageByPhone[item.phone_number]
+                ? lastMessageByPhone[item.phone_number].message
+                : item.last_message;
               return (
                 <li ref={isLast ? lastListItem : null} key={item.phone_number}>
                   <ChatCardComponent
@@ -89,7 +94,7 @@ export default function ChatListComponent({
                     contactName={item.whats_app_name}
                     imageUrl={item.picture_url}
                     cardSelected={cardSelected}
-                    lastMessage={item.last_message}
+                    lastMessage={lastMessage}
                     phoneNumber={item.phone_number}
                     sentAt={formatChatDate(item.sent_at)}
                   />
