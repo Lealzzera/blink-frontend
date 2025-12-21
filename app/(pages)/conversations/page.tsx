@@ -19,7 +19,7 @@ type ChatListData = {
 };
 
 export default function Conversations() {
-  const { clinicId, numberSelected } = useUser();
+  const { clinicId, contactSelected } = useUser();
   const [chatList, setChatList] = useState<ChatListData[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -86,8 +86,17 @@ export default function Conversations() {
         hasMore={hasMore}
         loading={loading}
       />
-      {numberSelected ? (
-        <ChatComponent phoneNumber={numberSelected} clinicId={clinicId} />
+      {contactSelected?.phone_number ? (
+        <ChatComponent
+          contactName={
+            contactSelected.whats_app_name
+              ? contactSelected.whats_app_name
+              : contactSelected.phone_number
+          }
+          phoneNumber={contactSelected.phone_number}
+          clinicId={clinicId}
+          imageUrl={contactSelected.picture_url}
+        />
       ) : (
         <div className={style.containerText}>
           <p>

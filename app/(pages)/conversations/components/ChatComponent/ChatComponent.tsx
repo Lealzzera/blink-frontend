@@ -6,15 +6,20 @@ import MessageComponent from "../MessageComponent/MessageComponent";
 import style from "./style.module.css";
 import { Send } from "lucide-react";
 import { postMessage } from "@/app/actions/postMessage";
+import Image from "next/image";
 
 type ChatComponentProps = {
   phoneNumber: string | null;
   clinicId: number | null;
+  contactName?: string;
+  imageUrl?: string;
 };
 
 export default function ChatComponent({
   phoneNumber,
   clinicId,
+  contactName,
+  imageUrl,
 }: ChatComponentProps) {
   const [loading, setLoading] = useState(false);
   const [messageList, setMessageList] = useState<any[]>([]);
@@ -59,13 +64,6 @@ export default function ChatComponent({
     },
     [loading, hasMore]
   );
-
-  const withStableId = (msg: any) => ({
-    ...msg,
-    _id: `${msg.sent_at}-${msg.from_me ? "me" : "them"}-${
-      msg.body ?? msg.text ?? ""
-    }`,
-  });
 
   const fetchMessageList = useCallback(
     async (page: number) => {
@@ -198,6 +196,18 @@ export default function ChatComponent({
 
   return (
     <div ref={chatRef} className={style.chatContainer}>
+      <div className={style.contactInfo}>
+        <div className={style.contactInfoContainer}>
+          <p>{contactName}</p>
+          <Image
+            alt="Imagem de perfil do contato"
+            src={imageUrl ? imageUrl : "/images/avatar.png"}
+            width={50}
+            height={50}
+            className={style.imageContact}
+          />
+        </div>
+      </div>
       {loading && pageNumber > 0 && (
         <div className={style.dots}>
           <span></span>

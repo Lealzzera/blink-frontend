@@ -1,3 +1,4 @@
+import { ContactSelected } from "@/app/context/userContext";
 import styles from "./style.module.css";
 import Image from "next/image";
 
@@ -7,7 +8,7 @@ type ChatCardComponentProps = {
   phoneNumber?: string;
   sentAt?: string;
   contactName?: string;
-  cardSelected?: string | null;
+  cardSelected?: ContactSelected | null;
   cardClick: () => void;
 };
 
@@ -24,7 +25,7 @@ export default function ChatCardComponent({
     <div
       onClick={cardClick}
       className={`${styles.cardContainer} ${
-        cardSelected === phoneNumber ? styles.cardSelected : ""
+        cardSelected?.phone_number === phoneNumber ? styles.cardSelected : ""
       }`}
     >
       <div className={styles.pictureContainer}>

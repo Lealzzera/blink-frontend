@@ -6,7 +6,7 @@ import style from "./style.module.css";
 import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
 import { useRouter } from "next/navigation";
 import formatChatDate from "@/utils/formatChatDate";
-import { useUser } from "@/app/context/userContext";
+import { ContactSelected, useUser } from "@/app/context/userContext";
 import { useChat } from "@/app/context/chatContext";
 
 type ChatListItem = {
@@ -34,9 +34,9 @@ export default function ChatListComponent({
   loading,
   numberNotConnected,
 }: ChatListComponentProps) {
-  const { numberSelected, handleSetNumberSelected } = useUser();
-  const [cardSelected, setCardSelected] = useState<string | null>(
-    numberSelected
+  const { contactSelected, handleSetContactSelected } = useUser();
+  const [cardSelected, setCardSelected] = useState<ContactSelected | null>(
+    contactSelected
   );
   const router = useRouter();
   const observer = useRef<IntersectionObserver | null>(null);
@@ -58,9 +58,9 @@ export default function ChatListComponent({
     [fetchMore, hasMore, loading.firstLoading, loading.loading]
   );
 
-  const handleCardClick = (value: string) => {
+  const handleCardClick = (value: ContactSelected) => {
     setCardSelected(value);
-    handleSetNumberSelected(value);
+    handleSetContactSelected(value);
   };
 
   return (
@@ -90,7 +90,7 @@ export default function ChatListComponent({
               return (
                 <li ref={isLast ? lastListItem : null} key={item.phone_number}>
                   <ChatCardComponent
-                    cardClick={() => handleCardClick(item.phone_number)}
+                    cardClick={() => handleCardClick(item)}
                     contactName={item.whats_app_name}
                     imageUrl={item.picture_url}
                     cardSelected={cardSelected}

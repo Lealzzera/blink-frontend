@@ -12,14 +12,20 @@ import { getClinicId } from "../actions/getClinicId";
 import axios from "axios";
 
 type User = { id: string; email: string };
+export type ContactSelected = {
+  phone_number: string;
+  whats_app_name?: string;
+  picture_url?: string;
+  ai_answer?: boolean;
+};
 
 type UserContextType = {
   user: User | null;
   clinicId: number | null;
-  numberSelected: string | null;
+  contactSelected: ContactSelected | null;
   handleSetUser: (data: User) => void;
   handleClearUser: () => void;
-  handleSetNumberSelected: (number: string) => void;
+  handleSetContactSelected: (contactSelected: ContactSelected) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -27,7 +33,8 @@ const UserContext = createContext<UserContextType | undefined>(undefined);
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userInfo, setUserInfo] = useState<User | null>(null);
   const [clinicId, setClinicId] = useState<number | null>(null);
-  const [numberSelected, setNumberSelected] = useState<string | null>(null);
+  const [contactSelected, setContactSelected] =
+    useState<ContactSelected | null>(null);
 
   function handleSetUser(data: User) {
     setUserInfo(data);
@@ -37,8 +44,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserInfo(null);
   }
 
-  function handleSetNumberSelected(number: string) {
-    setNumberSelected(number);
+  function handleSetContactSelected(contactSelected: ContactSelected) {
+    setContactSelected(contactSelected);
   }
 
   const pathname = usePathname();
@@ -74,8 +81,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         clinicId,
         handleSetUser,
         handleClearUser,
-        numberSelected,
-        handleSetNumberSelected,
+        contactSelected,
+        handleSetContactSelected,
       }}
     >
       {children}
