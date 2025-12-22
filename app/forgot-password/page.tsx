@@ -6,10 +6,12 @@ import InputComponent from "../components/InputComponent/InputComponent";
 import styles from "./style.module.css";
 import { forgotPassword } from "../actions/forgotPassword";
 import { toast, ToastContainer } from "react-toastify";
+import { useRouter } from "next/navigation";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
+  const route = useRouter();
 
   const handleChangeEmail = (event: ChangeEvent<HTMLInputElement>) => {
     setEmail(event.target.value);
@@ -39,6 +41,10 @@ export default function ForgotPassword() {
     setEmail("");
   };
 
+  const handleBackToLoginPage = () => {
+    route.push("/");
+  };
+
   return (
     <div className={styles.forgotPage}>
       <ToastContainer />
@@ -60,6 +66,9 @@ export default function ForgotPassword() {
             disabled={loading}
             text={!loading ? "Enviar" : "Enviando..."}
           />
+          <div className={styles.backButton}>
+            <p onClick={handleBackToLoginPage}>Voltar</p>
+          </div>
         </form>
       </div>
     </div>

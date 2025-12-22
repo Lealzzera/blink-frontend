@@ -28,3 +28,15 @@
   flex-direction: column;
   gap: 1rem;
 }
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.backButton p {
+  cursor: pointer;
+  font-weight: 500;
+}
