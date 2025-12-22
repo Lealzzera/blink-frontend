@@ -1,0 +1,115 @@
+.container {
+  /* leave space for the fixed sidebar (72px) and take full remaining width */
+  padding: 28px 28px;
+  min-height: 100vh;
+  margin-left: 72px; /* align content with main app area when sidebar is present */
+  width: calc(100% - 72px);
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.title {
+  font-size: 20px;
+  color: var(--gray-100);
+  margin-bottom: 6px;
+}
+
+.subtitle {
+  color: var(--gray-300);
+  font-size: 13px;
+}
+
+.card {
+  background: var(--gray-700);
+  border-radius: 10px;
+  padding: 18px;
+  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.4);
+  width: 100%;
+  max-width: none; /* allow full width */
+}
+
+.rowHeader {
+  display: grid;
+  grid-template-columns: 1fr 80px repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  padding: 8px 4px;
+  color: var(--gray-300);
+  font-weight: 600;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 80px repeat(4, minmax(120px, 1fr));
+  gap: 12px;
+  align-items: center;
+  padding: 10px 4px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), transparent);
+  border-radius: 6px;
+}
+
+.dayLabel {
+  font-weight: 600;
+  color: var(--gray-100);
+}
+
+.dayToggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.timeInput {
+  width: 100%;
+}
+
+.rowError {
+  grid-column: 1 / -1;
+  color: var(--red-300);
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+.globalError {
+  color: var(--red-300);
+  margin-top: 12px;
+}
+
+.actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.actionsLeft {
+  width: 160px;
+}
+
+.actionsRight {
+  width: 160px;
+}
+
+@media (max-width: 920px) {
+  .container {
+    margin-left: 0; /* collapse space on small screens where sidebar hides */
+    width: 100%;
+    padding: 18px;
+  }
+  .rowHeader,
+  .row {
+    grid-template-columns: 1fr 60px 1fr 1fr 1fr 1fr;
+  }
+  .card {
+    padding: 12px;
+  }
+}
