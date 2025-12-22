@@ -25,7 +25,6 @@ export async function getAppointments({
   }
 
   try {
-    console.log(startDate, endDate);
     const response = await axios.get(
       `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/appointments/availability/${clinicId}?start_date=${startDate}&end_date=${endDate}&hide_cancelled=true`,
       {

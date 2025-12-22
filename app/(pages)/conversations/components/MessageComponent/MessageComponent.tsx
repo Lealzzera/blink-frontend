@@ -12,9 +12,9 @@ export default function MessageComponent({ message }: MessageComponentProps) {
         message.from_me ? styles.fromMe : styles.fromPatient
       }`}
     >
-      <p>{message.message_text}</p>
+      <p>{message.message_text ? message.message_text : message.message}</p>
       <span className={styles.sentAt}>
-        {formatMessageTimestamp(message.sent_at)}
+        {formatMessageTimestamp(message.sent_at ? message.sent_at : new Date())}
       </span>
     </div>
   );

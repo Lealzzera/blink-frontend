@@ -8,9 +8,10 @@ import { Send } from "lucide-react";
 import { postMessage } from "@/app/actions/postMessage";
 import Image from "next/image";
 import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
+import { useChat } from "@/app/context/chatContext";
 
 type ChatComponentProps = {
-  phoneNumber: string | null;
+  phoneNumber: string;
   clinicId: number | null;
   contactName?: string;
   imageUrl?: string;
@@ -28,6 +29,7 @@ export default function ChatComponent({
   const [message, setMessage] = useState("");
   const [pageNumber, setPageNumber] = useState(0);
   const [isSwitchOn, setIsSwitchOn] = useState(false);
+  const { lastMessageByPhone } = useChat();
 
   const chatRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -138,7 +140,6 @@ export default function ChatComponent({
     if (!message.trim()) return;
 
     setMessage("");
-    await postMessage({ clinicId, message, phoneNumber });
 
     const newMessage = {
       message_text: message,
@@ -147,6 +148,8 @@ export default function ChatComponent({
     };
 
     setMessageList((prev) => [...prev, newMessage]);
+
+    await postMessage({ clinicId, message, phoneNumber });
 
     if (ulRef.current) {
       ulRef.current.scrollTop = ulRef.current.scrollHeight;
@@ -195,6 +198,14 @@ export default function ChatComponent({
       prevScrollTopRef.current = 0;
     }
   }, [messageList, pageNumber]);
+
+  useEffect(() => {
+    const message = lastMessageByPhone[phoneNumber];
+    if (!message) return;
+    if (message.from_me) return;
+
+    setMessageList((prev) => [...prev, message]);
+  }, [lastMessageByPhone]);
 
   return (
     <div ref={chatRef} className={style.chatContainer}>
