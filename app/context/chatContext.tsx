@@ -81,11 +81,16 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       if (!token || !userId || !mounted) return;
 
-      const socket = new SockJS(
-        `${process.env.NEXT_PUBLIC_BLINK_BE_WS}/wpp-socket/subscribe?token=Bearer%20${token}`
-      );
+      const res = await fetch("/api/ws-config");
+      const { wsUrl } = await res.json();
 
-      console.log({ socket, env: process.env.NEXT_PUBLIC_BLINK_BE_WS });
+      if (!wsUrl) {
+        throw new Error("WebSocket URL is not defined");
+      }
+
+      const socket = new SockJS(
+        `${wsUrl}/wpp-socket/subscribe?token=Bearer%20${token}`
+      );
 
       const client = new Client({
         webSocketFactory: () => socket,
