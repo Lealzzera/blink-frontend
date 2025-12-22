@@ -108,6 +108,7 @@ export default function Conversations() {
       />
       {contactSelected?.phone_number ? (
         <ChatComponent
+          aiAnswerOn={contactSelected.ai_answer}
           contactName={
             contactSelected.whats_app_name
               ? contactSelected.whats_app_name

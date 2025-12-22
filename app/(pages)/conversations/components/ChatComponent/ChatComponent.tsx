@@ -15,6 +15,7 @@ type ChatComponentProps = {
   clinicId: number | null;
   contactName?: string;
   imageUrl?: string;
+  aiAnswerOn: boolean;
 };
 
 export default function ChatComponent({
@@ -22,13 +23,14 @@ export default function ChatComponent({
   clinicId,
   contactName,
   imageUrl,
+  aiAnswerOn,
 }: ChatComponentProps) {
   const [loading, setLoading] = useState(false);
   const [messageList, setMessageList] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [message, setMessage] = useState("");
   const [pageNumber, setPageNumber] = useState(0);
-  const [isSwitchOn, setIsSwitchOn] = useState(false);
+  const [isSwitchOn, setIsSwitchOn] = useState(aiAnswerOn);
   const { lastMessageByPhone } = useChat();
 
   const chatRef = useRef<HTMLDivElement | null>(null);
@@ -175,6 +177,10 @@ export default function ChatComponent({
     setHasMore(true);
     fetchMessageList(0);
   }, [phoneNumber]);
+
+  useEffect(() => {
+    setIsSwitchOn(aiAnswerOn);
+  }, [aiAnswerOn, phoneNumber]);
 
   useEffect(() => {
     const container = ulRef.current;

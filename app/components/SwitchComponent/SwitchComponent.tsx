@@ -17,14 +17,16 @@ export default function SwitchComponent({
     >
       <input
         checked={isOn}
-        onChange={() => handleToggle()}
+        onChange={handleToggle}
         className={styles.checkbox}
         type="checkbox"
         aria-checked={isOn}
       />
       <span className={styles.switch} />
 
-      <span className={styles.tooltip}>{isOn ? "Desligar IA" : "Ligar IA"}</span>
+      <span className={styles.tooltip}>
+        {isOn ? "Desligar IA" : "Ligar IA"}
+      </span>
     </label>
   );
 }

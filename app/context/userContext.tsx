@@ -16,7 +16,7 @@ export type ContactSelected = {
   phone_number: string;
   whats_app_name?: string;
   picture_url?: string;
-  ai_answer?: boolean;
+  ai_answer: boolean;
 };
 
 type UserContextType = {
