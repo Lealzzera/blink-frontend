@@ -93,7 +93,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
           client.subscribe(topic, (msg: Message) => {
             const payload = JSON.parse(msg.body);
-            console.log("message", { payload });
+            console.log({ payload });
             pushIncomingMessage(payload);
           });
         },
