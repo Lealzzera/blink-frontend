@@ -85,6 +85,8 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         `${process.env.NEXT_PUBLIC_BLINK_BE_WS}/wpp-socket/subscribe?token=Bearer%20${token}`
       );
 
+      console.log({ socket, env: process.env.NEXT_PUBLIC_BLINK_BE_WS });
+
       const client = new Client({
         webSocketFactory: () => socket,
         connectHeaders: { Authorization: `Bearer ${token}` },
