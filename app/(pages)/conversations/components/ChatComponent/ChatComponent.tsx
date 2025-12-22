@@ -7,6 +7,7 @@ import style from "./style.module.css";
 import { Send } from "lucide-react";
 import { postMessage } from "@/app/actions/postMessage";
 import Image from "next/image";
+import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
 
 type ChatComponentProps = {
   phoneNumber: string | null;
@@ -26,6 +27,7 @@ export default function ChatComponent({
   const [hasMore, setHasMore] = useState(true);
   const [message, setMessage] = useState("");
   const [pageNumber, setPageNumber] = useState(0);
+  const [isSwitchOn, setIsSwitchOn] = useState(false);
 
   const chatRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
@@ -207,6 +209,10 @@ export default function ChatComponent({
             className={style.imageContact}
           />
         </div>
+        <SwitchComponent
+          isOn={isSwitchOn}
+          handleToggle={() => setIsSwitchOn(!isSwitchOn)}
+        />
       </div>
       {loading && pageNumber > 0 && (
         <div className={style.dots}>

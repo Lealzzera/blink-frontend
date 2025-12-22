@@ -12,6 +12,8 @@
   margin-top: 0px;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
 }
 
 .contactInfoContainer {
@@ -20,7 +22,6 @@
   align-items: center;
   gap: 0.5rem;
   font-weight: bold;
-  margin: 1rem;
 }
 
 .imageContact {
