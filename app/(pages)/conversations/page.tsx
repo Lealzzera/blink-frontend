@@ -7,6 +7,7 @@ import { getConversations } from "@/app/actions/getConversations";
 import { useUser } from "@/app/context/userContext";
 import { useWhatsApp } from "@/app/hooks/useWhatsApp";
 import ChatComponent from "./components/ChatComponent/ChatComponent";
+import { useChat } from "@/app/context/chatContext";
 
 type ChatListData = {
   ai_answer: boolean;
@@ -20,6 +21,7 @@ type ChatListData = {
 
 export default function Conversations() {
   const { clinicId, contactSelected } = useUser();
+  const { lastMessageByPhone } = useChat();
   const [chatList, setChatList] = useState<ChatListData[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -39,8 +41,6 @@ export default function Conversations() {
           setHasMore(false);
           return;
         }
-
-        console.log({ response });
         setChatList((prev) => {
           const merged = [...prev, ...response];
           const unique = merged.filter(
@@ -66,6 +66,11 @@ export default function Conversations() {
     !loading.firstLoading &&
     !loading.loading;
 
+  const handleFetchMore = useCallback(() => {
+    if (!hasMore || loading.loading) return;
+    fetchConversationsList(page + 1);
+  }, [hasMore, loading, page, fetchConversationsList]);
+
   useEffect(() => {
     if (!clinicId) return;
     setChatList([]);
@@ -74,10 +79,23 @@ export default function Conversations() {
     fetchConversationsList(0);
   }, [clinicId]);
 
-  const handleFetchMore = useCallback(() => {
-    if (!hasMore || loading.loading) return;
-    fetchConversationsList(page + 1);
-  }, [hasMore, loading, page, fetchConversationsList]);
+  useEffect(() => {
+    const prioritizedChatList = chatList.filter((chat) => {
+      return (
+        chat.phone_number ===
+        lastMessageByPhone[chat.phone_number]?.phone_number
+      );
+    });
+
+    const otherChats = chatList.filter((chat) => {
+      return (
+        chat.phone_number !==
+        lastMessageByPhone[chat.phone_number]?.phone_number
+      );
+    });
+
+    setChatList([...prioritizedChatList, ...otherChats]);
+  }, [lastMessageByPhone]);
 
   return (
     <section className={style.conversationPageContainer}>
