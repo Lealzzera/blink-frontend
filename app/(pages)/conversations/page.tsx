@@ -39,6 +39,8 @@ export default function Conversations() {
           setHasMore(false);
           return;
         }
+
+        console.log({ response });
         setChatList((prev) => {
           const merged = [...prev, ...response];
           const unique = merged.filter(
