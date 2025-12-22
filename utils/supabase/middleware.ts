@@ -13,7 +13,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
 
@@ -34,8 +34,9 @@ export async function updateSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAuthPage = pathname === "/";
   const isForgotPage = pathname.startsWith("/forgot-password");
+  const isResetPage = pathname.startsWith("/reset-password");
 
-  if (!user && !isAuthPage && !isForgotPage) {
+  if (!user && !isAuthPage && !isForgotPage && !isResetPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);

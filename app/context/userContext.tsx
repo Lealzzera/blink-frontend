@@ -52,7 +52,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // don't call /api/me when on the login page (root path)
-    if (pathname === "/") return;
+    if (
+      pathname === "/" ||
+      pathname === "/reset-password" ||
+      pathname === "/forgot-password"
+    )
+      return;
     const loadUser = async () => {
       try {
         const res = await axios.get("/api/me", {

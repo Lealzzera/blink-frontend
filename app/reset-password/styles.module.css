@@ -1,0 +1,30 @@
+.resetPage {
+  background-color: var(--gray-700);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.resetContainer {
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  width: 400px;
+  padding: 1rem;
+}
+
+.resetContainer h1 {
+  font-size: 2rem;
+}
+
+.resetContainer p {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.containerInputButton {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
