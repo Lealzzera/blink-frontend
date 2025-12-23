@@ -24,7 +24,7 @@ export async function putAppointmentStatus({
 
   try {
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/appointments/${appointmentId}`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/appointments/${appointmentId}`,
       { status },
       {
         headers: {

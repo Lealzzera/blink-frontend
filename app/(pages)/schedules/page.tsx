@@ -18,6 +18,7 @@ export default function Schedules() {
   const [events, setEvents] = useState<EventInput[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formTelephone, setFormTelephone] = useState<string>("");
+  const [formPatientName, setFormPatientName] = useState<string>("");
   const [formDate, setFormDate] = useState<string>("");
   const [formTime, setFormTime] = useState<string>("");
   const [formDescription, setFormDescription] = useState<string>("");
@@ -37,27 +38,35 @@ export default function Schedules() {
     setFormTime("");
     setFormDescription("");
     setError("");
+    setFormPatientName("");
+    setFormTelephone("");
   };
 
   const handleCreate = async () => {
     if (!clinicId) return;
-    if (!formTelephone || !formDate || !formTime) {
+    if (!formTelephone || !formDate || !formTime || !formPatientName) {
       setError("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
     const formattedTelephone = formTelephone.replace(/\D/g, "");
     const [day, month, year] = formDate.split("/");
-    const dateFormatted = `${year}-${month}-${day} ${formTime}`;
+    const isoDate = `${year}-${month}-${day}T${formTime}:00Z`;
+    const dateObj = new Date(isoDate);
+    if (isNaN(dateObj.getTime())) {
+      setError("Data ou horário inválido.");
+      return;
+    }
+    const isoString = dateObj.toISOString();
     try {
       setError("");
       await postAppointment({
         clinicId,
         notes: formDescription,
         patientNumber: formattedTelephone,
-        scheduledTime: dateFormatted,
+        scheduledTime: isoString,
+        patientName: formPatientName,
       });
 
-      // close modal and refresh appointments
       handleCloseModal();
       await fetchAppointments();
     } catch (err: any) {
@@ -84,6 +93,10 @@ export default function Schedules() {
     }
 
     setFormTelephone(formatted);
+  };
+
+  const handleChangePatientName = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormPatientName(e.target.value);
   };
 
   const handleChangeDate = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,6 +270,12 @@ export default function Schedules() {
         <div className={styles.scheduleModal}>
           <div className={styles.modalContent}>
             <h2>Novo Agendamento</h2>
+            <InputComponent
+              label="Nome do paciente"
+              placeholder="Digite o nome do paciente"
+              value={formPatientName}
+              handleChangeInput={handleChangePatientName}
+            />
             <InputComponent
               label="Telefone"
               placeholder="(00)00000-0000"

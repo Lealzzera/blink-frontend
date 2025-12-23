@@ -16,7 +16,7 @@ export async function getWhatsAppStatus() {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/status`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/message/whats-app/status`,
       {
         headers: {
           "Content-Type": "application/json",

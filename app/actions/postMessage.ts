@@ -28,7 +28,7 @@ export async function postMessage({
 
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/message/whats-app/send-message`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/message/whats-app/send-message`,
       {
         clinic_id: clinicId,
         message,

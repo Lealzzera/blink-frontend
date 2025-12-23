@@ -15,7 +15,7 @@ export async function getClinicId() {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/configuration/clinic-id`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/configuration/clinic-id`,
       {
         headers: {
           "Content-Type": "application/json",

@@ -2,6 +2,7 @@ import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type PostAppointmentType = {
+  patientName: string;
   patientNumber: string;
   scheduledTime: string;
   notes: string;
@@ -13,6 +14,7 @@ export async function postAppointment({
   scheduledTime,
   notes,
   clinicId,
+  patientName,
 }: PostAppointmentType) {
   const supabase = createClient();
 
@@ -28,14 +30,13 @@ export async function postAppointment({
 
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/appointments`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/appointments`,
       {
         patient_number: patientNumber,
         scheduled_time: scheduledTime,
+        patient_name: patientName,
         notes,
         clinic: clinicId,
-        //TODO: remove hardcoded service_type
-        service_type: 1,
       },
       {
         headers: {
