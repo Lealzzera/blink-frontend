@@ -6,6 +6,8 @@ import Image from "next/image";
 import style from "./style.module.css";
 import { LogOut, MessageCircleOff } from "lucide-react";
 import { logout } from "@/app/actions/logout";
+import { deleteWhatsappConnection } from "@/app/actions/deleteWhatsappConnection";
+import { toast, ToastContainer } from "react-toastify";
 
 export default function Settings() {
   const { clinicId } = useUser();
@@ -26,10 +28,28 @@ export default function Settings() {
     return whatsAppStatus?.status === "CONNECTED" && !loading;
   };
 
+  const handleDisconnectWhatsapp = async () => {
+    const response = await deleteWhatsappConnection();
+    if (response.status === "DISCONNECTED") {
+      toast("WhatsApp desconectado com sucesso.", {
+        type: "success",
+        theme: "colored",
+      });
+      return;
+    }
+
+    toast("Falha ao desconectar whatsapp.", {
+      type: "error",
+      theme: "colored",
+    });
+    return;
+  };
+
   const handleLogout = async () => await logout();
 
   return (
     <div className={style.containerSettings}>
+      <ToastContainer />
       <div className={style.containerSettingsText}>
         <h1>Configurações</h1>
         <p>
@@ -68,7 +88,10 @@ export default function Settings() {
 
       <ul className={style.optionsList}>
         <li>
-          <div className={style.disconnectOption}>
+          <div
+            onClick={handleDisconnectWhatsapp}
+            className={style.disconnectOption}
+          >
             <MessageCircleOff />
             <p>Desconectar WhatsApp</p>
           </div>
