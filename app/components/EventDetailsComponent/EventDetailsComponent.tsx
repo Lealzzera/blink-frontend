@@ -1,8 +1,9 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EventInput } from "@fullcalendar/core";
 import styles from "./style.module.css";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
+import { getAppointmentDetails } from "@/app/actions/getAppointmentsDetails";
 
 type AppointmentDetailsProps = {
   event: EventInput;
@@ -19,13 +20,15 @@ export default function EventDetailsComponent({
     id: "",
     status: "",
   });
+  const [appontmentDetails, setAppointmentDetails] = useState<any>(null);
+
+  console.log(event);
 
   const handleChangeStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNewStatus({ id: event.id, status: e.target.value });
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = () => {
     return new Date(event.start as string).toLocaleDateString("pt-BR", {
       timeZone: "America/Sao_Paulo",
       day: "2-digit",
@@ -35,15 +38,31 @@ export default function EventDetailsComponent({
       minute: "2-digit",
     });
   };
+
+  useEffect(() => {
+    const fetchAppiontmentDetails = async () => {
+      if (!event.id) return;
+      const response = await getAppointmentDetails(+event.id);
+      setAppointmentDetails(response);
+    };
+
+    fetchAppiontmentDetails();
+  }, []);
   return (
     <div className={styles.modalDetailsBg}>
       <div className={styles.modalContent}>
         <h3>Detalhes do agendamento</h3>
         <p>
-          Paciente: <span>{event.title}</span>
+          Paciente: <span>{appontmentDetails?.patient?.name}</span>
         </p>
         <p>
-          Data: <span>{formatDate(event.start as string)}</span>
+          Telefone: <span>{appontmentDetails?.patient?.phone_number}</span>
+        </p>
+        <p>
+          Data: <span>{formatDate()}</span>
+        </p>
+        <p>
+          Anotações: <span>{appontmentDetails?.notes}</span>
         </p>
         <div className={styles.selectStatusContainer}>
           <select

@@ -20,6 +20,15 @@
   gap: 0.5rem;
 }
 
+.modalContent p span {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
 .modalButtons {
   display: flex;
   justify-content: flex-end;
