@@ -20,13 +20,36 @@
   gap: 0.5rem;
 }
 
+.modalContent p {
+  display: flex;
+  gap: 0.5rem;
+}
+
 .modalContent p span {
-  display: inline-block;
+  display: block;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  vertical-align: middle;
+  word-break: break-word;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.notes {
+  flex-direction: column;
+  gap: 0px;
+  margin-top: 1rem;
+}
+
+.modalContent p span::-webkit-scrollbar {
+  width: 6px;
+}
+
+.modalContent p span::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.modalContent p span::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .modalButtons {

@@ -61,7 +61,7 @@ export default function EventDetailsComponent({
         <p>
           Data: <span>{formatDate()}</span>
         </p>
-        <p>
+        <p className={styles.notes}>
           Anotações: <span>{appontmentDetails?.notes}</span>
         </p>
         <div className={styles.selectStatusContainer}>
