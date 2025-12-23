@@ -224,6 +224,24 @@ export default function Schedules() {
         <button className={styles.newScheduleButton} onClick={handleOpenModal}>
           Novo agendamento
         </button>
+        <div className={styles.legend}>
+          <div>
+            <div className={styles.scheduled}></div>
+            <span>Agendado</span>
+          </div>
+          <div>
+            <div className={styles.confirmed}></div>
+            <span>Confirmado</span>
+          </div>
+          <div>
+            <div className={styles.showedUp}></div>
+            <span>Compareceu</span>
+          </div>
+          <div>
+            <div className={styles.notShowedUp}></div>
+            <span>Não compareceu</span>
+          </div>
+        </div>
       </div>
       <div className={styles.calendarContainer}>
         {selectedEvent && (

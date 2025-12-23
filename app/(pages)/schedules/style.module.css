@@ -13,8 +13,46 @@
   cursor: pointer;
 }
 
+.legend {
+  display: flex;
+  gap: 1rem;
+}
+
+.legend div {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scheduled,
+.confirmed,
+.showedUp,
+.notShowedUp {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+}
+
+.scheduled {
+  background-color: var(--yellow-400);
+}
+
+.confirmed {
+  background-color: var(--green-400);
+}
+
+.showedUp {
+  background-color: var(--blue-400);
+}
+
+.notShowedUp {
+  background-color: var(--red-300);
+}
+
 .buttonContainer {
   margin-top: 2rem;
+  display: flex;
+  justify-content: space-between;
 }
 
 .calendarContainer {
