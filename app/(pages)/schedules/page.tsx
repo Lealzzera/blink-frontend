@@ -12,6 +12,7 @@ import { useUser } from "@/app/context/userContext";
 import { getAppointments } from "@/app/actions/getAppointments";
 import { putAppointmentStatus } from "@/app/actions/putAppointmentStatus";
 import { postAppointment } from "@/app/actions/postAppointment";
+import { toast, ToastContainer } from "react-toastify";
 export default function Schedules() {
   const { clinicId } = useUser();
 
@@ -68,10 +69,21 @@ export default function Schedules() {
       });
 
       handleCloseModal();
+      toast("Agendamento criado com sucesso!", {
+        theme: "colored",
+        type: "success",
+      });
       await fetchAppointments();
     } catch (err: any) {
       setError(
         err?.message || "Erro ao criar agendamento. Tente novamente mais tarde."
+      );
+      toast(
+        "Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.",
+        {
+          theme: "colored",
+          type: "error",
+        }
       );
     }
   };
@@ -172,6 +184,7 @@ export default function Schedules() {
 
   const fetchAppointments = useCallback(async () => {
     if (!clinicId) return;
+    if (!dataRange.start) return;
     try {
       const appointments = await getAppointments({
         clinicId,
@@ -205,6 +218,7 @@ export default function Schedules() {
   );
   return (
     <div className={styles.schedulesContainer}>
+      <ToastContainer />
       <h1>Agendamentos</h1>
       <div className={styles.buttonContainer}>
         <button className={styles.newScheduleButton} onClick={handleOpenModal}>
