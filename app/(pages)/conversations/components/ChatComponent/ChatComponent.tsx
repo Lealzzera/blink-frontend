@@ -229,6 +229,7 @@ export default function ChatComponent({
         <SwitchComponent
           isOn={isSwitchOn}
           handleToggle={() => setIsSwitchOn(!isSwitchOn)}
+          label={isSwitchOn ? "Desligar IA" : "Ligar IA"}
         />
       </div>
       {loading && pageNumber > 0 && (

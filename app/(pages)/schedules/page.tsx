@@ -58,34 +58,35 @@ export default function Schedules() {
       return;
     }
     const isoString = dateObj.toISOString();
-    try {
-      setError("");
-      await postAppointment({
-        clinicId,
-        notes: formDescription,
-        patientNumber: formattedTelephone,
-        scheduledTime: isoString,
-        patientName: formPatientName,
-      });
+    setError("");
+    const response: any = await postAppointment({
+      clinicId,
+      notes: formDescription,
+      patientNumber: formattedTelephone,
+      scheduledTime: isoString,
+      patientName: formPatientName,
+    });
 
-      handleCloseModal();
-      toast("Agendamento criado com sucesso!", {
+    if (response.status === 201) {
+      toast("Agendamento criado com sucesso.", {
         theme: "colored",
         type: "success",
       });
+
+      handleCloseModal();
       await fetchAppointments();
-    } catch (err: any) {
-      setError(
-        err?.message || "Erro ao criar agendamento. Tente novamente mais tarde."
-      );
-      toast(
-        "Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.",
-        {
-          theme: "colored",
-          type: "error",
-        }
-      );
+      return;
     }
+
+    toast(
+      "Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.",
+      {
+        theme: "colored",
+        type: "error",
+      }
+    );
+
+    setError("Ocorreu um erro ao criar o agendamento.");
   };
 
   const handleChangeTelephone = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,224 +1,405 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
 import styles from "./style.module.css";
-import InputComponent from "../../components/InputComponent/InputComponent";
-import SwitchComponent from "../../components/SwitchComponent/SwitchComponent";
-import ButtonComponent from "../../components/ButtonComponent/ButtonComponent";
+import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
+import InputComponent from "@/app/components/InputComponent/InputComponent";
+import { useUser } from "@/app/context/userContext";
+import { PutClinicAvailabilityType } from "@/app/actions/putClinicAvailability";
+import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
+import { putClinicAvailability } from "@/app/actions/putClinicAvailability";
+import { getClinicAvailability } from "@/app/actions/getClinicAvailability";
+import { toast, ToastContainer } from "react-toastify";
+import BaseModalComponent from "@/app/components/BaseModalComponent/BaseModalComponent";
+import AtypicalDayModalContent from "./AtypicalDayModalContent/AtypicalDayModalContent";
+import postAtypicalDayAvailability from "@/app/actions/postAtypicalDayAvailability";
 
-type DaySettings = {
-  id: number;
-  key: string;
-  label: string;
-  enabled: boolean;
-  open: string; // HH:MM
-  pauseStart: string;
-  pauseEnd: string;
-  close: string;
-  error?: string | null;
+type ClinicDay = {
+  week_day: string;
+  is_work_day: boolean;
+  open?: string;
+  close?: string;
+  break_start?: string;
+  break_end?: string;
 };
 
-const DEFAULT_DAYS = [
-  ["mon", "Segunda"],
-  ["tue", "Terça"],
-  ["wed", "Quarta"],
-  ["thu", "Quinta"],
-  ["fri", "Sexta"],
-  ["sat", "Sábado"],
-  ["sun", "Domingo"],
-] as const;
-
 export default function ClinicSettingsPage() {
-  const initial = useMemo<DaySettings[]>(() => {
-    return DEFAULT_DAYS.map(([key, label], idx) => ({
-      id: idx,
-      key,
-      label,
-      enabled: idx < 5, // weekdays enabled by default
-      open: "08:00",
-      pauseStart: "12:00",
-      pauseEnd: "13:30",
-      close: "18:00",
-      error: null,
-    }));
-  }, []);
+  const [defaultDays, setDefaultDays] = useState<ClinicDay[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { clinicId } = useUser();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [atypicalDayConfig, setAtypicalDayConfig] = useState({
+    clinic_id: clinicId,
+    exception_day: "",
+    is_working_day: false,
+    open: "",
+    close: "",
+    break_start: "",
+    break_end: "",
+  });
 
-  const [days, setDays] = useState<DaySettings[]>(initial);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-
-  function updateDay(id: number, patch: Partial<DaySettings>) {
-    setDays((prev) =>
-      prev.map((d) => (d.id === id ? { ...d, ...patch, error: null } : d))
-    );
-  }
-
-  function validateDay(d: DaySettings): string | null {
-    if (!d.enabled) return null;
-    const toMins = (t: string) => {
-      const parts = t.split(":");
-      if (parts.length !== 2) return NaN;
-      const [hStr, mStr] = parts;
-      const h = Number(hStr);
-      const m = Number(mStr);
-      if (
-        Number.isNaN(h) ||
-        Number.isNaN(m) ||
-        h < 0 ||
-        h > 23 ||
-        m < 0 ||
-        m > 59
-      )
-        return NaN;
-      return h * 60 + m;
-    };
-
-    const open = toMins(d.open);
-    const close = toMins(d.close);
-    if (isNaN(open) || isNaN(close))
-      return "Horários inválidos (use 00:00 - 23:59)";
-    if (open >= close)
-      return "Horário de abertura deve ser antes do fechamento";
-    const pauseStart = toMins(d.pauseStart);
-    const pauseEnd = toMins(d.pauseEnd);
-    // if pause fields are empty keep valid
-    if (d.pauseStart && d.pauseEnd) {
-      if (isNaN(pauseStart) || isNaN(pauseEnd))
-        return "Horário de pausa inválido (use 00:00 - 23:59)";
-      if (!(open <= pauseStart && pauseStart < pauseEnd && pauseEnd <= close))
-        return "Pausa deve ficar entre abertura e fechamento e ter início antes do fim";
-    }
-    return null;
-  }
-
-  function handleSave() {
-    let ok = true;
-    const newDays = days.map((d) => {
-      const err = validateDay(d);
-      if (err) ok = false;
-      return { ...d, error: err };
+  const fetchClinicAvailability = async () => {
+    setLoading(true);
+    const response = await getClinicAvailability();
+    if (!response) return;
+    const formattedResponse: ClinicDay[] = response.map((day: ClinicDay) => {
+      const w = String(day.week_day || "").toUpperCase();
+      switch (w) {
+        case "SEGUNDA":
+          return { ...day, week_day: "Segunda" } as ClinicDay;
+        case "TERCA":
+          return { ...day, week_day: "Terça" } as ClinicDay;
+        case "QUARTA":
+          return { ...day, week_day: "Quarta" } as ClinicDay;
+        case "QUINTA":
+          return { ...day, week_day: "Quinta" } as ClinicDay;
+        case "SEXTA":
+          return { ...day, week_day: "Sexta" } as ClinicDay;
+        case "SABADO":
+          return { ...day, week_day: "Sábado" } as ClinicDay;
+        case "DOMINGO":
+          return { ...day, week_day: "Domingo" } as ClinicDay;
+        default:
+          return {
+            week_day: String(day.week_day || ""),
+            is_work_day: Boolean(day.is_work_day),
+            open: day.open ?? undefined,
+            close: day.close ?? undefined,
+            break_start: day.break_start ?? undefined,
+            break_end: day.break_end ?? undefined,
+          } as ClinicDay;
+      }
     });
-    setDays(newDays);
-    if (!ok) {
-      setGlobalError("Corrija os horários marcados antes de salvar.");
+
+    const weekOrder = [
+      "Segunda",
+      "Terça",
+      "Quarta",
+      "Quinta",
+      "Sexta",
+      "Sábado",
+      "Domingo",
+    ];
+
+    const sortedDays = formattedResponse.sort((a: ClinicDay, b: ClinicDay) => {
+      return weekOrder.indexOf(a.week_day) - weekOrder.indexOf(b.week_day);
+    });
+    setDefaultDays(sortedDays);
+    setLoading(false);
+  };
+
+  const formatTimeValue = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+
+    let formatted = "";
+
+    if (digits.length > 0) {
+      formatted += digits.substring(0, 2);
+    }
+    if (digits.length >= 3) {
+      formatted += ":" + digits.substring(2, 4);
+    }
+
+    return formatted;
+  };
+
+  const formatDateValue = (value: string) => {
+    const digits = value.replace(/\D/g, "");
+
+    let formatted = "";
+
+    if (digits.length > 0) {
+      formatted += digits.substring(0, 2);
+    }
+    if (digits.length >= 3) {
+      formatted += "/" + digits.substring(2, 4);
+    }
+    if (digits.length >= 5) {
+      formatted += "/" + digits.substring(4, 8);
+    }
+
+    return formatted;
+  };
+
+  const handleUpdateProperty = ({
+    weekDay,
+    key,
+    value,
+  }: {
+    weekDay: string;
+    key: string;
+    value: unknown;
+  }) => {
+    setDefaultDays((previousDays) => {
+      return previousDays.map((day) => {
+        if (
+          key === "open" ||
+          key === "close" ||
+          key === "break_start" ||
+          key === "break_end"
+        ) {
+          return day.week_day === weekDay
+            ? { ...day, [key]: formatTimeValue(String(value)) }
+            : day;
+        }
+        return day.week_day === weekDay ? { ...day, [key]: value } : day;
+      });
+    });
+  };
+
+  const showToastMessage = ({
+    success,
+    successMessage,
+    errorMessage,
+  }: {
+    success: boolean;
+    successMessage: string;
+    errorMessage: string;
+  }) => {
+    if (success) {
+      toast(successMessage, {
+        type: "success",
+        theme: "colored",
+      });
       return;
     }
 
-    setGlobalError(null);
-    // The user said they'll implement endpoint calls; just log for now
-    const payload = newDays.map(
-      ({ id, key, enabled, open, pauseStart, pauseEnd, close }) => ({
-        id,
-        key,
-        enabled,
-        open,
-        pauseStart,
-        pauseEnd,
-        close,
-      })
-    );
-    console.log("Clinic hours to save:", payload);
-    // show a lightweight UI feedback
-    alert(
-      "Configurações salvas (local). Implementar chamada ao endpoint conforme necessário."
-    );
-  }
+    toast(errorMessage, {
+      type: "error",
+      theme: "colored",
+    });
+    return;
+  };
 
-  function handleReset() {
-    setDays(initial);
-    setGlobalError(null);
-  }
+  const handleSaveConfiguration = async () => {
+    const formattedDays = defaultDays
+      .map((day: ClinicDay): PutClinicAvailabilityType | undefined => {
+        switch (day.week_day) {
+          case "Segunda":
+            return { ...day, week_day: "SEGUNDA", clinic_id: clinicId };
+          case "Terça":
+            return { ...day, week_day: "TERCA", clinic_id: clinicId };
+          case "Quarta":
+            return { ...day, week_day: "QUARTA", clinic_id: clinicId };
+          case "Quinta":
+            return { ...day, week_day: "QUINTA", clinic_id: clinicId };
+          case "Sexta":
+            return { ...day, week_day: "SEXTA", clinic_id: clinicId };
+          case "Sábado":
+            return { ...day, week_day: "SABADO", clinic_id: clinicId };
+          case "Domingo":
+            return { ...day, week_day: "DOMINGO", clinic_id: clinicId };
+          default:
+            return undefined;
+        }
+      })
+      .filter((day): day is PutClinicAvailabilityType => day !== undefined);
+
+    const response = await putClinicAvailability(formattedDays);
+    showToastMessage({
+      success: response === 200,
+      successMessage: "Configurações atualizadas com sucesso",
+      errorMessage:
+        "Houve um erro ao atualizar as configurações, tente novamente mais tarde.",
+    });
+
+    await fetchClinicAvailability();
+  };
+
+  const handleOpenAtypicalDayModalConfig = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setAtypicalDayConfig({
+      clinic_id: clinicId,
+      exception_day: "",
+      is_working_day: false,
+      open: "",
+      close: "",
+      break_start: "",
+      break_end: "",
+    });
+  };
+
+  const handleManageAtypicalDay = (
+    objectKey: string,
+    value: string | boolean
+  ) => {
+    setAtypicalDayConfig((prev) => {
+      if (
+        objectKey === "open" ||
+        objectKey === "close" ||
+        objectKey === "break_start" ||
+        objectKey === "break_end"
+      ) {
+        const formattedValue = formatTimeValue(String(value));
+        return { ...prev, [objectKey]: formattedValue };
+      }
+
+      if (objectKey === "exception_day") {
+        const formattedValue = formatDateValue(String(value));
+        return { ...prev, [objectKey]: formattedValue };
+      }
+      return { ...prev, [objectKey]: value };
+    });
+  };
+
+  const saveAtypicalConfiguration = async () => {
+    const [day, month, year] = atypicalDayConfig["exception_day"].split("/");
+    const dateFormatted = `${year}-${month}-${day}`;
+    const bodyFormatted = {
+      ...atypicalDayConfig,
+      exception_day: dateFormatted,
+    };
+    const response = await postAtypicalDayAvailability(bodyFormatted);
+    if (response?.status === 201) {
+      handleCloseModal();
+    }
+    showToastMessage({
+      success: response?.status === 201,
+      successMessage: "Dia atípico atualizado com sucesso",
+      errorMessage:
+        "Houve um erro ao atualizar o dia atípico, tente novamente mais tarde.",
+    });
+  };
+
+  useEffect(() => {
+    fetchClinicAvailability();
+  }, []);
 
   return (
     <div className={styles.container}>
+      <ToastContainer />
       <div className={styles.header}>
-        <h2 className={styles.title}>Configurações da clínica</h2>
+        <h1>Configurações da clínica</h1>
         <p className={styles.subtitle}>
-          Defina os dias de funcionamento e os horários (abertura, pausa e
-          fechamento).
+          {`Defina os dias de funcionamento e os horários (abertura, pausa e
+          fechamento).`}
         </p>
       </div>
-
-      <div className={styles.card}>
-        <div className={styles.rowHeader}>
-          <div>DIA</div>
-          <div>ATIVO</div>
-          <div>ABERTURA</div>
-          <div>INÍCIO PAUSA</div>
-          <div>FIM PAUSA</div>
-          <div>FECHAMENTO</div>
+      {loading && (
+        <div className={styles.containerWrapped}>
+          <div className={styles.containerSkeleton}></div>
         </div>
-
-        <div className={styles.rows}>
-          {days.map((d) => (
-            <div key={d.key} className={styles.row}>
-              <div className={styles.dayLabel}>{d.label}</div>
-              <div className={styles.dayToggle}>
-                <SwitchComponent
-                  isOn={d.enabled}
-                  handleToggle={() => updateDay(d.id, { enabled: !d.enabled })}
-                />
-              </div>
-
-              <div className={styles.timeInput}>
-                <InputComponent
-                  type="time"
-                  value={d.open}
-                  handleChangeInput={(e) =>
-                    updateDay(d.id, { open: e.target.value })
-                  }
-                  disabled={!d.enabled}
-                />
-              </div>
-
-              <div className={styles.timeInput}>
-                <InputComponent
-                  type="time"
-                  value={d.pauseStart}
-                  handleChangeInput={(e) =>
-                    updateDay(d.id, { pauseStart: e.target.value })
-                  }
-                  disabled={!d.enabled}
-                />
-              </div>
-
-              <div className={styles.timeInput}>
-                <InputComponent
-                  type="time"
-                  value={d.pauseEnd}
-                  handleChangeInput={(e) =>
-                    updateDay(d.id, { pauseEnd: e.target.value })
-                  }
-                  disabled={!d.enabled}
-                />
-              </div>
-
-              <div className={styles.timeInput}>
-                <InputComponent
-                  type="time"
-                  value={d.close}
-                  handleChangeInput={(e) =>
-                    updateDay(d.id, { close: e.target.value })
-                  }
-                  disabled={!d.enabled}
-                />
-              </div>
-
-              {d.error && <div className={styles.rowError}>{d.error}</div>}
+      )}
+      {!loading && defaultDays.length > 0 && (
+        <div className={styles.containerWrapped}>
+          {isModalOpen && (
+            <BaseModalComponent handleCloseModal={handleCloseModal}>
+              <AtypicalDayModalContent
+                saveAtypicalConfiguration={saveAtypicalConfiguration}
+                closeModal={handleCloseModal}
+                atypicalConfigurationObject={atypicalDayConfig}
+                handleChangeAtypicalConfigurationObject={
+                  handleManageAtypicalDay
+                }
+              />
+            </BaseModalComponent>
+          )}
+          <div className={styles.containerContent}>
+            <div className={styles.containerLegend}>
+              <p>Dia da semana</p>
+              <p>Ativar</p>
+              <p>Abertura</p>
+              <p>Pausa</p>
+              <p>Retorno</p>
+              <p>Fechamento</p>
             </div>
-          ))}
-        </div>
-
-        {globalError && <div className={styles.globalError}>{globalError}</div>}
-
-        <div className={styles.actions}>
-          <div className={styles.actionsLeft}>
-            <ButtonComponent text="Resetar" onClick={handleReset} />
+            <ul className={styles.listDays}>
+              {defaultDays.map((day) => (
+                <li key={day.week_day}>
+                  <p>{day.week_day}</p>
+                  <SwitchComponent
+                    isOn={day.is_work_day}
+                    handleToggle={() =>
+                      handleUpdateProperty({
+                        key: "is_work_day",
+                        weekDay: day.week_day,
+                        value: !day.is_work_day,
+                      })
+                    }
+                  />
+                  <div className={styles.inputContainer}>
+                    <InputComponent
+                      label=""
+                      placeholder="00:00"
+                      value={day.open ? String(day.open) : ""}
+                      disabled={!day.is_work_day}
+                      handleChangeInput={(event) =>
+                        handleUpdateProperty({
+                          key: "open",
+                          weekDay: day.week_day,
+                          value: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className={styles.inputContainer}>
+                    <InputComponent
+                      label=""
+                      placeholder="00:00"
+                      value={day.break_start ? String(day.break_start) : ""}
+                      disabled={!day.is_work_day}
+                      handleChangeInput={(event) =>
+                        handleUpdateProperty({
+                          key: "break_start",
+                          weekDay: day.week_day,
+                          value: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className={styles.inputContainer}>
+                    <InputComponent
+                      label=""
+                      placeholder="00:00"
+                      value={day.break_end ? String(day.break_end) : ""}
+                      disabled={!day.is_work_day}
+                      handleChangeInput={(event) =>
+                        handleUpdateProperty({
+                          key: "break_end",
+                          weekDay: day.week_day,
+                          value: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className={styles.inputContainer}>
+                    <InputComponent
+                      label=""
+                      placeholder="00:00"
+                      value={day.close ? String(day.close) : ""}
+                      disabled={!day.is_work_day}
+                      handleChangeInput={(event) =>
+                        handleUpdateProperty({
+                          key: "close",
+                          weekDay: day.week_day,
+                          value: event.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          <div className={styles.actionsRight}>
-            <ButtonComponent text="Salvar" onClick={handleSave} />
+          <div className={styles.containerButton}>
+            <div className={styles.atypicalDayButton}>
+              <p onClick={handleOpenAtypicalDayModalConfig}>
+                Adicionar dia atípico
+              </p>
+            </div>
+            <div>
+              <ButtonComponent
+                text="Salvar"
+                handleClickButton={handleSaveConfiguration}
+              />
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

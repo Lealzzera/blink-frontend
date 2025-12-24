@@ -1,115 +1,104 @@
 .container {
-  /* leave space for the fixed sidebar (72px) and take full remaining width */
-  padding: 28px 28px;
-  min-height: 100vh;
-  margin-left: 72px; /* align content with main app area when sidebar is present */
-  width: calc(100% - 72px);
+  height: 100vh;
+  padding: 30px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.containerWrapped {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.containerContent {
+  margin-top: 3rem;
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1rem;
+  max-width: 1000px;
+}
+
+.containerButton {
+  width: 680px;
+  margin-top: 2rem;
+  max-width: 1000px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.atypicalDayButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.atypicalDayButton p {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--gray-100);
+}
+
+.containerLegend {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  font-weight: 600;
+  margin-bottom: 1rem;
 }
 
 .header {
   margin-bottom: 18px;
 }
 
-.title {
-  font-size: 20px;
-  color: var(--gray-100);
-  margin-bottom: 6px;
-}
-
 .subtitle {
   color: var(--gray-300);
-  font-size: 13px;
 }
 
-.card {
-  background: var(--gray-700);
-  border-radius: 10px;
-  padding: 18px;
-  box-shadow: 0 6px 20px rgba(2, 6, 23, 0.4);
-  width: 100%;
-  max-width: none; /* allow full width */
-}
-
-.rowHeader {
+.listDays li {
   display: grid;
-  grid-template-columns: 1fr 80px repeat(4, minmax(120px, 1fr));
-  gap: 12px;
-  padding: 8px 4px;
-  color: var(--gray-300);
-  font-weight: 600;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-}
-
-.rows {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.row {
-  display: grid;
-  grid-template-columns: 1fr 80px repeat(4, minmax(120px, 1fr));
-  gap: 12px;
-  align-items: center;
-  padding: 10px 4px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.01), transparent);
-  border-radius: 6px;
-}
-
-.dayLabel {
-  font-weight: 600;
-  color: var(--gray-100);
-}
-
-.dayToggle {
-  display: flex;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
   align-items: center;
   justify-content: center;
 }
 
-.timeInput {
-  width: 100%;
+.inputContainer {
+  width: 70px;
 }
 
-.rowError {
-  grid-column: 1 / -1;
-  color: var(--red-300);
-  font-size: 13px;
-  margin-top: 6px;
+.containerSkeleton {
+  margin-top: 3rem;
+  width: 680px;
+  max-width: 1000px;
+  height: 400px;
+
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1rem;
+
+  position: relative;
+  overflow: hidden;
 }
 
-.globalError {
-  color: var(--red-300);
-  margin-top: 12px;
+.containerSkeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
 }
 
-.actions {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 16px;
-}
-
-.actionsLeft {
-  width: 160px;
-}
-
-.actionsRight {
-  width: 160px;
-}
-
-@media (max-width: 920px) {
-  .container {
-    margin-left: 0; /* collapse space on small screens where sidebar hides */
-    width: 100%;
-    padding: 18px;
+@keyframes skeleton-pulse {
+  0% {
+    transform: translateX(-100%);
   }
-  .rowHeader,
-  .row {
-    grid-template-columns: 1fr 60px 1fr 1fr 1fr 1fr;
-  }
-  .card {
-    padding: 12px;
+  100% {
+    transform: translateX(100%);
   }
 }

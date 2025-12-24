@@ -46,8 +46,9 @@ export async function postAppointment({
       }
     );
 
-    return response.data;
+    return response;
   } catch (err) {
     console.error("Error to create a new appointment:", err);
+    return err;
   }
 }

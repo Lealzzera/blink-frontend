@@ -3,17 +3,19 @@ import styles from "./style.module.css";
 type SwitchComponentProps = {
   handleToggle: () => void;
   isOn: boolean;
+  label?: string;
 };
 
 export default function SwitchComponent({
   handleToggle,
   isOn,
+  label,
 }: SwitchComponentProps) {
   return (
     <label
       className={styles.checkboxContainer}
-      title={isOn ? "Desligar IA" : "Ligar IA"}
-      aria-label={isOn ? "Desligar IA" : "Ligar IA"}
+      title={label}
+      aria-label={label}
     >
       <input
         checked={isOn}
@@ -24,9 +26,7 @@ export default function SwitchComponent({
       />
       <span className={styles.switch} />
 
-      <span className={styles.tooltip}>
-        {isOn ? "Desligar IA" : "Ligar IA"}
-      </span>
+      {label && <span className={styles.tooltip}>{label}</span>}
     </label>
   );
 }
