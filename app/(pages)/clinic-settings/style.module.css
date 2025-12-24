@@ -102,3 +102,42 @@
     transform: translateX(100%);
   }
 }
+
+.atypicalDaysList {
+  width: 680px;
+  margin-top: 2.5rem;
+  max-width: 1000px;
+}
+
+.atypicalDaysUl {
+  overflow: auto;
+  max-height: 400px;
+  margin-top: 1rem;
+}
+
+.atypicalDayCard {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyContentContainer {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.atypicalDayInput {
+  width: 105px;
+}
+
+.atypicalDayTime {
+  width: 65px;
+}
+
+.deleteAtypicalButtonContainer {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

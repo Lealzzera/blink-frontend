@@ -2,7 +2,7 @@
 
 import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
 import styles from "./style.module.css";
-import { ChangeEvent, SyntheticEvent, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import InputComponent from "@/app/components/InputComponent/InputComponent";
 import { useUser } from "@/app/context/userContext";
 import { PutClinicAvailabilityType } from "@/app/actions/putClinicAvailability";
@@ -13,6 +13,9 @@ import { toast, ToastContainer } from "react-toastify";
 import BaseModalComponent from "@/app/components/BaseModalComponent/BaseModalComponent";
 import AtypicalDayModalContent from "./AtypicalDayModalContent/AtypicalDayModalContent";
 import postAtypicalDayAvailability from "@/app/actions/postAtypicalDayAvailability";
+import { getAtypicalDaysList } from "@/app/actions/getAtypicalDaysList";
+import { deleteAtypicalDay } from "@/app/actions/deleteAtypicalDay";
+import putUpdateAtypicalDay from "@/app/actions/putUpdateAtypicalDay";
 
 type ClinicDay = {
   week_day: string;
@@ -21,6 +24,17 @@ type ClinicDay = {
   close?: string;
   break_start?: string;
   break_end?: string;
+};
+
+type AtypicalDayObject = {
+  id: number;
+  clinic_id: number;
+  exception_day: string;
+  is_working_day: boolean;
+  open: string;
+  close: string;
+  break_start: string;
+  break_end: string;
 };
 
 export default function ClinicSettingsPage() {
@@ -37,6 +51,9 @@ export default function ClinicSettingsPage() {
     break_start: "",
     break_end: "",
   });
+  const [atypicalDaysList, setAtypicalDaysList] = useState<AtypicalDayObject[]>(
+    []
+  );
 
   const fetchClinicAvailability = async () => {
     setLoading(true);
@@ -86,6 +103,23 @@ export default function ClinicSettingsPage() {
     });
     setDefaultDays(sortedDays);
     setLoading(false);
+  };
+
+  const fetchAtypicalDaysList = async () => {
+    const response = await getAtypicalDaysList();
+    if (!response) {
+      toast("Erro ao puxar a lista de dias atípicos.", {
+        theme: "colored",
+        type: "error",
+      });
+    }
+
+    const responseFormatted = response.map((item: AtypicalDayObject) => {
+      const [year, month, day] = item.exception_day.split("-");
+      return { ...item, exception_day: `${day}/${month}/${year}` };
+    });
+
+    setAtypicalDaysList(responseFormatted);
   };
 
   const formatTimeValue = (value: string) => {
@@ -254,19 +288,80 @@ export default function ClinicSettingsPage() {
       exception_day: dateFormatted,
     };
     const response = await postAtypicalDayAvailability(bodyFormatted);
-    if (response?.status === 201) {
+    if (response?.status === 201 || response?.status === 200) {
       handleCloseModal();
+      await fetchAtypicalDaysList();
     }
     showToastMessage({
-      success: response?.status === 201,
-      successMessage: "Dia atípico atualizado com sucesso",
+      success: response?.status === 200 || response?.status === 201,
+      successMessage: "Dia atípico criado com sucesso",
       errorMessage:
-        "Houve um erro ao atualizar o dia atípico, tente novamente mais tarde.",
+        "Houve um erro ao criar o dia atípico, tente novamente mais tarde.",
     });
+  };
+
+  const handleChangeAtypicalDayCard = (
+    id: number,
+    objectKey: string,
+    value: unknown
+  ) => {
+    setAtypicalDaysList((prevState) => {
+      return prevState.map((day) => {
+        if (day.id !== id) return day;
+        if (objectKey === "exception_day") {
+          return { ...day, exception_day: formatDateValue(String(value)) };
+        }
+        if (
+          objectKey === "open" ||
+          objectKey === "close" ||
+          objectKey === "break_start" ||
+          objectKey === "break_end"
+        ) {
+          return { ...day, [objectKey]: formatTimeValue(String(value)) };
+        }
+        return { ...day, [objectKey]: value };
+      });
+    });
+  };
+
+  const handleSaveNewAtypicalDayValue = async (id: number) => {
+    const atypicalDayToUpdate = atypicalDaysList.filter(
+      (atypicalDay) => atypicalDay.id === id
+    );
+    const [day, month, year] = atypicalDayToUpdate[0].exception_day.split("/");
+    const newAtypicalDayToUpdate = {
+      ...atypicalDayToUpdate[0],
+      exception_day: `${year}-${month}-${day}`,
+    };
+
+    const response = await putUpdateAtypicalDay(newAtypicalDayToUpdate, id);
+
+    showToastMessage({
+      success: response?.status === 200 || response?.status === 201,
+      successMessage: "Dia atualizado com sucesso",
+      errorMessage:
+        "Houve um erro ao atualizar o dia selecionado, tente novamente.",
+    });
+
+    await fetchAtypicalDaysList();
+  };
+
+  const handleDeleteAtypicalDay = async (id: number) => {
+    const response = await deleteAtypicalDay(id);
+
+    showToastMessage({
+      success: response?.status === 204,
+      successMessage: "Dia atípico deletado com sucesso",
+      errorMessage:
+        "Houve um erro ao deletar o dia atípico, tente novamente mais tarde",
+    });
+
+    await fetchAtypicalDaysList();
   };
 
   useEffect(() => {
     fetchClinicAvailability();
+    fetchAtypicalDaysList();
   }, []);
 
   return (
@@ -397,6 +492,129 @@ export default function ClinicSettingsPage() {
                 handleClickButton={handleSaveConfiguration}
               />
             </div>
+          </div>
+          <div className={styles.atypicalDaysList}>
+            <h2>Lista de dias atípicos</h2>
+            <ul className={styles.atypicalDaysUl}>
+              {atypicalDaysList.length > 0 ? (
+                <>
+                  {atypicalDaysList.map((atypicalDay) => (
+                    <li className={styles.atypicalDayCard} key={atypicalDay.id}>
+                      <div className={styles.atypicalDayInput}>
+                        <InputComponent
+                          value={
+                            atypicalDay.exception_day
+                              ? String(atypicalDay.exception_day)
+                              : ""
+                          }
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(
+                              atypicalDay.id,
+                              "exception_day",
+                              e.target.value
+                            )
+                          }
+                          placeholder="DD/MM/AAAA"
+                        />
+                      </div>
+                      <SwitchComponent
+                        handleToggle={() =>
+                          handleChangeAtypicalDayCard(
+                            atypicalDay.id,
+                            "is_working_day",
+                            !atypicalDay.is_working_day
+                          )
+                        }
+                        isOn={atypicalDay.is_working_day}
+                      />
+                      <div className={styles.atypicalDayTime}>
+                        <InputComponent
+                          value={
+                            atypicalDay.open ? String(atypicalDay.open) : ""
+                          }
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(
+                              atypicalDay.id,
+                              "open",
+                              e.target.value
+                            )
+                          }
+                          placeholder="00:00"
+                        />
+                      </div>
+                      <div className={styles.atypicalDayTime}>
+                        <InputComponent
+                          value={
+                            atypicalDay.break_start
+                              ? String(atypicalDay.break_start)
+                              : ""
+                          }
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(
+                              atypicalDay.id,
+                              "break_start",
+                              e.target.value
+                            )
+                          }
+                          placeholder="00:00"
+                        />
+                      </div>
+                      <div className={styles.atypicalDayTime}>
+                        <InputComponent
+                          value={
+                            atypicalDay.break_end
+                              ? String(atypicalDay.break_end)
+                              : ""
+                          }
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(
+                              atypicalDay.id,
+                              "break_end",
+                              e.target.value
+                            )
+                          }
+                          placeholder="00:00"
+                        />
+                      </div>
+                      <div className={styles.atypicalDayTime}>
+                        <InputComponent
+                          value={
+                            atypicalDay.close ? String(atypicalDay.close) : ""
+                          }
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(
+                              atypicalDay.id,
+                              "close",
+                              e.target.value
+                            )
+                          }
+                          placeholder="00:00"
+                        />
+                      </div>
+                      <div className={styles.deleteAtypicalButtonContainer}>
+                        <ButtonComponent
+                          style={{ background: "var(--red-300)" }}
+                          handleClickButton={() =>
+                            handleDeleteAtypicalDay(atypicalDay.id)
+                          }
+                          text="Excluir"
+                        />
+                        <ButtonComponent
+                          handleClickButton={() =>
+                            handleSaveNewAtypicalDayValue(atypicalDay.id)
+                          }
+                          text="Salvar"
+                        />
+                      </div>
+                    </li>
+                  ))}
+                </>
+              ) : (
+                <div className={styles.emptyContentContainer}>
+                  <p>Não existem dias atípicos configurados.</p>
+                </div>
+              )}
+            </ul>
           </div>
         </div>
       )}
