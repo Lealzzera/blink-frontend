@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import formatChatDate from "@/utils/formatChatDate";
 import { ContactSelected, useUser } from "@/app/context/userContext";
 import { useChat } from "@/app/context/chatContext";
+import InputComponent from "@/app/components/InputComponent/InputComponent";
 
 type ChatListItem = {
   ai_answer: boolean;
@@ -41,9 +42,13 @@ export default function ChatListComponent({
   const router = useRouter();
   const observer = useRef<IntersectionObserver | null>(null);
   const { lastMessageByPhone } = useChat();
+  const [searchInputValue, setSearchInputValue] = useState("");
+  const [filteredList, setFilteredList] = useState<ChatListItem[]>(chatList);
+  const originalListRef = useRef<ChatListItem[]>(chatList);
 
   const lastListItem = useCallback(
     (node: HTMLLIElement | null) => {
+      if (searchInputValue) return;
       if (loading.firstLoading || loading.loading) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver(
@@ -55,13 +60,50 @@ export default function ChatListComponent({
       );
       if (node) observer.current.observe(node);
     },
-    [fetchMore, hasMore, loading.firstLoading, loading.loading]
+    [
+      fetchMore,
+      hasMore,
+      loading.firstLoading,
+      loading.loading,
+      searchInputValue,
+    ]
   );
 
   const handleCardClick = (value: ContactSelected) => {
     setCardSelected(value);
     handleSetContactSelected(value);
   };
+
+  const handleSearchChat = (event: any) => {
+    const contactName = event.target.value;
+    setSearchInputValue(contactName);
+  };
+
+  useEffect(() => {
+    originalListRef.current = chatList;
+    setFilteredList(chatList);
+  }, [chatList]);
+
+  useEffect(() => {
+    const q = String(searchInputValue || "").trim();
+    if (!q) {
+      setFilteredList(originalListRef.current);
+      return;
+    }
+
+    const lower = q.toLowerCase();
+    const newChatListFiltered = originalListRef.current.filter((chat) => {
+      const name = chat.whats_app_name || "";
+      const last = chat.last_message || "";
+      return (
+        name.toLowerCase().includes(lower) ||
+        last.toLowerCase().includes(lower) ||
+        chat.phone_number.includes(q)
+      );
+    });
+
+    setFilteredList(newChatListFiltered);
+  }, [searchInputValue]);
 
   return (
     <div className={style.chatListContainer}>
@@ -78,12 +120,19 @@ export default function ChatListComponent({
         </div>
       )}
       <ul className={style.chatListUl}>
+        <div className={style.searchInputContainer}>
+          <InputComponent
+            placeholder="Buscar contato"
+            value={searchInputValue}
+            handleChangeInput={handleSearchChat}
+          />
+        </div>
         {loading.firstLoading
           ? Array.from({ length: 20 }).map((_, i) => (
               <li key={`skeleton-${i}`} className={style.skeletonCard}></li>
             ))
-          : chatList.map((item, index) => {
-              const isLast = index === chatList.length - 1;
+          : filteredList.map((item, index) => {
+              const isLast = index === filteredList.length - 1;
               const lastMessage = lastMessageByPhone[item.phone_number]
                 ? lastMessageByPhone[item.phone_number].message
                 : item.last_message;

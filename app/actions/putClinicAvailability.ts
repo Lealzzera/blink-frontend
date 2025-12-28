@@ -27,6 +27,7 @@ export async function putClinicAvailability(
   }
 
   try {
+    //TODO: THIS METHOD IS NOT IMPLEMENTED ON THE BACKEND APPLICATION
     const response = await axios.put(
       `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/configuration/availability`,
       availabilityList,
