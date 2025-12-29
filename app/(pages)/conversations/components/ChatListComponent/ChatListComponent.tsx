@@ -120,13 +120,15 @@ export default function ChatListComponent({
         </div>
       )}
       <ul className={style.chatListUl}>
-        <div className={style.searchInputContainer}>
-          <InputComponent
-            placeholder="Buscar contato"
-            value={searchInputValue}
-            handleChangeInput={handleSearchChat}
-          />
-        </div>
+        {!loading.firstLoading && (
+          <div className={style.searchInputContainer}>
+            <InputComponent
+              placeholder="Buscar contato"
+              value={searchInputValue}
+              handleChangeInput={handleSearchChat}
+            />
+          </div>
+        )}
         {loading.firstLoading
           ? Array.from({ length: 20 }).map((_, i) => (
               <li key={`skeleton-${i}`} className={style.skeletonCard}></li>
