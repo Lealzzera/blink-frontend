@@ -138,6 +138,8 @@ export default function ChatListComponent({
               const lastMessage = lastMessageByPhone[item.phone_number]
                 ? lastMessageByPhone[item.phone_number].message
                 : item.last_message;
+
+              console.log(lastMessage);
               return (
                 <li ref={isLast ? lastListItem : null} key={item.phone_number}>
                   <ChatCardComponent
