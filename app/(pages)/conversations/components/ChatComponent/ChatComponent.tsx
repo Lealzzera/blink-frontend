@@ -207,6 +207,7 @@ export default function ChatComponent({
 
   useEffect(() => {
     const message = lastMessageByPhone[phoneNumber];
+    console.log(message);
     if (!message) return;
     if (message.from_me) return;
 
