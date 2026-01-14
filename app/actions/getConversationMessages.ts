@@ -26,7 +26,7 @@ export async function getConversationMessages({
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/chat/${clinicId}/overview/${phoneNumber}?page=${page}`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/whats-app/chat/${phoneNumber}?page=${page}`,
       {
         headers: {
           "Content-Type": "application/json",
