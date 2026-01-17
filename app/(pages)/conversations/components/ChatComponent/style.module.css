@@ -24,6 +24,12 @@
   font-weight: bold;
 }
 
+.contactInfoText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .imageContact {
   border-radius: 50%;
 }

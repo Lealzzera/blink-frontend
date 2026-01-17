@@ -2,12 +2,10 @@ import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
 type GetConversationsType = {
-  clinicId?: number | null;
   page?: number;
 };
 
 export async function getConversations({
-  clinicId,
   page = 0,
 }: GetConversationsType) {
   const supabase = createClient();
@@ -24,7 +22,7 @@ export async function getConversations({
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/chat/${clinicId}/overview?page=${page}`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/whats-app/chat/conversations?page=${page}`,
       {
         headers: {
           "Content-Type": "application/json",

@@ -20,7 +20,7 @@ export async function getQrCode() {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/message/whats-app/qr-code`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/whats-app/auth/qr-code`,
       {
         headers: {
           Accept: "image/png",

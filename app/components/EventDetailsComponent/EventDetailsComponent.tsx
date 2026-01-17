@@ -22,7 +22,6 @@ export default function EventDetailsComponent({
   });
   const [appontmentDetails, setAppointmentDetails] = useState<any>(null);
 
-  console.log(event);
 
   const handleChangeStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNewStatus({ id: event.id, status: e.target.value });

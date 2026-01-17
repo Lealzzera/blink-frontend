@@ -23,7 +23,7 @@ export function useWhatsApp(clinicId?: number | null) {
       const res = await getWhatsAppStatus();
       setWhatsAppStatus({
         status: res.status,
-        connectedPhoneNumber: res.connected_phone_number,
+        connectedPhoneNumber: res.connected_number,
       });
     } catch {
       setError(true);

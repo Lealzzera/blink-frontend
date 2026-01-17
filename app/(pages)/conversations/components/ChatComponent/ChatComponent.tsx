@@ -207,7 +207,6 @@ export default function ChatComponent({
 
   useEffect(() => {
     const message = lastMessageByPhone[phoneNumber];
-    console.log(message);
     if (!message) return;
     if (message.from_me) return;
 
@@ -218,7 +217,10 @@ export default function ChatComponent({
     <div ref={chatRef} className={style.chatContainer}>
       <div className={style.contactInfo}>
         <div className={style.contactInfoContainer}>
-          <p>{contactName}</p>
+          <div className={style.contactInfoText}>
+            <p>{contactName}</p>
+            {contactName && <span>{phoneNumber}</span>}
+          </div>
           <Image
             alt="Imagem de perfil do contato"
             src={imageUrl ? imageUrl : "/images/avatar.png"}

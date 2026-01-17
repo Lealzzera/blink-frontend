@@ -36,7 +36,7 @@ export default function Conversations() {
       if (!clinicId || loading.loading) return;
       setLoading({ firstLoading: pageNum === 0, loading: pageNum > 0 });
       try {
-        const response = await getConversations({ clinicId, page: pageNum });
+        const response = await getConversations({ page: pageNum });
         if (!response?.length) {
           setHasMore(false);
           return;

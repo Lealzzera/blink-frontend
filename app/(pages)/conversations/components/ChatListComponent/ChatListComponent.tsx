@@ -120,7 +120,7 @@ export default function ChatListComponent({
         </div>
       )}
       <ul className={style.chatListUl}>
-        {!loading.firstLoading && (
+        {!loading.firstLoading && !numberNotConnected && (
           <div className={style.searchInputContainer}>
             <InputComponent
               placeholder="Buscar contato"
@@ -139,7 +139,6 @@ export default function ChatListComponent({
                 ? lastMessageByPhone[item.phone_number].message
                 : item.last_message;
 
-              console.log(lastMessage);
               return (
                 <li ref={isLast ? lastListItem : null} key={item.phone_number}>
                   <ChatCardComponent
