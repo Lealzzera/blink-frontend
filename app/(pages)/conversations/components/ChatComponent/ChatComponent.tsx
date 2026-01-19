@@ -63,12 +63,12 @@ export default function ChatComponent({
         {
           threshold: 0,
           root: chatRef.current,
-        }
+        },
       );
 
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore]
+    [loading, hasMore],
   );
 
   const fetchMessageList = useCallback(
@@ -95,7 +95,7 @@ export default function ChatComponent({
 
         const sortedResponse = [...response].sort(
           (a, b) =>
-            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
         );
 
         if (page === 0) {
@@ -108,12 +108,12 @@ export default function ChatComponent({
 
             const unique = merged.filter(
               (msg, index, arr) =>
-                arr.findIndex((m) => m.sent_at === msg.sent_at) === index
+                arr.findIndex((m) => m.sent_at === msg.sent_at) === index,
             );
 
             return unique.sort(
               (a, b) =>
-                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
             );
           });
         }
@@ -125,7 +125,7 @@ export default function ChatComponent({
         setLoading(false);
       }
     },
-    [clinicId, phoneNumber, loading]
+    [clinicId, phoneNumber, loading],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -219,7 +219,7 @@ export default function ChatComponent({
         <div className={style.contactInfoContainer}>
           <div className={style.contactInfoText}>
             <p>{contactName}</p>
-            {contactName && <span>{phoneNumber}</span>}
+            {contactName ? <span>{phoneNumber}</span> : ""}
           </div>
           <Image
             alt="Imagem de perfil do contato"
