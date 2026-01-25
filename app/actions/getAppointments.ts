@@ -26,7 +26,7 @@ export async function getAppointments({
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/appointments/availability/${clinicId}?start_date=${startDate}&end_date=${endDate}&hide_cancelled=true`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/appointments/availability?start_date=${startDate}&end_date=${endDate}`,
       {
         headers: {
           "Content-Type": "application/json",
