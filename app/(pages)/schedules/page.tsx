@@ -164,10 +164,10 @@ export default function Schedules() {
 
         return {
           id: String(appt.id),
-          title: appt.name,
+          title: appt.patient_name,
           start: new Date(isoTime).toISOString(),
           extendedProps: {
-            phone: appt.phone,
+            phone: appt.patient_phone,
             duration: appt.duration,
             status: appt.status,
             sales: appt.sales,
