@@ -159,8 +159,8 @@ export default function Schedules() {
     return appointmentsData.flatMap((appointment: any) => {
       const date = appointment.date;
       return (appointment.appointments || []).map((appt: any) => {
-        const time = appt.time || "00:00";
-        const isoTime = `${date}T${time}:00`;
+        const time = appt.time || "00:00:00";
+        const isoTime = `${date}T${time}`;
 
         return {
           id: String(appt.id),
@@ -171,6 +171,7 @@ export default function Schedules() {
             duration: appt.duration,
             status: appt.status,
             sales: appt.sales,
+            notes: appt.notes,
             dayInfo: {
               open: appointment.open,
               close: appointment.close,
