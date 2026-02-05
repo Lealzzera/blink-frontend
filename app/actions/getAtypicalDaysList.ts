@@ -16,13 +16,13 @@ export async function getAtypicalDaysList() {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/configuration/availability/atypical`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/configuration/availability/atypical`,
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     return response.data;

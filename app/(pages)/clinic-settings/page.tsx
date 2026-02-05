@@ -16,6 +16,8 @@ import postAtypicalDayAvailability from "@/app/actions/postAtypicalDayAvailabili
 import { getAtypicalDaysList } from "@/app/actions/getAtypicalDaysList";
 import { deleteAtypicalDay } from "@/app/actions/deleteAtypicalDay";
 import putUpdateAtypicalDay from "@/app/actions/putUpdateAtypicalDay";
+import { getClinicConfiguration } from "@/app/actions/getClinicConfiguration";
+import { putClinicConfiguration } from "@/app/actions/putClinicConfiguration";
 
 type ClinicDay = {
   week_day: string;
@@ -41,6 +43,13 @@ export default function ClinicSettingsPage() {
   const [defaultDays, setDefaultDays] = useState<ClinicDay[]>([]);
   const [loading, setLoading] = useState(true);
   const { clinicId } = useUser();
+  const [clinicName, setClinicName] = useState("");
+  const [aiAgentName, setAiAgentName] = useState("");
+  const [clinicNameError, setClinicNameError] = useState(false);
+  const [aiAgentNameError, setAiAgentNameError] = useState(false);
+  const [appointmentDuration, setAppointmentDuration] = useState("");
+  const [allowSameTimeBooking, setAllowSameTimeBooking] = useState(false);
+  const [activeTab, setActiveTab] = useState<"dados" | "horarios">("dados");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] = useState({
     clinic_id: clinicId,
@@ -52,7 +61,7 @@ export default function ClinicSettingsPage() {
     break_end: "",
   });
   const [atypicalDaysList, setAtypicalDaysList] = useState<AtypicalDayObject[]>(
-    []
+    [],
   );
 
   const fetchClinicAvailability = async () => {
@@ -205,6 +214,37 @@ export default function ClinicSettingsPage() {
     return;
   };
 
+  const handleSaveClinicBasicData = async () => {
+    const normalizedClinicName = clinicName.trim();
+    const normalizedAiAgentName = aiAgentName.trim();
+
+    const clinicError = normalizedClinicName.length === 0;
+    const agentError = normalizedAiAgentName.length === 0;
+    setClinicNameError(clinicError);
+    setAiAgentNameError(agentError);
+
+    if (clinicError || agentError) {
+      toast("Preencha os campos obrigatórios.", {
+        type: "error",
+        theme: "colored",
+      });
+      return;
+    }
+
+    const response = await putClinicConfiguration({
+      clinic_name: normalizedClinicName,
+      ai_name: normalizedAiAgentName,
+      appointment_duration: Number(appointmentDuration) || 0,
+      allow_overbooking: allowSameTimeBooking,
+    });
+
+    showToastMessage({
+      success: response === 200 || response === 201 || response === 204,
+      successMessage: "Dados da clínica salvos com sucesso.",
+      errorMessage: "Erro ao salvar os dados da clínica.",
+    });
+  };
+
   const handleSaveConfiguration = async () => {
     const formattedDays = defaultDays
       .map((day: ClinicDay): PutClinicAvailabilityType | undefined => {
@@ -259,7 +299,7 @@ export default function ClinicSettingsPage() {
 
   const handleManageAtypicalDay = (
     objectKey: string,
-    value: string | boolean
+    value: string | boolean,
   ) => {
     setAtypicalDayConfig((prev) => {
       if (
@@ -303,7 +343,7 @@ export default function ClinicSettingsPage() {
   const handleChangeAtypicalDayCard = (
     id: number,
     objectKey: string,
-    value: unknown
+    value: unknown,
   ) => {
     setAtypicalDaysList((prevState) => {
       return prevState.map((day) => {
@@ -326,7 +366,7 @@ export default function ClinicSettingsPage() {
 
   const handleSaveNewAtypicalDayValue = async (id: number) => {
     const atypicalDayToUpdate = atypicalDaysList.filter(
-      (atypicalDay) => atypicalDay.id === id
+      (atypicalDay) => atypicalDay.id === id,
     );
     const [day, month, year] = atypicalDayToUpdate[0].exception_day.split("/");
     const newAtypicalDayToUpdate = {
@@ -359,7 +399,22 @@ export default function ClinicSettingsPage() {
     await fetchAtypicalDaysList();
   };
 
+  const fetchClinicConfiguration = async () => {
+    const response = await getClinicConfiguration();
+    if (response) {
+      setClinicName(response.clinic_name || "");
+      setAiAgentName(response.ai_name || "");
+      setAppointmentDuration(
+        response.appointment_duration
+          ? String(response.appointment_duration)
+          : "",
+      );
+      setAllowSameTimeBooking(response.allow_overbooking || false);
+    }
+  };
+
   useEffect(() => {
+    fetchClinicConfiguration();
     fetchClinicAvailability();
     fetchAtypicalDaysList();
   }, []);
@@ -370,16 +425,91 @@ export default function ClinicSettingsPage() {
       <div className={styles.header}>
         <h1>Configurações da clínica</h1>
         <p className={styles.subtitle}>
-          {`Defina os dias de funcionamento e os horários (abertura, pausa e
-          fechamento).`}
+          Gerencie os dados e horários de funcionamento da sua clínica.
         </p>
       </div>
-      {loading && (
+
+      <div className={styles.tabsContainer}>
+        <button
+          className={`${styles.tabButton} ${activeTab === "dados" ? styles.tabButtonActive : ""}`}
+          onClick={() => setActiveTab("dados")}
+        >
+          Dados da clínica
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === "horarios" ? styles.tabButtonActive : ""}`}
+          onClick={() => setActiveTab("horarios")}
+        >
+          Horários de funcionamento
+        </button>
+      </div>
+
+      {activeTab === "dados" && (
+        <div className={styles.basicDataCard}>
+          <div className={styles.basicDataHeader}>
+            <h2>Dados da clínica</h2>
+            <p className={styles.subtitle}>
+              Defina como sua clínica e seu agente de IA serão identificados.
+            </p>
+          </div>
+          <div className={styles.basicDataForm}>
+            <InputComponent
+              label="Nome da clínica"
+              placeholder="Ex.: Clínica São Lucas"
+              value={clinicName}
+              required
+              error={clinicNameError}
+              handleChangeInput={(e) => {
+                setClinicNameError(false);
+                setClinicName(e.target.value);
+              }}
+            />
+            <InputComponent
+              label="Nome do agente de IA"
+              placeholder="Ex.: Blink"
+              value={aiAgentName}
+              required
+              error={aiAgentNameError}
+              handleChangeInput={(e) => {
+                setAiAgentNameError(false);
+                setAiAgentName(e.target.value);
+              }}
+            />
+            <InputComponent
+              label="Duração do agendamento (minutos)"
+              placeholder="Ex.: 30"
+              type="number"
+              value={appointmentDuration}
+              handleChangeInput={(e) => {
+                const val = e.target.value.replace(/\D/g, "");
+                setAppointmentDuration(val);
+              }}
+            />
+            <div className={styles.switchRow}>
+              <span className={styles.switchLabel}>
+                Permitir agendamentos no mesmo horário
+              </span>
+              <SwitchComponent
+                isOn={allowSameTimeBooking}
+                handleToggle={() => setAllowSameTimeBooking((prev) => !prev)}
+              />
+            </div>
+          </div>
+          <div className={styles.basicDataActions}>
+            <ButtonComponent
+              text="Salvar dados"
+              handleClickButton={handleSaveClinicBasicData}
+            />
+          </div>
+        </div>
+      )}
+
+      {activeTab === "horarios" && loading && (
         <div className={styles.containerWrapped}>
           <div className={styles.containerSkeleton}></div>
         </div>
       )}
-      {!loading && defaultDays.length > 0 && (
+      {activeTab === "horarios" && !loading && defaultDays.length > 0 && (
         <div className={styles.containerWrapped}>
           {isModalOpen && (
             <BaseModalComponent handleCloseModal={handleCloseModal}>
@@ -511,7 +641,7 @@ export default function ClinicSettingsPage() {
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
                               "exception_day",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="DD/MM/AAAA"
@@ -522,7 +652,7 @@ export default function ClinicSettingsPage() {
                           handleChangeAtypicalDayCard(
                             atypicalDay.id,
                             "is_working_day",
-                            !atypicalDay.is_working_day
+                            !atypicalDay.is_working_day,
                           )
                         }
                         isOn={atypicalDay.is_working_day}
@@ -536,7 +666,7 @@ export default function ClinicSettingsPage() {
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
                               "open",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="00:00"
@@ -553,7 +683,7 @@ export default function ClinicSettingsPage() {
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
                               "break_start",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="00:00"
@@ -570,7 +700,7 @@ export default function ClinicSettingsPage() {
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
                               "break_end",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="00:00"
@@ -585,7 +715,7 @@ export default function ClinicSettingsPage() {
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
                               "close",
-                              e.target.value
+                              e.target.value,
                             )
                           }
                           placeholder="00:00"

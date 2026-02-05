@@ -56,6 +56,81 @@
   color: var(--gray-300);
 }
 
+.tabsContainer {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--gray-600);
+  color: var(--gray-300);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.tabButton:hover {
+  background-color: var(--gray-500);
+}
+
+.tabButtonActive {
+  background-color: var(--blue-500);
+  color: var(--gray-100);
+}
+
+.basicDataCard {
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1.5rem;
+  width: 680px;
+  max-width: 1000px;
+  margin: 0 auto 2rem auto;
+}
+
+.basicDataHeader {
+  margin-bottom: 1rem;
+}
+
+.basicDataForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .basicDataForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+.basicDataActions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.switchLabel {
+  color: var(--gray-100);
+  font-size: 0.875rem;
+}
+
 .listDays li {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;

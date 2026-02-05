@@ -24,14 +24,14 @@ export async function putAppointmentStatus({
 
   try {
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/appointments/${appointmentId}`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/appointments/${appointmentId}`,
       { status },
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     return response.data;

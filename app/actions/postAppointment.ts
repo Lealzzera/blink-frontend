@@ -6,14 +6,12 @@ type PostAppointmentType = {
   patientNumber: string;
   scheduledTime: string;
   notes: string;
-  clinicId: number;
 };
 
 export async function postAppointment({
   patientNumber,
   scheduledTime,
   notes,
-  clinicId,
   patientName,
 }: PostAppointmentType) {
   const supabase = createClient();
@@ -36,14 +34,13 @@ export async function postAppointment({
         scheduled_time: scheduledTime,
         patient_name: patientName,
         notes,
-        clinic: clinicId,
       },
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
 
     return response;

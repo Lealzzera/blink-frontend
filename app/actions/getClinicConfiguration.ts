@@ -1,10 +1,14 @@
 import { createClient } from "@/utils/supabase/client";
-import { AtypicalConfigurationObject } from "../types/types";
 import axios from "axios";
 
-export default async function postAtypicalDayAvailability(
-  atypicalObjectBody: AtypicalConfigurationObject,
-) {
+export type ClinicConfigurationResponse = {
+  clinic_name: string;
+  ai_name: string;
+  appointment_duration: number;
+  allow_overbooking: boolean;
+};
+
+export async function getClinicConfiguration(): Promise<ClinicConfigurationResponse | null> {
   const supabase = createClient();
 
   const {
@@ -18,19 +22,19 @@ export default async function postAtypicalDayAvailability(
   }
 
   try {
-    const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/configuration/availability/atypical`,
-      atypicalObjectBody,
+    const response = await axios.get(
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/configuration/clinic`,
       {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${accessToken}`,
         },
-      },
+      }
     );
 
-    return response;
+    return response.data;
   } catch (err) {
-    console.error("Error to post clinic atypical day availability:", err);
+    console.error("Error fetching clinic configuration:", err);
+    return null;
   }
 }

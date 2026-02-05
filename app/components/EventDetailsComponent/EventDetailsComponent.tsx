@@ -1,9 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { EventInput } from "@fullcalendar/core";
 import styles from "./style.module.css";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
-import { getAppointmentDetails } from "@/app/actions/getAppointmentsDetails";
 
 type AppointmentDetailsProps = {
   event: EventInput;
@@ -20,8 +19,6 @@ export default function EventDetailsComponent({
     id: "",
     status: "",
   });
-  const [appontmentDetails, setAppointmentDetails] = useState<any>(null);
-
 
   const handleChangeStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNewStatus({ id: event.id, status: e.target.value });
@@ -37,31 +34,21 @@ export default function EventDetailsComponent({
       minute: "2-digit",
     });
   };
-
-  useEffect(() => {
-    const fetchAppiontmentDetails = async () => {
-      if (!event.id) return;
-      const response = await getAppointmentDetails(+event.id);
-      setAppointmentDetails(response);
-    };
-
-    fetchAppiontmentDetails();
-  }, []);
   return (
     <div className={styles.modalDetailsBg}>
       <div className={styles.modalContent}>
         <h3>Detalhes do agendamento</h3>
         <p>
-          Paciente: <span>{appontmentDetails?.patient?.name}</span>
+          Paciente: <span>{event.title}</span>
         </p>
         <p>
-          Telefone: <span>{appontmentDetails?.patient?.phone_number}</span>
+          Telefone: <span>{event.extendedProps?.phone}</span>
         </p>
         <p>
           Data: <span>{formatDate()}</span>
         </p>
         <p className={styles.notes}>
-          Anotações: <span>{appontmentDetails?.notes}</span>
+          Anotações: <span>{event.extendedProps?.notes}</span>
         </p>
         <div className={styles.selectStatusContainer}>
           <select

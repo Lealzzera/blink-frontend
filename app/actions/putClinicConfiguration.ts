@@ -1,7 +1,16 @@
 import { createClient } from "@/utils/supabase/client";
 import axios from "axios";
 
-export async function getAppointmentDetails(appointmentId: number) {
+export type PutClinicConfigurationBody = {
+  clinic_name: string;
+  ai_name: string;
+  appointment_duration: number;
+  allow_overbooking: boolean;
+};
+
+export async function putClinicConfiguration(
+  body: PutClinicConfigurationBody
+): Promise<number | null> {
   const supabase = createClient();
 
   const {
@@ -15,8 +24,9 @@ export async function getAppointmentDetails(appointmentId: number) {
   }
 
   try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/appointments/${appointmentId}/details`,
+    const response = await axios.put(
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/configuration/clinic`,
+      body,
       {
         headers: {
           "Content-Type": "application/json",
@@ -25,8 +35,9 @@ export async function getAppointmentDetails(appointmentId: number) {
       }
     );
 
-    return response.data;
+    return response.status;
   } catch (err) {
-    console.error("Error fetching appointment details:", err);
+    console.error("Error updating clinic configuration:", err);
+    return null;
   }
 }

@@ -14,8 +14,6 @@ import { putAppointmentStatus } from "@/app/actions/putAppointmentStatus";
 import { postAppointment } from "@/app/actions/postAppointment";
 import { toast, ToastContainer } from "react-toastify";
 export default function Schedules() {
-  const { clinicId } = useUser();
-
   const [events, setEvents] = useState<EventInput[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formTelephone, setFormTelephone] = useState<string>("");
@@ -44,7 +42,6 @@ export default function Schedules() {
   };
 
   const handleCreate = async () => {
-    if (!clinicId) return;
     if (!formTelephone || !formDate || !formTime || !formPatientName) {
       setError("Por favor, preencha todos os campos obrigatórios.");
       return;
@@ -60,7 +57,6 @@ export default function Schedules() {
     const isoString = dateObj.toISOString();
     setError("");
     const response: any = await postAppointment({
-      clinicId,
       notes: formDescription,
       patientNumber: formattedTelephone,
       scheduledTime: isoString,
@@ -83,7 +79,7 @@ export default function Schedules() {
       {
         theme: "colored",
         type: "error",
-      }
+      },
     );
 
     setError("Ocorreu um erro ao criar o agendamento.");
@@ -160,17 +156,17 @@ export default function Schedules() {
       const date = appointment.date;
       return (appointment.appointments || []).map((appt: any) => {
         const time = appt.time || "00:00";
-        const isoTime = `${date}T${time}:00`;
+        const isoTime = `${date}T${time}`;
 
         return {
           id: String(appt.id),
-          title: appt.name,
+          title: appt.patient_name,
           start: new Date(isoTime).toISOString(),
           extendedProps: {
-            phone: appt.phone,
+            phone: appt.patient_phone,
             duration: appt.duration,
             status: appt.status,
-            sales: appt.sales,
+            notes: appt.notes,
             dayInfo: {
               open: appointment.open,
               close: appointment.close,
@@ -184,23 +180,30 @@ export default function Schedules() {
   };
 
   const fetchAppointments = useCallback(async () => {
-    if (!clinicId) return;
     if (!dataRange.start) return;
     try {
       const appointments = await getAppointments({
-        clinicId,
         startDate: dataRange.start,
         endDate: dataRange.end,
       });
 
+      console.log("appointments response:", appointments);
+
+      if (!appointments || !Array.isArray(appointments)) {
+        console.error("Appointments inválido ou não é um array:", appointments);
+        return;
+      }
+
       const appointmentsFormatted =
         handlePresenterAppointmentsList(appointments);
+
+      console.log("appointmentsFormatted:", appointmentsFormatted);
 
       setEvents(appointmentsFormatted);
     } catch (err) {
       console.error("Erro ao buscar appointments:", err);
     }
-  }, [clinicId, dataRange]);
+  }, [dataRange]);
 
   useEffect(() => {
     fetchAppointments();
@@ -215,7 +218,7 @@ export default function Schedules() {
       });
       await fetchAppointments();
     },
-    [fetchAppointments]
+    [fetchAppointments],
   );
   return (
     <div className={styles.schedulesContainer}>
@@ -286,7 +289,7 @@ export default function Schedules() {
             const key = `status_${String(status || "").toUpperCase()}`;
             const statusClass = (styles as any)[key];
             return [styles.scheduleItem, statusClass].filter(
-              Boolean
+              Boolean,
             ) as string[];
           }}
           dayCellClassNames={(arg) => {
