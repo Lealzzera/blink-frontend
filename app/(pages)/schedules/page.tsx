@@ -187,8 +187,6 @@ export default function Schedules() {
         endDate: dataRange.end,
       });
 
-      console.log("appointments response:", appointments);
-
       if (!appointments || !Array.isArray(appointments)) {
         console.error("Appointments inválido ou não é um array:", appointments);
         return;
@@ -196,8 +194,6 @@ export default function Schedules() {
 
       const appointmentsFormatted =
         handlePresenterAppointmentsList(appointments);
-
-      console.log("appointmentsFormatted:", appointmentsFormatted);
 
       setEvents(appointmentsFormatted);
     } catch (err) {

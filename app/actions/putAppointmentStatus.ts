@@ -3,12 +3,16 @@ import axios from "axios";
 
 type PutAppointmentStatusType = {
   appointmentId: string;
-  status: string;
+  status?: string;
+  notes?: string;
+  scheduledTime?: string;
 };
 
 export async function putAppointmentStatus({
   appointmentId,
   status,
+  notes,
+  scheduledTime,
 }: PutAppointmentStatusType) {
   const supabase = createClient();
 
@@ -23,9 +27,9 @@ export async function putAppointmentStatus({
   }
 
   try {
-    const response = await axios.put(
+    const response = await axios.patch(
       `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/appointments/${appointmentId}`,
-      { status },
+      { status, notes, scheduled_time: scheduledTime },
       {
         headers: {
           "Content-Type": "application/json",
