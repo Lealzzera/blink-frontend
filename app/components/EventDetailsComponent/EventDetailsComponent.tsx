@@ -19,7 +19,6 @@ export default function EventDetailsComponent({
     id: "",
     status: "",
   });
-
   const handleChangeStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setNewStatus({ id: event.id, status: e.target.value });
   };
