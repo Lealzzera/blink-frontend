@@ -235,6 +235,7 @@ export default function ChatComponent({
           handleToggle={async () => {
             try {
               const newValue = await putAiAnswer(phoneNumber);
+              console.log("newValue:", newValue);
               setIsSwitchOn(newValue);
             } catch (err) {
               console.error("Error toggling AI answer:", err);
