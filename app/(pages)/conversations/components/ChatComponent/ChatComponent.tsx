@@ -9,6 +9,7 @@ import { postMessage } from "@/app/actions/postMessage";
 import Image from "next/image";
 import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
 import { useChat } from "@/app/context/chatContext";
+import { putAiAnswer } from "@/app/actions/putAiAnswer";
 
 type ChatComponentProps = {
   phoneNumber: string;
@@ -231,7 +232,14 @@ export default function ChatComponent({
         </div>
         <SwitchComponent
           isOn={isSwitchOn}
-          handleToggle={() => setIsSwitchOn(!isSwitchOn)}
+          handleToggle={async () => {
+            try {
+              const newValue = await putAiAnswer(phoneNumber);
+              setIsSwitchOn(newValue);
+            } catch (err) {
+              console.error("Error toggling AI answer:", err);
+            }
+          }}
           label={isSwitchOn ? "Desligar IA" : "Ligar IA"}
         />
       </div>
