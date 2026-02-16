@@ -49,6 +49,7 @@ export default function ClinicSettingsPage() {
   const [aiAgentNameError, setAiAgentNameError] = useState(false);
   const [appointmentDuration, setAppointmentDuration] = useState("");
   const [allowSameTimeBooking, setAllowSameTimeBooking] = useState(false);
+  const [customPrompt, setCustomPrompt] = useState("");
   const [activeTab, setActiveTab] = useState<"dados" | "horarios">("dados");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] = useState({
@@ -236,6 +237,7 @@ export default function ClinicSettingsPage() {
       ai_name: normalizedAiAgentName,
       appointment_duration: Number(appointmentDuration) || 0,
       allow_overbooking: allowSameTimeBooking,
+      custom_prompt: customPrompt,
     });
 
     showToastMessage({
@@ -410,6 +412,7 @@ export default function ClinicSettingsPage() {
           : "",
       );
       setAllowSameTimeBooking(response.allow_overbooking || false);
+      setCustomPrompt(response.custom_prompt || "");
     }
   };
 
@@ -494,6 +497,21 @@ export default function ClinicSettingsPage() {
                 handleToggle={() => setAllowSameTimeBooking((prev) => !prev)}
               />
             </div>
+          </div>
+          <div className={styles.customPromptSection}>
+            <label className={styles.customPromptLabel}>
+              Prompt personalizado da IA
+            </label>
+            <p className={styles.customPromptDescription}>
+              Instrua o agente de IA sobre como ele deve se comportar, responder e interagir com os pacientes.
+            </p>
+            <textarea
+              className={styles.customPromptTextarea}
+              placeholder="Ex.: Você é um assistente simpático da clínica. Sempre cumprimente o paciente pelo nome e ofereça ajuda para agendar consultas..."
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
+              rows={6}
+            />
           </div>
           <div className={styles.basicDataActions}>
             <ButtonComponent

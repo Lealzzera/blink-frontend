@@ -6,6 +6,7 @@ export type PutClinicConfigurationBody = {
   ai_name: string;
   appointment_duration: number;
   allow_overbooking: boolean;
+  custom_prompt: string;
 };
 
 export async function putClinicConfiguration(
