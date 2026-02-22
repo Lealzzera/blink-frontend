@@ -1,0 +1,261 @@
+.container {
+  height: 100vh;
+  padding: 30px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.containerWrapped {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+}
+
+.containerContent {
+  margin-top: 3rem;
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1rem;
+  max-width: 1000px;
+}
+
+.containerButton {
+  width: 680px;
+  margin-top: 2rem;
+  max-width: 1000px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.atypicalDayButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 1rem;
+}
+
+.atypicalDayButton p {
+  cursor: pointer;
+  font-weight: bold;
+  color: var(--gray-100);
+}
+
+.containerLegend {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.subtitle {
+  color: var(--gray-300);
+}
+
+.tabsContainer {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.tabButton {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: var(--gray-600);
+  color: var(--gray-300);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s,
+    color 0.2s;
+}
+
+.tabButton:hover {
+  background-color: var(--gray-500);
+}
+
+.tabButtonActive {
+  background-color: var(--blue-500);
+  color: var(--gray-100);
+}
+
+.basicDataCard {
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1.5rem;
+  width: 680px;
+  max-width: 1000px;
+  margin: 0 auto 2rem auto;
+}
+
+.basicDataHeader {
+  margin-bottom: 1rem;
+}
+
+.basicDataForm {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+@media (max-width: 720px) {
+  .basicDataForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+.customPromptSection {
+  margin-top: 1.5rem;
+  grid-column: 1 / -1;
+}
+
+.customPromptLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--gray-100);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.customPromptDescription {
+  font-size: 0.8rem;
+  color: var(--gray-300);
+  margin-bottom: 0.75rem;
+}
+
+.customPromptTextarea {
+  width: 100%;
+  min-height: 140px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--gray-500);
+  border-radius: 6px;
+  background-color: var(--gray-700);
+  color: var(--gray-100);
+  font-size: 0.875rem;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  transition: border-color 0.2s;
+}
+
+.customPromptTextarea::placeholder {
+  color: var(--gray-400);
+}
+
+.customPromptTextarea:focus {
+  outline: none;
+  border-color: var(--blue-500);
+}
+
+.basicDataActions {
+  margin-top: 1.25rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.switchRow {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.switchLabel {
+  color: var(--gray-100);
+  font-size: 0.875rem;
+}
+
+.listDays li {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  align-items: center;
+  justify-content: center;
+}
+
+.inputContainer {
+  width: 70px;
+}
+
+.containerSkeleton {
+  margin-top: 3rem;
+  width: 680px;
+  max-width: 1000px;
+  height: 400px;
+
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1rem;
+
+  position: relative;
+  overflow: hidden;
+}
+
+.containerSkeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.08),
+    transparent
+  );
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.atypicalDaysList {
+  width: 680px;
+  margin-top: 2.5rem;
+  max-width: 1000px;
+}
+
+.atypicalDaysUl {
+  overflow: auto;
+  max-height: 400px;
+  margin-top: 1rem;
+}
+
+.atypicalDayCard {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyContentContainer {
+  margin-top: 2rem;
+  text-align: center;
+}
+
+.atypicalDayInput {
+  width: 105px;
+}
+
+.atypicalDayTime {
+  width: 65px;
+}
+
+.deleteAtypicalButtonContainer {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}

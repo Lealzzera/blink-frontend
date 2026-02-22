@@ -1,0 +1,24 @@
+.buttonContainer {
+  width: 100%;
+}
+
+.button {
+  background-color: var(--blue-400);
+  color: var(--white);
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.button:hover {
+  background-color: var(--blue-500);
+}
+
+.button:disabled {
+  background-color: rgba(110, 193, 253, 0.932);
+  opacity: 0.6;
+  cursor: auto;
+}

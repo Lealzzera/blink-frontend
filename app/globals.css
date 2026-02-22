@@ -1,7 +1,70 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+:root {
+  --white: #fff;
+  --blue-200: #a8d0db;
+  --blue-400: #044b7f;
+  --blue-500: #003153;
+  --gray-100: #f0f0f0;
+  --gray-300: #7d7c7c;
+  --gray-600: #303036;
+  --gray-700: #262626;
+  --gray-900: #0a0a0b;
+  --green-400: #00b850;
+  --green-500: #00662c;
+  --red-300: #b43030;
+  --red-600: #b80000;
+  --yellow-400: #f59e0b;
+}
 
+html {
+  font-family: var(--main-font-sans);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
 body {
-    background: rgb(255, 255, 255); 
-  }
+  margin: 0;
+  padding: 0;
+  background-color: var(--gray-900);
+  color: var(--gray-100);
+}
+
+.overflow-hidden {
+  overflow: hidden;
+}
+
+ul,
+li {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+input {
+  margin: 0px;
+  padding: 0px;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+span,
+a,
+div,
+nav {
+  padding: 0px;
+  margin: 0px;
+  font-family: var(--main-font-sans), sans-serif;
+}
+
+.main-page-title {
+  color: var(--gray-900);
+  font-size: 1.25rem;
+  font-weight: bold;
+}

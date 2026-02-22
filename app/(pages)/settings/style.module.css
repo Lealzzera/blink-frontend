@@ -1,0 +1,112 @@
+.containerSettings {
+  padding: 30px;
+}
+
+.containerSettingsText {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.containerQrCode {
+  margin-top: 2rem;
+}
+
+.containerConnected {
+  width: 320px;
+  height: 320px;
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  flex-direction: column;
+  border-radius: 4px;
+  padding: 1rem;
+}
+
+.containerErrorQrCode {
+  width: 320px;
+  height: 320px;
+  margin-top: 2rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background-color: var(--gray-600);
+  border-radius: 4px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.containerSkeletonQrCode {
+  width: 320px;
+  height: 320px;
+  margin-top: 2rem;
+  position: relative;
+  overflow: hidden;
+  background-color: #303036;
+  border-radius: 4px;
+}
+
+.containerSkeletonQrCode::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -150%;
+  height: 100%;
+  width: 150%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.08) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(150%);
+  }
+}
+
+.optionsList {
+  margin-top: 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.disconnectOption {
+  width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logoutOption {
+  width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.logoutOption:hover,
+.disconnectOption:hover {
+  background-color: var(--gray-600);
+}
+
+.logoutOption:hover .logoutIcon,
+.logoutOption:hover p {
+  color: var(--red-300);
+  color: var(--red-300);
+}
