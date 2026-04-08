@@ -35,14 +35,15 @@ export async function updateSession(request: NextRequest) {
   const isAuthPage = pathname === "/";
   const isForgotPage = pathname.startsWith("/forgot-password");
   const isResetPage = pathname.startsWith("/reset-password");
+  const isRegisterPage = pathname.startsWith("/register");
 
-  if (!user && !isAuthPage && !isForgotPage && !isResetPage) {
+  if (!user && !isAuthPage && !isForgotPage && !isResetPage && !isRegisterPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  if (user && (isAuthPage || isForgotPage)) {
+  if (user && (isAuthPage || isForgotPage || isRegisterPage)) {
     const url = request.nextUrl.clone();
     url.pathname = "/conversations";
     return NextResponse.redirect(url);

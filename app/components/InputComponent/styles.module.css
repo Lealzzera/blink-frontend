@@ -11,6 +11,10 @@
   background-color: #d4d4d8;
 }
 
+.inputLabel {
+  width: 5px;
+}
+
 .inputLabel.required::after {
   content: " *";
   color: var(--red-300);

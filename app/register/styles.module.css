@@ -1,0 +1,21 @@
+.registerSection {
+    background-color: var(--gray-700);
+    color: var(--white);
+    width: 100%;
+    height: 100vh;
+    padding: 2rem;
+}
+
+.registerContainer {
+    max-width: 800px;
+    background-color: var(--gray-600);
+    text-align: left;
+    color: var(--white);
+    margin: 30px auto 0px auto;
+    height: 75vh;
+    border-radius: 8px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
