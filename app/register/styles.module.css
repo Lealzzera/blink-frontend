@@ -1,21 +1,123 @@
 .registerSection {
-    background-color: var(--gray-700);
-    color: var(--white);
-    width: 100%;
-    height: 100vh;
-    padding: 2rem;
+  background-color: var(--gray-700);
+  color: var(--white);
+  width: 100%;
+  min-height: 100vh;
+  padding: 2.5rem 1rem 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
+/* ─── cabeçalho ─── */
+.pageHeader {
+  width: 100%;
+  max-width: 700px;
+  margin-bottom: 1.75rem;
+}
+
+.pageTitle {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--white);
+}
+
+.pageSubtitle {
+  font-size: 0.9rem;
+  color: var(--gray-300);
+  margin-top: 0.25rem;
+}
+
+/* ─── steps bar ─── */
+.stepsBar {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.stepItem {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.stepItem:last-child {
+  flex: 0;
+}
+
+.stepCircle {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px solid var(--gray-300);
+  color: var(--gray-300);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.stepCircle.stepActive {
+  border-color: var(--blue-400);
+  color: var(--blue-400);
+}
+
+.stepCircle.stepDone {
+  border-color: var(--green-400);
+  background-color: var(--green-400);
+  color: var(--white);
+}
+
+.stepLabel {
+  font-size: 0.72rem;
+  color: var(--gray-300);
+  margin-left: 0.4rem;
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.stepLabelActive {
+  color: var(--white);
+  font-weight: 600;
+}
+
+.stepLine {
+  flex: 1;
+  height: 2px;
+  background-color: var(--gray-300);
+  margin: 0 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.stepLineDone {
+  background-color: var(--green-400);
+}
+
+/* ─── card de conteúdo ─── */
 .registerContainer {
-    max-width: 800px;
-    background-color: var(--gray-600);
-    text-align: left;
-    color: var(--white);
-    margin: 30px auto 0px auto;
-    height: 75vh;
-    border-radius: 8px;
-    padding: 2rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+  width: 100%;
+  max-width: 700px;
+  background-color: var(--gray-600);
+  border-radius: 8px;
+  padding: 2rem;
+  /* cresce conforme o conteúdo, sem altura fixa */
+}
+
+/* ─── navegação Voltar / Próximo ─── */
+.navRow {
+  width: 100%;
+  max-width: 700px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.navBtn {
+  width: 110px;
 }

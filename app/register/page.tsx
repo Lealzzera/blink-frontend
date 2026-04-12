@@ -1,10 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import RegisterUserInfoComponent from "./components/register-user-info/RegisterUserInfoComponent";
-import styles from "./styles.module.css";
-import ButtonComponent from "../components/ButtonComponent/ButtonComponent";
-import RegisterClinicInfo from "./components/register-clinic-info/RegisterClinicInfo";
+import { useEffect, useState } from 'react';
+import ButtonComponent from '../components/ButtonComponent/ButtonComponent';
+import RegisterClinicInfo from './components/register-clinic-info/RegisterClinicInfo';
+import RegisterUserInfoComponent from './components/register-user-info/RegisterUserInfoComponent';
+import RegisterClinicWorkingHours from './components/register-clinic-working-hours/RegisterClinicWorkingHours';
+import RegisterClinicServices from './components/register-clinic-services/RegisterClinicServices';
+import styles from './styles.module.css';
 
 type WorkingHour = {
   weekday: string;
@@ -45,24 +47,28 @@ export type RegisterClinicObject = {
   settings: SettingsObject;
 };
 
+const TOTAL_STEPS = 4;
+
+const STEP_LABELS = ['Usuário', 'Clínica', 'Horários', 'Serviços'];
+
 export default function RegisterPage() {
-  const [name, setName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
   const [registerObject, setRegisterObject] = useState<RegisterClinicObject>({
-    userFullName: "",
-    userEmail: "",
-    password: "",
-    clinicName: "",
-    clinicType: "",
-    phone: "",
-    address: "",
-    city: "",
-    postalCode: "",
-    state: "",
-    planId: "",
+    userFullName: '',
+    userEmail: '',
+    password: '',
+    clinicName: '',
+    clinicType: '',
+    phone: '',
+    address: '',
+    city: '',
+    postalCode: '',
+    state: '',
+    planId: '',
     workingHours: [],
     services: [],
     settings: {
@@ -72,37 +78,38 @@ export default function RegisterPage() {
       appointmentDurationMinutes: 0,
       allowRescheduling: false,
       allowCancelation: false,
-      aiAgentName: "",
+      aiAgentName: '',
     },
   });
 
-  const disableFirstStep =
-    password !== confirmPassword ||
-    password.length < 8 ||
-    !name ||
-    !lastName ||
-    !registerObject.userEmail;
   const clinicTypeOptions = [
-    { value: "DENTAL", label: "Clínica Odontológica" },
-    { value: "MEDICAL", label: "Clínica Médica" },
-    { value: "AESTHETIC", label: "Clínica Estética" },
-    { value: "PSYCHOLOGY", label: "Clínica de Psicologia" },
-    { value: "OTHER", label: "Outro" },
+    { value: 'DENTAL', label: 'Clínica Odontológica' },
+    { value: 'MEDICAL', label: 'Clínica Médica' },
+    { value: 'AESTHETIC', label: 'Clínica Estética' },
+    { value: 'PSYCHOLOGY', label: 'Clínica de Psicologia' },
+    { value: 'OTHER', label: 'Outro' },
   ];
+
+  const disableNext =
+    (currentStep === 1 &&
+      (password !== confirmPassword ||
+        password.length < 8 ||
+        !name ||
+        !lastName ||
+        !registerObject.userEmail)) ||
+    (currentStep === 2 &&
+      (!registerObject.clinicName ||
+        !registerObject.address ||
+        !registerObject.city ||
+        !registerObject.state ||
+        !registerObject.clinicType)) ||
+    (currentStep === 3 && registerObject.workingHours.length === 0);
+
   const handleChangeObjectValue = <K extends keyof RegisterClinicObject>(
     key: K,
     value: RegisterClinicObject[K],
   ) => {
-    setRegisterObject((prev) => {
-      return {
-        ...prev,
-        [key]: value,
-      };
-    });
-  };
-
-  const handleNextStep = () => {
-    setCurrentStep(currentStep + 1);
+    setRegisterObject((prev) => ({ ...prev, [key]: value }));
   };
 
   useEffect(() => {
@@ -111,18 +118,46 @@ export default function RegisterPage() {
 
   return (
     <section className={styles.registerSection}>
-      <h1>Cadastro</h1>
-      <p>Siga os passos abaixo para criar a sua conta</p>
+      <div className={styles.pageHeader}>
+        <h1 className={styles.pageTitle}>Cadastro</h1>
+        <p className={styles.pageSubtitle}>Siga os passos abaixo para criar a sua conta</p>
+      </div>
+
+      {/* step indicator */}
+      <div className={styles.stepsBar}>
+        {STEP_LABELS.map((label, i) => {
+          const step = i + 1;
+          const done = step < currentStep;
+          const active = step === currentStep;
+          return (
+            <div key={step} className={styles.stepItem}>
+              <div
+                className={`${styles.stepCircle} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`}
+              >
+                {done ? '✓' : step}
+              </div>
+              <span
+                className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}
+              >
+                {label}
+              </span>
+              {step < TOTAL_STEPS && (
+                <div className={`${styles.stepLine} ${done ? styles.stepLineDone : ''}`} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* card */}
       <div className={styles.registerContainer}>
-        {currentStep === 2 && (
+        {currentStep === 1 && (
           <RegisterUserInfoComponent
             password={password}
             setPassword={setPassword}
             confirmPassword={confirmPassword}
             setConfirmPassword={setConfirmPassword}
-            setEmailValue={(value) =>
-              handleChangeObjectValue("userEmail", value)
-            }
+            setEmailValue={(value) => handleChangeObjectValue('userEmail', value)}
             emailValue={registerObject.userEmail}
             nameValue={name}
             setNameValue={setName}
@@ -130,54 +165,54 @@ export default function RegisterPage() {
             setLastNameValue={setLastName}
           />
         )}
-        {currentStep === 1 && (
+        {currentStep === 2 && (
           <RegisterClinicInfo
             clinicPostalCode={registerObject.postalCode}
-            setClinicPostalCode={(value) =>
-              handleChangeObjectValue("postalCode", value)
-            }
+            setClinicPostalCode={(value) => handleChangeObjectValue('postalCode', value)}
             clinicTypeValue={registerObject.clinicType}
-            setClinicTypeValue={(value) =>
-              handleChangeObjectValue("clinicType", value)
-            }
+            setClinicTypeValue={(value) => handleChangeObjectValue('clinicType', value)}
             clinicTypeOptions={clinicTypeOptions}
             clinicNameValue={registerObject.clinicName}
-            setClinicNameValue={(value) =>
-              handleChangeObjectValue("clinicName", value)
-            }
+            setClinicNameValue={(value) => handleChangeObjectValue('clinicName', value)}
             clinicPhoneNumber={registerObject.phone}
-            setClinicPhoneNumber={(value) =>
-              handleChangeObjectValue("phone", value)
-            }
+            setClinicPhoneNumber={(value) => handleChangeObjectValue('phone', value)}
             clinicAddress={registerObject.address}
-            setClinicAddress={(value) =>
-              handleChangeObjectValue("address", value)
-            }
+            setClinicAddress={(value) => handleChangeObjectValue('address', value)}
             clinicCity={registerObject.city}
-            setClinicCity={(value) => handleChangeObjectValue("city", value)}
+            setClinicCity={(value) => handleChangeObjectValue('city', value)}
             clinicState={registerObject.state}
-            setClinicState={(value) => handleChangeObjectValue("state", value)}
+            setClinicState={(value) => handleChangeObjectValue('state', value)}
           />
         )}
-        <div
-          style={{ display: "flex", justifyContent: "flex-end", gap: "1rem" }}
-        >
-          <div style={{ width: "100px" }}>
-            <ButtonComponent
-              disabled={currentStep === 1}
-              style={{ width: "100px" }}
-              text="Voltar"
-              handleClickButton={() => setCurrentStep(1)}
-            />
-          </div>
-          <div style={{ width: "100px" }}>
-            <ButtonComponent
-              disabled={disableFirstStep}
-              style={{ width: "100px" }}
-              text="Próximo"
-              handleClickButton={handleNextStep}
-            />
-          </div>
+        {currentStep === 3 && (
+          <RegisterClinicWorkingHours
+            workingHours={registerObject.workingHours}
+            setWorkingHours={(value) => handleChangeObjectValue('workingHours', value)}
+          />
+        )}
+        {currentStep === 4 && (
+          <RegisterClinicServices
+            services={registerObject.services}
+            setServices={(value) => handleChangeObjectValue('services', value)}
+          />
+        )}
+      </div>
+
+      {/* navegação */}
+      <div className={styles.navRow}>
+        <div className={styles.navBtn}>
+          <ButtonComponent
+            disabled={currentStep === 1}
+            text="Voltar"
+            handleClickButton={() => setCurrentStep((prev) => prev - 1)}
+          />
+        </div>
+        <div className={styles.navBtn}>
+          <ButtonComponent
+            disabled={disableNext}
+            text={currentStep === TOTAL_STEPS ? 'Concluir' : 'Próximo'}
+            handleClickButton={() => setCurrentStep((prev) => prev + 1)}
+          />
         </div>
       </div>
     </section>

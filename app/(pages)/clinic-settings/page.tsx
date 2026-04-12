@@ -1,23 +1,25 @@
-"use client";
+'use client';
 
-import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
-import styles from "./style.module.css";
-import { useEffect, useState } from "react";
-import InputComponent from "@/app/components/InputComponent/InputComponent";
-import { useUser } from "@/app/context/userContext";
-import { PutClinicAvailabilityType } from "@/app/actions/putClinicAvailability";
-import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
-import { putClinicAvailability } from "@/app/actions/putClinicAvailability";
-import { getClinicAvailability } from "@/app/actions/getClinicAvailability";
-import { toast, ToastContainer } from "react-toastify";
-import BaseModalComponent from "@/app/components/BaseModalComponent/BaseModalComponent";
-import AtypicalDayModalContent from "./AtypicalDayModalContent/AtypicalDayModalContent";
-import postAtypicalDayAvailability from "@/app/actions/postAtypicalDayAvailability";
-import { getAtypicalDaysList } from "@/app/actions/getAtypicalDaysList";
-import { deleteAtypicalDay } from "@/app/actions/deleteAtypicalDay";
-import putUpdateAtypicalDay from "@/app/actions/putUpdateAtypicalDay";
-import { getClinicConfiguration } from "@/app/actions/getClinicConfiguration";
-import { putClinicConfiguration } from "@/app/actions/putClinicConfiguration";
+import { deleteAtypicalDay } from '@/app/actions/deleteAtypicalDay';
+import { getAtypicalDaysList } from '@/app/actions/getAtypicalDaysList';
+import { getClinicAvailability } from '@/app/actions/getClinicAvailability';
+import { getClinicConfiguration } from '@/app/actions/getClinicConfiguration';
+import postAtypicalDayAvailability from '@/app/actions/postAtypicalDayAvailability';
+import {
+  putClinicAvailability,
+  PutClinicAvailabilityType,
+} from '@/app/actions/putClinicAvailability';
+import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
+import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
+import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalComponent';
+import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
+import InputComponent from '@/app/components/InputComponent/InputComponent';
+import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { useUser } from '@/app/context/userContext';
+import { useEffect, useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import AtypicalDayModalContent from './AtypicalDayModalContent/AtypicalDayModalContent';
+import styles from './style.module.css';
 
 type ClinicDay = {
   week_day: string;
@@ -43,52 +45,50 @@ export default function ClinicSettingsPage() {
   const [defaultDays, setDefaultDays] = useState<ClinicDay[]>([]);
   const [loading, setLoading] = useState(true);
   const { clinicId } = useUser();
-  const [clinicName, setClinicName] = useState("");
-  const [aiAgentName, setAiAgentName] = useState("");
+  const [clinicName, setClinicName] = useState('');
+  const [aiAgentName, setAiAgentName] = useState('');
   const [clinicNameError, setClinicNameError] = useState(false);
   const [aiAgentNameError, setAiAgentNameError] = useState(false);
-  const [appointmentDuration, setAppointmentDuration] = useState("");
+  const [appointmentDuration, setAppointmentDuration] = useState('');
   const [allowSameTimeBooking, setAllowSameTimeBooking] = useState(false);
-  const [customPrompt, setCustomPrompt] = useState("");
-  const [activeTab, setActiveTab] = useState<"dados" | "horarios">("dados");
+  const [customPrompt, setCustomPrompt] = useState('');
+  const [activeTab, setActiveTab] = useState<'dados' | 'horarios'>('dados');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] = useState({
     clinic_id: clinicId,
-    exception_day: "",
+    exception_day: '',
     is_working_day: false,
-    open: "",
-    close: "",
-    break_start: "",
-    break_end: "",
+    open: '',
+    close: '',
+    break_start: '',
+    break_end: '',
   });
-  const [atypicalDaysList, setAtypicalDaysList] = useState<AtypicalDayObject[]>(
-    [],
-  );
+  const [atypicalDaysList, setAtypicalDaysList] = useState<AtypicalDayObject[]>([]);
 
   const fetchClinicAvailability = async () => {
     setLoading(true);
     const response = await getClinicAvailability();
     if (!response) return;
     const formattedResponse: ClinicDay[] = response.map((day: ClinicDay) => {
-      const w = String(day.week_day || "").toUpperCase();
+      const w = String(day.week_day || '').toUpperCase();
       switch (w) {
-        case "SEGUNDA":
-          return { ...day, week_day: "Segunda" } as ClinicDay;
-        case "TERCA":
-          return { ...day, week_day: "Terça" } as ClinicDay;
-        case "QUARTA":
-          return { ...day, week_day: "Quarta" } as ClinicDay;
-        case "QUINTA":
-          return { ...day, week_day: "Quinta" } as ClinicDay;
-        case "SEXTA":
-          return { ...day, week_day: "Sexta" } as ClinicDay;
-        case "SABADO":
-          return { ...day, week_day: "Sábado" } as ClinicDay;
-        case "DOMINGO":
-          return { ...day, week_day: "Domingo" } as ClinicDay;
+        case 'SEGUNDA':
+          return { ...day, week_day: 'Segunda' } as ClinicDay;
+        case 'TERCA':
+          return { ...day, week_day: 'Terça' } as ClinicDay;
+        case 'QUARTA':
+          return { ...day, week_day: 'Quarta' } as ClinicDay;
+        case 'QUINTA':
+          return { ...day, week_day: 'Quinta' } as ClinicDay;
+        case 'SEXTA':
+          return { ...day, week_day: 'Sexta' } as ClinicDay;
+        case 'SABADO':
+          return { ...day, week_day: 'Sábado' } as ClinicDay;
+        case 'DOMINGO':
+          return { ...day, week_day: 'Domingo' } as ClinicDay;
         default:
           return {
-            week_day: String(day.week_day || ""),
+            week_day: String(day.week_day || ''),
             is_work_day: Boolean(day.is_work_day),
             open: day.open ?? undefined,
             close: day.close ?? undefined,
@@ -98,15 +98,7 @@ export default function ClinicSettingsPage() {
       }
     });
 
-    const weekOrder = [
-      "Segunda",
-      "Terça",
-      "Quarta",
-      "Quinta",
-      "Sexta",
-      "Sábado",
-      "Domingo",
-    ];
+    const weekOrder = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
 
     const sortedDays = formattedResponse.sort((a: ClinicDay, b: ClinicDay) => {
       return weekOrder.indexOf(a.week_day) - weekOrder.indexOf(b.week_day);
@@ -118,14 +110,14 @@ export default function ClinicSettingsPage() {
   const fetchAtypicalDaysList = async () => {
     const response = await getAtypicalDaysList();
     if (!response) {
-      toast("Erro ao puxar a lista de dias atípicos.", {
-        theme: "colored",
-        type: "error",
+      toast('Erro ao puxar a lista de dias atípicos.', {
+        theme: 'colored',
+        type: 'error',
       });
     }
 
     const responseFormatted = response.map((item: AtypicalDayObject) => {
-      const [year, month, day] = item.exception_day.split("-");
+      const [year, month, day] = item.exception_day.split('-');
       return { ...item, exception_day: `${day}/${month}/${year}` };
     });
 
@@ -133,33 +125,33 @@ export default function ClinicSettingsPage() {
   };
 
   const formatTimeValue = (value: string) => {
-    const digits = value.replace(/\D/g, "");
+    const digits = value.replace(/\D/g, '');
 
-    let formatted = "";
+    let formatted = '';
 
     if (digits.length > 0) {
       formatted += digits.substring(0, 2);
     }
     if (digits.length >= 3) {
-      formatted += ":" + digits.substring(2, 4);
+      formatted += ':' + digits.substring(2, 4);
     }
 
     return formatted;
   };
 
   const formatDateValue = (value: string) => {
-    const digits = value.replace(/\D/g, "");
+    const digits = value.replace(/\D/g, '');
 
-    let formatted = "";
+    let formatted = '';
 
     if (digits.length > 0) {
       formatted += digits.substring(0, 2);
     }
     if (digits.length >= 3) {
-      formatted += "/" + digits.substring(2, 4);
+      formatted += '/' + digits.substring(2, 4);
     }
     if (digits.length >= 5) {
-      formatted += "/" + digits.substring(4, 8);
+      formatted += '/' + digits.substring(4, 8);
     }
 
     return formatted;
@@ -176,15 +168,8 @@ export default function ClinicSettingsPage() {
   }) => {
     setDefaultDays((previousDays) => {
       return previousDays.map((day) => {
-        if (
-          key === "open" ||
-          key === "close" ||
-          key === "break_start" ||
-          key === "break_end"
-        ) {
-          return day.week_day === weekDay
-            ? { ...day, [key]: formatTimeValue(String(value)) }
-            : day;
+        if (key === 'open' || key === 'close' || key === 'break_start' || key === 'break_end') {
+          return day.week_day === weekDay ? { ...day, [key]: formatTimeValue(String(value)) } : day;
         }
         return day.week_day === weekDay ? { ...day, [key]: value } : day;
       });
@@ -202,15 +187,15 @@ export default function ClinicSettingsPage() {
   }) => {
     if (success) {
       toast(successMessage, {
-        type: "success",
-        theme: "colored",
+        type: 'success',
+        theme: 'colored',
       });
       return;
     }
 
     toast(errorMessage, {
-      type: "error",
-      theme: "colored",
+      type: 'error',
+      theme: 'colored',
     });
     return;
   };
@@ -225,9 +210,9 @@ export default function ClinicSettingsPage() {
     setAiAgentNameError(agentError);
 
     if (clinicError || agentError) {
-      toast("Preencha os campos obrigatórios.", {
-        type: "error",
-        theme: "colored",
+      toast('Preencha os campos obrigatórios.', {
+        type: 'error',
+        theme: 'colored',
       });
       return;
     }
@@ -242,8 +227,8 @@ export default function ClinicSettingsPage() {
 
     showToastMessage({
       success: response === 200 || response === 201 || response === 204,
-      successMessage: "Dados da clínica salvos com sucesso.",
-      errorMessage: "Erro ao salvar os dados da clínica.",
+      successMessage: 'Dados da clínica salvos com sucesso.',
+      errorMessage: 'Erro ao salvar os dados da clínica.',
     });
   };
 
@@ -251,20 +236,20 @@ export default function ClinicSettingsPage() {
     const formattedDays = defaultDays
       .map((day: ClinicDay): PutClinicAvailabilityType | undefined => {
         switch (day.week_day) {
-          case "Segunda":
-            return { ...day, week_day: "SEGUNDA", clinic_id: clinicId };
-          case "Terça":
-            return { ...day, week_day: "TERCA", clinic_id: clinicId };
-          case "Quarta":
-            return { ...day, week_day: "QUARTA", clinic_id: clinicId };
-          case "Quinta":
-            return { ...day, week_day: "QUINTA", clinic_id: clinicId };
-          case "Sexta":
-            return { ...day, week_day: "SEXTA", clinic_id: clinicId };
-          case "Sábado":
-            return { ...day, week_day: "SABADO", clinic_id: clinicId };
-          case "Domingo":
-            return { ...day, week_day: "DOMINGO", clinic_id: clinicId };
+          case 'Segunda':
+            return { ...day, week_day: 'SEGUNDA', clinic_id: clinicId };
+          case 'Terça':
+            return { ...day, week_day: 'TERCA', clinic_id: clinicId };
+          case 'Quarta':
+            return { ...day, week_day: 'QUARTA', clinic_id: clinicId };
+          case 'Quinta':
+            return { ...day, week_day: 'QUINTA', clinic_id: clinicId };
+          case 'Sexta':
+            return { ...day, week_day: 'SEXTA', clinic_id: clinicId };
+          case 'Sábado':
+            return { ...day, week_day: 'SABADO', clinic_id: clinicId };
+          case 'Domingo':
+            return { ...day, week_day: 'DOMINGO', clinic_id: clinicId };
           default:
             return undefined;
         }
@@ -274,9 +259,8 @@ export default function ClinicSettingsPage() {
     const response = await putClinicAvailability(formattedDays);
     showToastMessage({
       success: response === 200,
-      successMessage: "Configurações atualizadas com sucesso",
-      errorMessage:
-        "Houve um erro ao atualizar as configurações, tente novamente mais tarde.",
+      successMessage: 'Configurações atualizadas com sucesso',
+      errorMessage: 'Houve um erro ao atualizar as configurações, tente novamente mais tarde.',
     });
 
     await fetchClinicAvailability();
@@ -290,31 +274,28 @@ export default function ClinicSettingsPage() {
     setIsModalOpen(false);
     setAtypicalDayConfig({
       clinic_id: clinicId,
-      exception_day: "",
+      exception_day: '',
       is_working_day: false,
-      open: "",
-      close: "",
-      break_start: "",
-      break_end: "",
+      open: '',
+      close: '',
+      break_start: '',
+      break_end: '',
     });
   };
 
-  const handleManageAtypicalDay = (
-    objectKey: string,
-    value: string | boolean,
-  ) => {
+  const handleManageAtypicalDay = (objectKey: string, value: string | boolean) => {
     setAtypicalDayConfig((prev) => {
       if (
-        objectKey === "open" ||
-        objectKey === "close" ||
-        objectKey === "break_start" ||
-        objectKey === "break_end"
+        objectKey === 'open' ||
+        objectKey === 'close' ||
+        objectKey === 'break_start' ||
+        objectKey === 'break_end'
       ) {
         const formattedValue = formatTimeValue(String(value));
         return { ...prev, [objectKey]: formattedValue };
       }
 
-      if (objectKey === "exception_day") {
+      if (objectKey === 'exception_day') {
         const formattedValue = formatDateValue(String(value));
         return { ...prev, [objectKey]: formattedValue };
       }
@@ -323,7 +304,7 @@ export default function ClinicSettingsPage() {
   };
 
   const saveAtypicalConfiguration = async () => {
-    const [day, month, year] = atypicalDayConfig["exception_day"].split("/");
+    const [day, month, year] = atypicalDayConfig['exception_day'].split('/');
     const dateFormatted = `${year}-${month}-${day}`;
     const bodyFormatted = {
       ...atypicalDayConfig,
@@ -336,28 +317,23 @@ export default function ClinicSettingsPage() {
     }
     showToastMessage({
       success: response?.status === 200 || response?.status === 201,
-      successMessage: "Dia atípico criado com sucesso",
-      errorMessage:
-        "Houve um erro ao criar o dia atípico, tente novamente mais tarde.",
+      successMessage: 'Dia atípico criado com sucesso',
+      errorMessage: 'Houve um erro ao criar o dia atípico, tente novamente mais tarde.',
     });
   };
 
-  const handleChangeAtypicalDayCard = (
-    id: number,
-    objectKey: string,
-    value: unknown,
-  ) => {
+  const handleChangeAtypicalDayCard = (id: number, objectKey: string, value: unknown) => {
     setAtypicalDaysList((prevState) => {
       return prevState.map((day) => {
         if (day.id !== id) return day;
-        if (objectKey === "exception_day") {
+        if (objectKey === 'exception_day') {
           return { ...day, exception_day: formatDateValue(String(value)) };
         }
         if (
-          objectKey === "open" ||
-          objectKey === "close" ||
-          objectKey === "break_start" ||
-          objectKey === "break_end"
+          objectKey === 'open' ||
+          objectKey === 'close' ||
+          objectKey === 'break_start' ||
+          objectKey === 'break_end'
         ) {
           return { ...day, [objectKey]: formatTimeValue(String(value)) };
         }
@@ -367,10 +343,8 @@ export default function ClinicSettingsPage() {
   };
 
   const handleSaveNewAtypicalDayValue = async (id: number) => {
-    const atypicalDayToUpdate = atypicalDaysList.filter(
-      (atypicalDay) => atypicalDay.id === id,
-    );
-    const [day, month, year] = atypicalDayToUpdate[0].exception_day.split("/");
+    const atypicalDayToUpdate = atypicalDaysList.filter((atypicalDay) => atypicalDay.id === id);
+    const [day, month, year] = atypicalDayToUpdate[0].exception_day.split('/');
     const newAtypicalDayToUpdate = {
       ...atypicalDayToUpdate[0],
       exception_day: `${year}-${month}-${day}`,
@@ -380,9 +354,8 @@ export default function ClinicSettingsPage() {
 
     showToastMessage({
       success: response?.status === 200 || response?.status === 201,
-      successMessage: "Dia atualizado com sucesso",
-      errorMessage:
-        "Houve um erro ao atualizar o dia selecionado, tente novamente.",
+      successMessage: 'Dia atualizado com sucesso',
+      errorMessage: 'Houve um erro ao atualizar o dia selecionado, tente novamente.',
     });
 
     await fetchAtypicalDaysList();
@@ -393,9 +366,8 @@ export default function ClinicSettingsPage() {
 
     showToastMessage({
       success: response?.status === 204,
-      successMessage: "Dia atípico deletado com sucesso",
-      errorMessage:
-        "Houve um erro ao deletar o dia atípico, tente novamente mais tarde",
+      successMessage: 'Dia atípico deletado com sucesso',
+      errorMessage: 'Houve um erro ao deletar o dia atípico, tente novamente mais tarde',
     });
 
     await fetchAtypicalDaysList();
@@ -404,15 +376,13 @@ export default function ClinicSettingsPage() {
   const fetchClinicConfiguration = async () => {
     const response = await getClinicConfiguration();
     if (response) {
-      setClinicName(response.clinic_name || "");
-      setAiAgentName(response.ai_name || "");
+      setClinicName(response.clinic_name || '');
+      setAiAgentName(response.ai_name || '');
       setAppointmentDuration(
-        response.appointment_duration
-          ? String(response.appointment_duration)
-          : "",
+        response.appointment_duration ? String(response.appointment_duration) : '',
       );
       setAllowSameTimeBooking(response.allow_overbooking || false);
-      setCustomPrompt(response.custom_prompt || "");
+      setCustomPrompt(response.custom_prompt || '');
     }
   };
 
@@ -434,20 +404,20 @@ export default function ClinicSettingsPage() {
 
       <div className={styles.tabsContainer}>
         <button
-          className={`${styles.tabButton} ${activeTab === "dados" ? styles.tabButtonActive : ""}`}
-          onClick={() => setActiveTab("dados")}
+          className={`${styles.tabButton} ${activeTab === 'dados' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('dados')}
         >
           Dados da clínica
         </button>
         <button
-          className={`${styles.tabButton} ${activeTab === "horarios" ? styles.tabButtonActive : ""}`}
-          onClick={() => setActiveTab("horarios")}
+          className={`${styles.tabButton} ${activeTab === 'horarios' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('horarios')}
         >
           Horários de funcionamento
         </button>
       </div>
 
-      {activeTab === "dados" && (
+      {activeTab === 'dados' && (
         <div className={styles.basicDataCard}>
           <div className={styles.basicDataHeader}>
             <h2>Dados da clínica</h2>
@@ -484,14 +454,12 @@ export default function ClinicSettingsPage() {
               type="number"
               value={appointmentDuration}
               handleChangeInput={(e) => {
-                const val = e.target.value.replace(/\D/g, "");
+                const val = e.target.value.replace(/\D/g, '');
                 setAppointmentDuration(val);
               }}
             />
             <div className={styles.switchRow}>
-              <span className={styles.switchLabel}>
-                Permitir agendamentos no mesmo horário
-              </span>
+              <span className={styles.switchLabel}>Permitir agendamentos no mesmo horário</span>
               <SwitchComponent
                 isOn={allowSameTimeBooking}
                 handleToggle={() => setAllowSameTimeBooking((prev) => !prev)}
@@ -499,11 +467,10 @@ export default function ClinicSettingsPage() {
             </div>
           </div>
           <div className={styles.customPromptSection}>
-            <label className={styles.customPromptLabel}>
-              Prompt personalizado da IA
-            </label>
+            <label className={styles.customPromptLabel}>Prompt personalizado da IA</label>
             <p className={styles.customPromptDescription}>
-              Instrua o agente de IA sobre como ele deve se comportar, responder e interagir com os pacientes.
+              Instrua o agente de IA sobre como ele deve se comportar, responder e interagir com os
+              pacientes.
             </p>
             <textarea
               className={styles.customPromptTextarea}
@@ -514,20 +481,17 @@ export default function ClinicSettingsPage() {
             />
           </div>
           <div className={styles.basicDataActions}>
-            <ButtonComponent
-              text="Salvar dados"
-              handleClickButton={handleSaveClinicBasicData}
-            />
+            <ButtonComponent text="Salvar dados" handleClickButton={handleSaveClinicBasicData} />
           </div>
         </div>
       )}
 
-      {activeTab === "horarios" && loading && (
+      {activeTab === 'horarios' && loading && (
         <div className={styles.containerWrapped}>
           <div className={styles.containerSkeleton}></div>
         </div>
       )}
-      {activeTab === "horarios" && !loading && defaultDays.length > 0 && (
+      {activeTab === 'horarios' && !loading && defaultDays.length > 0 && (
         <div className={styles.containerWrapped}>
           {isModalOpen && (
             <BaseModalComponent handleCloseModal={handleCloseModal}>
@@ -535,9 +499,7 @@ export default function ClinicSettingsPage() {
                 saveAtypicalConfiguration={saveAtypicalConfiguration}
                 closeModal={handleCloseModal}
                 atypicalConfigurationObject={atypicalDayConfig}
-                handleChangeAtypicalConfigurationObject={
-                  handleManageAtypicalDay
-                }
+                handleChangeAtypicalConfigurationObject={handleManageAtypicalDay}
               />
             </BaseModalComponent>
           )}
@@ -558,7 +520,7 @@ export default function ClinicSettingsPage() {
                     isOn={day.is_work_day}
                     handleToggle={() =>
                       handleUpdateProperty({
-                        key: "is_work_day",
+                        key: 'is_work_day',
                         weekDay: day.week_day,
                         value: !day.is_work_day,
                       })
@@ -568,11 +530,11 @@ export default function ClinicSettingsPage() {
                     <InputComponent
                       label=""
                       placeholder="00:00"
-                      value={day.open ? String(day.open) : ""}
+                      value={day.open ? String(day.open) : ''}
                       disabled={!day.is_work_day}
                       handleChangeInput={(event) =>
                         handleUpdateProperty({
-                          key: "open",
+                          key: 'open',
                           weekDay: day.week_day,
                           value: event.target.value,
                         })
@@ -583,11 +545,11 @@ export default function ClinicSettingsPage() {
                     <InputComponent
                       label=""
                       placeholder="00:00"
-                      value={day.break_start ? String(day.break_start) : ""}
+                      value={day.break_start ? String(day.break_start) : ''}
                       disabled={!day.is_work_day}
                       handleChangeInput={(event) =>
                         handleUpdateProperty({
-                          key: "break_start",
+                          key: 'break_start',
                           weekDay: day.week_day,
                           value: event.target.value,
                         })
@@ -598,11 +560,11 @@ export default function ClinicSettingsPage() {
                     <InputComponent
                       label=""
                       placeholder="00:00"
-                      value={day.break_end ? String(day.break_end) : ""}
+                      value={day.break_end ? String(day.break_end) : ''}
                       disabled={!day.is_work_day}
                       handleChangeInput={(event) =>
                         handleUpdateProperty({
-                          key: "break_end",
+                          key: 'break_end',
                           weekDay: day.week_day,
                           value: event.target.value,
                         })
@@ -613,11 +575,11 @@ export default function ClinicSettingsPage() {
                     <InputComponent
                       label=""
                       placeholder="00:00"
-                      value={day.close ? String(day.close) : ""}
+                      value={day.close ? String(day.close) : ''}
                       disabled={!day.is_work_day}
                       handleChangeInput={(event) =>
                         handleUpdateProperty({
-                          key: "close",
+                          key: 'close',
                           weekDay: day.week_day,
                           value: event.target.value,
                         })
@@ -630,15 +592,10 @@ export default function ClinicSettingsPage() {
           </div>
           <div className={styles.containerButton}>
             <div className={styles.atypicalDayButton}>
-              <p onClick={handleOpenAtypicalDayModalConfig}>
-                Adicionar dia atípico
-              </p>
+              <p onClick={handleOpenAtypicalDayModalConfig}>Adicionar dia atípico</p>
             </div>
             <div>
-              <ButtonComponent
-                text="Salvar"
-                handleClickButton={handleSaveConfiguration}
-              />
+              <ButtonComponent text="Salvar" handleClickButton={handleSaveConfiguration} />
             </div>
           </div>
           <div className={styles.atypicalDaysList}>
@@ -650,15 +607,11 @@ export default function ClinicSettingsPage() {
                     <li className={styles.atypicalDayCard} key={atypicalDay.id}>
                       <div className={styles.atypicalDayInput}>
                         <InputComponent
-                          value={
-                            atypicalDay.exception_day
-                              ? String(atypicalDay.exception_day)
-                              : ""
-                          }
+                          value={atypicalDay.exception_day ? String(atypicalDay.exception_day) : ''}
                           handleChangeInput={(e) =>
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
-                              "exception_day",
+                              'exception_day',
                               e.target.value,
                             )
                           }
@@ -669,7 +622,7 @@ export default function ClinicSettingsPage() {
                         handleToggle={() =>
                           handleChangeAtypicalDayCard(
                             atypicalDay.id,
-                            "is_working_day",
+                            'is_working_day',
                             !atypicalDay.is_working_day,
                           )
                         }
@@ -677,13 +630,20 @@ export default function ClinicSettingsPage() {
                       />
                       <div className={styles.atypicalDayTime}>
                         <InputComponent
-                          value={
-                            atypicalDay.open ? String(atypicalDay.open) : ""
+                          value={atypicalDay.open ? String(atypicalDay.open) : ''}
+                          handleChangeInput={(e) =>
+                            handleChangeAtypicalDayCard(atypicalDay.id, 'open', e.target.value)
                           }
+                          placeholder="00:00"
+                        />
+                      </div>
+                      <div className={styles.atypicalDayTime}>
+                        <InputComponent
+                          value={atypicalDay.break_start ? String(atypicalDay.break_start) : ''}
                           handleChangeInput={(e) =>
                             handleChangeAtypicalDayCard(
                               atypicalDay.id,
-                              "open",
+                              'break_start',
                               e.target.value,
                             )
                           }
@@ -692,65 +652,30 @@ export default function ClinicSettingsPage() {
                       </div>
                       <div className={styles.atypicalDayTime}>
                         <InputComponent
-                          value={
-                            atypicalDay.break_start
-                              ? String(atypicalDay.break_start)
-                              : ""
-                          }
+                          value={atypicalDay.break_end ? String(atypicalDay.break_end) : ''}
                           handleChangeInput={(e) =>
-                            handleChangeAtypicalDayCard(
-                              atypicalDay.id,
-                              "break_start",
-                              e.target.value,
-                            )
+                            handleChangeAtypicalDayCard(atypicalDay.id, 'break_end', e.target.value)
                           }
                           placeholder="00:00"
                         />
                       </div>
                       <div className={styles.atypicalDayTime}>
                         <InputComponent
-                          value={
-                            atypicalDay.break_end
-                              ? String(atypicalDay.break_end)
-                              : ""
-                          }
+                          value={atypicalDay.close ? String(atypicalDay.close) : ''}
                           handleChangeInput={(e) =>
-                            handleChangeAtypicalDayCard(
-                              atypicalDay.id,
-                              "break_end",
-                              e.target.value,
-                            )
-                          }
-                          placeholder="00:00"
-                        />
-                      </div>
-                      <div className={styles.atypicalDayTime}>
-                        <InputComponent
-                          value={
-                            atypicalDay.close ? String(atypicalDay.close) : ""
-                          }
-                          handleChangeInput={(e) =>
-                            handleChangeAtypicalDayCard(
-                              atypicalDay.id,
-                              "close",
-                              e.target.value,
-                            )
+                            handleChangeAtypicalDayCard(atypicalDay.id, 'close', e.target.value)
                           }
                           placeholder="00:00"
                         />
                       </div>
                       <div className={styles.deleteAtypicalButtonContainer}>
                         <ButtonComponent
-                          style={{ background: "var(--red-300)" }}
-                          handleClickButton={() =>
-                            handleDeleteAtypicalDay(atypicalDay.id)
-                          }
+                          style={{ background: 'var(--red-300)' }}
+                          handleClickButton={() => handleDeleteAtypicalDay(atypicalDay.id)}
                           text="Excluir"
                         />
                         <ButtonComponent
-                          handleClickButton={() =>
-                            handleSaveNewAtypicalDayValue(atypicalDay.id)
-                          }
+                          handleClickButton={() => handleSaveNewAtypicalDayValue(atypicalDay.id)}
                           text="Salvar"
                         />
                       </div>
