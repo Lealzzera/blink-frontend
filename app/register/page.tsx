@@ -3,9 +3,9 @@
 import { useEffect, useState } from 'react';
 import ButtonComponent from '../components/ButtonComponent/ButtonComponent';
 import RegisterClinicInfo from './components/register-clinic-info/RegisterClinicInfo';
-import RegisterUserInfoComponent from './components/register-user-info/RegisterUserInfoComponent';
-import RegisterClinicWorkingHours from './components/register-clinic-working-hours/RegisterClinicWorkingHours';
 import RegisterClinicServices from './components/register-clinic-services/RegisterClinicServices';
+import RegisterClinicWorkingHours from './components/register-clinic-working-hours/RegisterClinicWorkingHours';
+import RegisterUserInfoComponent from './components/register-user-info/RegisterUserInfoComponent';
 import styles from './styles.module.css';
 
 type WorkingHour = {
@@ -136,9 +136,7 @@ export default function RegisterPage() {
               >
                 {done ? '✓' : step}
               </div>
-              <span
-                className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}
-              >
+              <span className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}>
                 {label}
               </span>
               {step < TOTAL_STEPS && (
