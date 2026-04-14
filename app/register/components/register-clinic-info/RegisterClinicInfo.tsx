@@ -56,15 +56,54 @@ export default function RegisterClinicInfo({
   clinicState,
   setClinicState,
 }: RegisterClinicInfoComponentProps) {
-  const [address, setAddress] = useState<Address | undefined>(undefined);
+  const [address, setAddress] = useState<Address | ''>('');
   const findAddressByPostalCode = async () => {
     if (clinicPostalCode.length < 8) return;
-    const response = await fetch(`https://viacep.com.br/ws/${clinicPostalCode}/json/`);
+    const postalCodeWithoutDash = clinicPostalCode.replace('-', '');
+    const response = await fetch(`https://viacep.com.br/ws/${postalCodeWithoutDash}/json/`);
     const data = await response.json();
     setAddress(data);
     setClinicAddress(data.logradouro);
     setClinicCity(data.localidade);
     setClinicState(data.estado);
+  };
+
+  const formatPhoneNumber = (value: string) => {
+    const cleanedPhone = value.replace(/\D/g, '');
+
+    if (cleanedPhone.length <= 10) {
+      return cleanedPhone
+        .replace(/^(\d{2})(\d)/, '($1)$2')
+        .replace(/(\d{4})(\d)/, '$1-$2')
+        .slice(0, 13);
+    }
+    return cleanedPhone
+      .replace(/^(\d{2})(\d)/, '($1)$2')
+      .replace(/(\d{5})(\d)/, '$1-$2')
+      .slice(0, 14);
+  };
+
+  const handlePhoneNumberChange = (value: string) => {
+    const cleanedPhoneNumber = value.replace(/\D/g, '');
+
+    if (cleanedPhoneNumber.length > 11) return;
+
+    const formatted = formatPhoneNumber(cleanedPhoneNumber);
+    setClinicPhoneNumber(formatted);
+  };
+
+  const formatPostalCode = (value: string) => {
+    const cleanedPostalCode = value.replace(/\D/g, '');
+    return cleanedPostalCode.replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9);
+  };
+
+  const handlePostalCodeChange = (value: string) => {
+    const cleaned = value.replace(/\D/g, '');
+
+    if (cleaned.length > 8) return;
+
+    const formatted = formatPostalCode(cleaned);
+    setClinicPostalCode(formatted);
   };
 
   return (
@@ -94,8 +133,8 @@ export default function RegisterClinicInfo({
             label="Telefone da clínica"
             required
             placeholder="Digite somente números"
-            value={clinicPhoneNumber}
-            handleChangeInput={(e) => setClinicPhoneNumber(e.target.value)}
+            value={clinicPhoneNumber ?? ''}
+            handleChangeInput={(e) => handlePhoneNumberChange(e.target.value)}
           />
           <InputComponent
             type="text"
@@ -103,9 +142,9 @@ export default function RegisterClinicInfo({
             id="postal-code"
             placeholder="Digite somente números"
             required
-            value={clinicPostalCode}
+            value={clinicPostalCode ?? ''}
             onBlur={findAddressByPostalCode}
-            handleChangeInput={(e) => setClinicPostalCode(e.target.value)}
+            handleChangeInput={(e) => handlePostalCodeChange(e.target.value)}
           />
         </div>
         <div className={styles.addressContainer}>
