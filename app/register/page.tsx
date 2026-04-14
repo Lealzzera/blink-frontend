@@ -56,6 +56,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showErrorMessage, setShowErrorMessage] = useState('')
   const [currentStep, setCurrentStep] = useState(1);
   const [registerObject, setRegisterObject] = useState<RegisterClinicObject>({
     userFullName: '',
@@ -112,6 +113,16 @@ export default function RegisterPage() {
     setRegisterObject((prev) => ({ ...prev, [key]: value }));
   };
 
+  const handleManageNextStep = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (currentStep === 1 && !emailRegex.test(registerObject.userEmail)) {
+      setShowErrorMessage('Email Inválido.')
+      return;
+    }
+    setShowErrorMessage('');
+    setCurrentStep((prev) => prev + 1);
+  };
+
   useEffect(() => {
     console.log({ registerObject });
   }, [registerObject]);
@@ -122,8 +133,6 @@ export default function RegisterPage() {
         <h1 className={styles.pageTitle}>Cadastro</h1>
         <p className={styles.pageSubtitle}>Siga os passos abaixo para criar a sua conta</p>
       </div>
-
-      {/* step indicator */}
       <div className={styles.stepsBar}>
         {STEP_LABELS.map((label, i) => {
           const step = i + 1;
@@ -146,11 +155,10 @@ export default function RegisterPage() {
           );
         })}
       </div>
-
-      {/* card */}
       <div className={styles.registerContainer}>
         {currentStep === 1 && (
           <RegisterUserInfoComponent
+            showErrorMessage={showErrorMessage.length > 0}
             password={password}
             setPassword={setPassword}
             confirmPassword={confirmPassword}
@@ -196,8 +204,9 @@ export default function RegisterPage() {
         )}
       </div>
 
-      {/* navegação */}
       <div className={styles.navRow}>
+        {showErrorMessage && <p className={styles.errorMessage}>{showErrorMessage}</p>}
+        <div className={styles.navButtonsContainer}>
         <div className={styles.navBtn}>
           <ButtonComponent
             disabled={currentStep === 1}
@@ -209,8 +218,9 @@ export default function RegisterPage() {
           <ButtonComponent
             disabled={disableNext}
             text={currentStep === TOTAL_STEPS ? 'Concluir' : 'Próximo'}
-            handleClickButton={() => setCurrentStep((prev) => prev + 1)}
+            handleClickButton={handleManageNextStep}
           />
+        </div>
         </div>
       </div>
     </section>

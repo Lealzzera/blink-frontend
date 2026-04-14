@@ -9,7 +9,6 @@
   align-items: center;
 }
 
-/* ─── cabeçalho ─── */
 .pageHeader {
   width: 100%;
   max-width: 700px;
@@ -28,7 +27,6 @@
   margin-top: 0.25rem;
 }
 
-/* ─── steps bar ─── */
 .stepsBar {
   width: 100%;
   max-width: 700px;
@@ -98,26 +96,36 @@
   background-color: var(--green-400);
 }
 
-/* ─── card de conteúdo ─── */
 .registerContainer {
   width: 100%;
   max-width: 700px;
   background-color: var(--gray-600);
   border-radius: 8px;
   padding: 2rem;
-  /* cresce conforme o conteúdo, sem altura fixa */
 }
-
-/* ─── navegação Voltar / Próximo ─── */
 .navRow {
   width: 100%;
   max-width: 700px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   gap: 0.75rem;
   margin-top: 1.25rem;
 }
 
+.navButtonsContainer {
+  display: flex;
+  gap: 0.75rem;
+  vertical-align: bottom;
+  margin-left: auto;
+}
+
 .navBtn {
   width: 110px;
+}
+
+.errorMessage {
+  color: var(--red-300);
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
 }

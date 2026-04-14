@@ -33,7 +33,7 @@ export default function InputComponent({
       <input
         {...props}
         id={props.id || 'input-element'}
-        className={`${styles.inputField} ${error ? styles.error : ''}`}
+        className={`${styles.inputField} ${error ? styles.error : ''} `}
         type={type}
         placeholder={placeholder}
         value={value}
