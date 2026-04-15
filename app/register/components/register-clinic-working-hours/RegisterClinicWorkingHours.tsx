@@ -76,24 +76,24 @@ export default function RegisterClinicWorkingHours({
   const dayConfigs = buildDayConfigs(workingHours);
 
   const handleToggleDay = (weekday: string) => {
-    const updated = dayConfigs.map((d) => {
-      if (d.weekday !== weekday) return d;
-      const nowEnabled = !d.enabled;
+    const updated = dayConfigs.map((dayConfig) => {
+      if (dayConfig.weekday !== weekday) return dayConfig;
+      const nowEnabled = !dayConfig.enabled;
       return {
-        ...d,
+        ...dayConfig,
         enabled: nowEnabled,
-        periods: nowEnabled ? DEFAULT_PERIODS : d.periods,
+        periods: nowEnabled ? DEFAULT_PERIODS : dayConfig.periods,
       };
     });
     setWorkingHours(buildWorkingHours(updated));
   };
 
   const handleAddPeriod = (weekday: string) => {
-    const updated = dayConfigs.map((d) => {
-      if (d.weekday !== weekday) return d;
+    const updated = dayConfigs.map((dayConfig) => {
+      if (dayConfig.weekday !== weekday) return dayConfig;
       return {
-        ...d,
-        periods: [...d.periods, { startTime: '', endTime: '' }],
+        ...dayConfig,
+        periods: [...dayConfig.periods, { startTime: '', endTime: '' }],
       };
     });
     setWorkingHours(buildWorkingHours(updated));
@@ -129,7 +129,7 @@ export default function RegisterClinicWorkingHours({
     <section className={styles.section}>
       <h2>Horários de funcionamento</h2>
       <p className={styles.subtitle}>
-        Agora nos informe quais são os dias e horários de funcionamento da sua clínica
+        Agora nos informe quais são os dias e horários de funcionamento da sua clínica.
       </p>
 
       <div className={styles.tableWrapper}>

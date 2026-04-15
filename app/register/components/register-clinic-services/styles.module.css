@@ -6,15 +6,13 @@
 }
 
 .title {
-  font-size: 1.1rem;
   font-weight: 700;
-  color: var(--gray-100);
+  margin: 0 auto;
   margin-bottom: 0.25rem;
 }
 
 .subtitle {
-  color: var(--gray-300);
-  font-size: 0.875rem;
+  margin: 0 auto;
   margin-bottom: 1.5rem;
 }
 
@@ -76,7 +74,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background-color 0.15s, transform 0.1s;
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
   /* alinha com a base dos inputs */
   margin-bottom: 0;
   align-self: flex-end;
@@ -156,7 +156,9 @@
   font-size: 0.65rem;
   border-radius: 50%;
   line-height: 1;
-  transition: color 0.15s, background-color 0.15s;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;

@@ -12,14 +12,13 @@
 }
 
 .section h2 {
-  font-size: 1.1rem;
   font-weight: 700;
   color: var(--gray-100);
+  margin: 0 auto;
 }
 
 .subtitle {
-  color: var(--gray-300);
-  font-size: 0.875rem;
+  margin: 0 auto;
   margin-top: 0.25rem;
   margin-bottom: 1.25rem;
 }
@@ -28,6 +27,14 @@
   background-color: var(--gray-700);
   border-radius: 6px;
   padding: 1rem;
+  overflow: auto;
+  max-height: 50vh;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.clinicInfoSection::-webkit-scrollbar {
+  display: none;
 }
 
 .legend {

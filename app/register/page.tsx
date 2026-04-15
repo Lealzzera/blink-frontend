@@ -56,7 +56,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showErrorMessage, setShowErrorMessage] = useState('')
+  const [showErrorMessage, setShowErrorMessage] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
   const [registerObject, setRegisterObject] = useState<RegisterClinicObject>({
     userFullName: '',
@@ -103,8 +103,7 @@ export default function RegisterPage() {
         !registerObject.address ||
         !registerObject.city ||
         !registerObject.state ||
-        !registerObject.clinicType)) ||
-    (currentStep === 3 && registerObject.workingHours.length === 0);
+        !registerObject.clinicType));
 
   const handleChangeObjectValue = <K extends keyof RegisterClinicObject>(
     key: K,
@@ -116,7 +115,7 @@ export default function RegisterPage() {
   const handleManageNextStep = () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (currentStep === 1 && !emailRegex.test(registerObject.userEmail)) {
-      setShowErrorMessage('Email Inválido.')
+      setShowErrorMessage('Email Inválido.');
       return;
     }
     setShowErrorMessage('');
@@ -207,20 +206,20 @@ export default function RegisterPage() {
       <div className={styles.navRow}>
         {showErrorMessage && <p className={styles.errorMessage}>{showErrorMessage}</p>}
         <div className={styles.navButtonsContainer}>
-        <div className={styles.navBtn}>
-          <ButtonComponent
-            disabled={currentStep === 1}
-            text="Voltar"
-            handleClickButton={() => setCurrentStep((prev) => prev - 1)}
-          />
-        </div>
-        <div className={styles.navBtn}>
-          <ButtonComponent
-            disabled={disableNext}
-            text={currentStep === TOTAL_STEPS ? 'Concluir' : 'Próximo'}
-            handleClickButton={handleManageNextStep}
-          />
-        </div>
+          <div className={styles.navBtn}>
+            <ButtonComponent
+              disabled={currentStep === 1}
+              text="Voltar"
+              handleClickButton={() => setCurrentStep((prev) => prev - 1)}
+            />
+          </div>
+          <div className={styles.navBtn}>
+            <ButtonComponent
+              disabled={disableNext}
+              text={currentStep === TOTAL_STEPS ? 'Concluir' : 'Próximo'}
+              handleClickButton={handleManageNextStep}
+            />
+          </div>
         </div>
       </div>
     </section>

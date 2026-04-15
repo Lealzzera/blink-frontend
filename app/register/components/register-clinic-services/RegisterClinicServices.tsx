@@ -77,8 +77,7 @@ export default function RegisterClinicServices({
     <section className={styles.section}>
       <h2 className={styles.title}>Serviços</h2>
       <p className={styles.subtitle}>
-        Agora preencha abaixo os serviços realizados pela sua clínica{' '}
-        <span className={styles.optional}>(opcional)</span>
+        Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
 
       <div className={styles.inputRow}>
