@@ -1,7 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { getPlansList } from '../actions/getPlansList';
 import ButtonComponent from '../components/ButtonComponent/ButtonComponent';
+import { Plan } from '../types/types';
+import { PlansSection } from './components/plans-section/PlansSection';
 import RegisterClinicInfo from './components/register-clinic-info/RegisterClinicInfo';
 import RegisterClinicServices from './components/register-clinic-services/RegisterClinicServices';
 import RegisterClinicWorkingHours from './components/register-clinic-working-hours/RegisterClinicWorkingHours';
@@ -47,11 +50,8 @@ export type RegisterClinicObject = {
   settings: SettingsObject;
 };
 
-const TOTAL_STEPS = 4;
-
-const STEP_LABELS = ['Usuário', 'Clínica', 'Horários', 'Serviços'];
-
 export default function RegisterPage() {
+  const [plansList, setPlansList] = useState<Plan[]>([]);
   const [name, setName] = useState('');
   const [lastName, setLastName] = useState('');
   const [password, setPassword] = useState('');
@@ -126,33 +126,19 @@ export default function RegisterPage() {
     console.log({ registerObject });
   }, [registerObject]);
 
+  useEffect(() => {
+    const fetchPlansList = async () => {
+      const response = await getPlansList();
+      setPlansList(response.plans);
+    };
+    fetchPlansList();
+  }, []);
+
   return (
     <section className={styles.registerSection}>
       <div className={styles.pageHeader}>
         <h1 className={styles.pageTitle}>Cadastro</h1>
         <p className={styles.pageSubtitle}>Siga os passos abaixo para criar a sua conta</p>
-      </div>
-      <div className={styles.stepsBar}>
-        {STEP_LABELS.map((label, i) => {
-          const step = i + 1;
-          const done = step < currentStep;
-          const active = step === currentStep;
-          return (
-            <div key={step} className={styles.stepItem}>
-              <div
-                className={`${styles.stepCircle} ${done ? styles.stepDone : ''} ${active ? styles.stepActive : ''}`}
-              >
-                {done ? '✓' : step}
-              </div>
-              <span className={`${styles.stepLabel} ${active ? styles.stepLabelActive : ''}`}>
-                {label}
-              </span>
-              {step < TOTAL_STEPS && (
-                <div className={`${styles.stepLine} ${done ? styles.stepLineDone : ''}`} />
-              )}
-            </div>
-          );
-        })}
       </div>
       <div className={styles.registerContainer}>
         {currentStep === 1 && (
@@ -201,6 +187,13 @@ export default function RegisterPage() {
             setServices={(value) => handleChangeObjectValue('services', value)}
           />
         )}
+        {currentStep === 5 && (
+          <PlansSection
+            plansList={plansList}
+            setSelectedPlan={(value) => handleChangeObjectValue('planId', value)}
+            selectedPlan={registerObject.planId}
+          />
+        )}
       </div>
 
       <div className={styles.navRow}>
@@ -216,7 +209,7 @@ export default function RegisterPage() {
           <div className={styles.navBtn}>
             <ButtonComponent
               disabled={disableNext}
-              text={currentStep === TOTAL_STEPS ? 'Concluir' : 'Próximo'}
+              text={currentStep === 7 ? 'Concluir' : 'Próximo'}
               handleClickButton={handleManageNextStep}
             />
           </div>

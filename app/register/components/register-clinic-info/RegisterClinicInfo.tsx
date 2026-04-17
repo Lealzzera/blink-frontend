@@ -152,7 +152,7 @@ export default function RegisterClinicInfo({
             required
             type="text"
             label="Endereço"
-            value={clinicAddress}
+            value={clinicAddress ?? ''}
             handleChangeInput={(e) => setClinicAddress(e.target.value)}
           />
         </div>
@@ -161,14 +161,14 @@ export default function RegisterClinicInfo({
             required
             type="text"
             label="Cidade"
-            value={clinicCity}
+            value={clinicCity ?? ''}
             handleChangeInput={(e) => setClinicCity(e.target.value)}
           />
           <InputComponent
             required
             type="text"
             label="Estado"
-            value={clinicState}
+            value={clinicState ?? ''}
             handleChangeInput={(e) => setClinicState(e.target.value)}
           />
         </div>

@@ -1,0 +1,272 @@
+.planSection {
+  width: 100%;
+}
+
+.planSectionHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.planListUl {
+  display: flex;
+  flex-direction: row;
+  gap: 1.25rem;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.basicCard,
+.plusCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background-color: var(--gray-600);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 2rem 1.75rem;
+  width: 320px;
+  flex-shrink: 0;
+  gap: 0;
+  overflow: hidden;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.basicCard:hover,
+.plusCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+}
+
+.basicCard h3,
+.plusCard h3 {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-100);
+  margin: 0;
+}
+
+.tagline {
+  font-size: 0.8rem;
+  color: var(--gray-300);
+  margin: 0.35rem 0 0 0;
+}
+
+.divider {
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  margin: 1.25rem 0;
+}
+
+.priceBlock {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.3rem;
+  margin-bottom: 0.35rem;
+}
+
+.priceCurrency {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--gray-300);
+  line-height: 2.1;
+}
+
+.priceValue {
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--gray-100);
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.pricePeriod {
+  font-size: 0.8rem;
+  color: var(--gray-300);
+  line-height: 2.2;
+}
+
+.trialBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--green-400);
+  background: rgba(0, 184, 80, 0.1);
+  border: 1px solid rgba(0, 184, 80, 0.2);
+  border-radius: 20px;
+  padding: 0.2rem 0.65rem;
+  width: fit-content;
+  margin-top: 0.5rem;
+}
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  gap: 0.7rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.875rem;
+  color: var(--gray-100);
+}
+
+.featureItem .featureIcon {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.featureItem .featureLabel {
+  color: var(--gray-300);
+  flex: 1;
+}
+
+.featureItem .featureValue {
+  font-weight: 600;
+  color: var(--gray-100);
+}
+
+.ctaButton {
+  margin-top: auto;
+  padding-top: 1.5rem;
+}
+
+.ctaButton button {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease;
+  border: none;
+  font-family: var(--main-font-sans);
+}
+
+.basicCard .planBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--blue-400);
+  background: rgba(4, 75, 127, 0.15);
+  border: 1px solid rgba(4, 75, 127, 0.3);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+  margin-bottom: 0.75rem;
+}
+
+.basicCard .featureIcon {
+  background: rgba(4, 75, 127, 0.15);
+  color: var(--blue-400);
+}
+
+.basicCard .ctaButton button {
+  background-color: transparent;
+  color: var(--blue-400);
+  border: 1.5px solid var(--blue-400);
+}
+
+.basicCard .ctaButton button:hover {
+  background-color: rgba(4, 75, 127, 0.15);
+}
+
+.plusCard {
+  border-color: rgba(4, 75, 127, 0.5);
+  background: linear-gradient(145deg, var(--gray-600) 0%, rgba(4, 75, 127, 0.12) 100%);
+}
+
+.planSelected {
+  border: 2px solid #01ddf5;
+}
+
+.plusCard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--blue-400), #01ddf5);
+  border-radius: 12px 12px 0 0;
+}
+
+.plusCard .planBadge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #01ddf5;
+  background: rgba(1, 221, 245, 0.1);
+  border: 1px solid rgba(1, 221, 245, 0.25);
+  border-radius: 4px;
+  padding: 0.15rem 0.5rem;
+  width: fit-content;
+  margin-bottom: 0.75rem;
+}
+
+.plusCard h3,
+.plusCard .priceValue {
+  color: #fff;
+}
+
+.plusCard .featureIcon {
+  background: rgba(1, 221, 245, 0.1);
+  color: #01ddf5;
+}
+
+.plusCard .featureValue {
+  color: #01ddf5;
+}
+
+.plusCard .ctaButton button {
+  background: linear-gradient(90deg, var(--blue-400), var(--blue-500));
+  color: #fff;
+}
+
+.plusCard .ctaButton button:hover {
+  opacity: 0.88;
+}
+
+.popularTag {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #01ddf5;
+  background: rgba(1, 221, 245, 0.12);
+  border: 1px solid rgba(1, 221, 245, 0.25);
+  border-radius: 20px;
+  padding: 0.2rem 0.55rem;
+}
