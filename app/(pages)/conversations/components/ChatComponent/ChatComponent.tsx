@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import { getConversationMessages } from "@/app/actions/getConversationMessages";
-import { useCallback, useEffect, useRef, useState } from "react";
-import MessageComponent from "../MessageComponent/MessageComponent";
-import style from "./style.module.css";
-import { Send } from "lucide-react";
-import { postMessage } from "@/app/actions/postMessage";
-import Image from "next/image";
-import SwitchComponent from "@/app/components/SwitchComponent/SwitchComponent";
-import { useChat } from "@/app/context/chatContext";
-import { putAiAnswer } from "@/app/actions/putAiAnswer";
+import { getConversationMessages } from '@/app/actions/getConversationMessages';
+import { postMessage } from '@/app/actions/postMessage';
+import { putAiAnswer } from '@/app/actions/putAiAnswer';
+import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { useChat } from '@/app/context/chatContext';
+import { Send } from 'lucide-react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import MessageComponent from '../MessageComponent/MessageComponent';
+import style from './style.module.css';
 
 type ChatComponentProps = {
   phoneNumber: string;
@@ -21,7 +21,6 @@ type ChatComponentProps = {
 
 export default function ChatComponent({
   phoneNumber,
-  clinicId,
   contactName,
   imageUrl,
   aiAnswerOn,
@@ -29,7 +28,7 @@ export default function ChatComponent({
   const [loading, setLoading] = useState(false);
   const [messageList, setMessageList] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [pageNumber, setPageNumber] = useState(0);
   const [isSwitchOn, setIsSwitchOn] = useState(aiAnswerOn);
   const { lastMessageByPhone } = useChat();
@@ -74,8 +73,7 @@ export default function ChatComponent({
 
   const fetchMessageList = useCallback(
     async (page: number) => {
-      if (!clinicId || !phoneNumber || loading) return;
-
+      if (!phoneNumber || loading) return;
       if (page > 0 && ulRef.current) {
         prevScrollHeightRef.current = ulRef.current.scrollHeight;
         prevScrollTopRef.current = ulRef.current.scrollTop;
@@ -84,7 +82,6 @@ export default function ChatComponent({
       setLoading(true);
       try {
         const response = await getConversationMessages({
-          clinicId,
           phoneNumber,
           page,
         });
@@ -95,8 +92,7 @@ export default function ChatComponent({
         }
 
         const sortedResponse = [...response].sort(
-          (a, b) =>
-            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+          (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
         );
 
         if (page === 0) {
@@ -108,20 +104,18 @@ export default function ChatComponent({
             const merged = [...sortedResponse, ...prev];
 
             const unique = merged.filter(
-              (msg, index, arr) =>
-                arr.findIndex((m) => m.sent_at === msg.sent_at) === index,
+              (msg, index, arr) => arr.findIndex((m) => m.sent_at === msg.sent_at) === index,
             );
 
             return unique.sort(
-              (a, b) =>
-                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
+              (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
             );
           });
         }
 
         setPageNumber(page);
       } catch (err) {
-        console.error("Error fetching messages:", err);
+        console.error('Error fetching messages:', err);
       } finally {
         setLoading(false);
       }
@@ -134,7 +128,7 @@ export default function ChatComponent({
     const value = e.target.value;
     setMessage(value);
     if (!textarea) return;
-    textarea.style.height = "auto";
+    textarea.style.height = 'auto';
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
   };
@@ -142,7 +136,7 @@ export default function ChatComponent({
     if (!phoneNumber || message.length === 0) return;
     if (!message.trim()) return;
 
-    setMessage("");
+    setMessage('');
 
     const newMessage = {
       message_text: message,
@@ -159,13 +153,13 @@ export default function ChatComponent({
     }
 
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px";
+      textareaRef.current.style.height = '40px';
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && e.shiftKey) return;
-    if (e.key === "Enter") {
+    if (e.key === 'Enter' && e.shiftKey) return;
+    if (e.key === 'Enter') {
       e.preventDefault();
       handleSendMessage();
     }
@@ -220,11 +214,11 @@ export default function ChatComponent({
         <div className={style.contactInfoContainer}>
           <div className={style.contactInfoText}>
             <p>{contactName}</p>
-            {contactName ? <span>{phoneNumber}</span> : ""}
+            {contactName ? <span>{phoneNumber}</span> : ''}
           </div>
           <Image
             alt="Imagem de perfil do contato"
-            src={imageUrl ? imageUrl : "/images/avatar.png"}
+            src={imageUrl ? imageUrl : '/images/avatar.png'}
             width={50}
             height={50}
             className={style.imageContact}
@@ -235,13 +229,13 @@ export default function ChatComponent({
           handleToggle={async () => {
             try {
               const newValue = await putAiAnswer(phoneNumber);
-              console.log("newValue:", newValue);
+              console.log('newValue:', newValue);
               setIsSwitchOn(newValue);
             } catch (err) {
-              console.error("Error toggling AI answer:", err);
+              console.error('Error toggling AI answer:', err);
             }
           }}
-          label={isSwitchOn ? "Desligar IA" : "Ligar IA"}
+          label={isSwitchOn ? 'Desligar IA' : 'Ligar IA'}
         />
       </div>
       {loading && pageNumber > 0 && (

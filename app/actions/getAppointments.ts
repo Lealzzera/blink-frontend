@@ -1,4 +1,7 @@
-import { createClient } from "@/utils/supabase/client";
+'use server';
+
+import { cookies } from 'next/headers';
+
 import axios from "axios";
 
 type GetAppointmentsType = {
@@ -12,16 +15,11 @@ export async function getAppointments({
   startDate,
   endDate,
 }: GetAppointmentsType) {
-  const supabase = createClient();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const accessToken = session?.access_token;
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access_token')?.value;
 
   if (!accessToken) {
-    throw new Error("User is not authenticated");
+    throw new Error('User is not authenticated');
   }
 
   try {

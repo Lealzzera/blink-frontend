@@ -13,7 +13,7 @@
 }
 
 .containerConnected {
-  width: 320px;
+  width: 420px;
   height: 320px;
   display: flex;
   gap: 0.5rem;
@@ -49,7 +49,7 @@
 }
 
 .containerSkeletonQrCode::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -150%;

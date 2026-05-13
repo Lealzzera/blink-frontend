@@ -18,10 +18,94 @@ export type Plan = {
   trialDays: number;
   maxWhatsappSessions: number;
   maxMonthlyAppointments: number;
+  stripePriceId: string;
 };
 
 export type SelectedPlan = {
   planId: string;
   planCode: string;
   planPrice: number;
+};
+
+export type RegisterClinicObject = {
+  name: string;
+  lastName: string;
+  userEmail: string;
+  password: string;
+  confirmPassword: string;
+  clinicName: string;
+  clinicType: string;
+  phone: string;
+  address: string;
+  city: string;
+  postalCode: string;
+  state: string;
+  selectedPlan: {
+    planId: string;
+    stripePriceId: string;
+  };
+  workingHours: WorkingHour[];
+  services: ServiceType[];
+  settings: SettingsObject;
+};
+
+export type WorkingHour = {
+  weekday: string;
+  startTime: string;
+  endTime: string;
+};
+
+export type ServiceType = {
+  name: string;
+  durationMinutes: number;
+  priceCents: number;
+};
+
+export type SettingsObject = {
+  chargesEvaluation: boolean;
+  evaluationPriceCents: number;
+};
+
+export type IWorkingHourInput = {
+  weekday: 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY';
+  startTime: string;
+  endTime: string;
+};
+
+export type IServiceInput = {
+  name: string;
+  durationMinutes: number;
+  priceCents?: number;
+};
+
+export type ISettingsInput = {
+  chargesEvaluation?: boolean;
+  evaluationPriceCents?: number;
+};
+
+export type SignupDraftData = {
+  clinicName: string;
+  clinicType: 'MEDICAL' | 'DENTAL' | 'OTHER' | 'PSYCHOLOGY' | 'AESTHETICAL';
+  phone: string;
+  address: string;
+  postalCode: string;
+  city: string;
+  state: string;
+  planId: string;
+  workingHours: IWorkingHourInput[];
+  services: IServiceInput[];
+  settings: ISettingsInput;
+};
+
+export type ChatListItem = {
+  ai_answer: boolean;
+  contactName: string;
+  id: string;
+  phoneNumber: string;
+  contactPicture: string;
+  lastMessage: {
+    hasMedia: boolean;
+    message: string;
+    sentAt: string;
+  };
 };

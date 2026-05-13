@@ -3,7 +3,7 @@ import styles from './styles.module.css';
 
 type PlanSectionProps = {
   plansList: Plan[];
-  setSelectedPlan: (planId: string) => void;
+  setSelectedPlan: ({ planId, stripePriceId }: { planId: string; stripePriceId: string }) => void;
   selectedPlan: string;
 };
 
@@ -21,9 +21,11 @@ export function PlansSection({ plansList, setSelectedPlan, selectedPlan }: PlanS
             return (
               <li key={plan.id}>
                 <div
-                  className={`${plan.code === 'plus' ? styles.plusCard : styles.basicCard} ${selectedPlan === plan.id ? styles.planSelected : ''}`}
+                  className={`${plan.code.toLowerCase() === 'plus' ? styles.plusCard : styles.basicCard} ${selectedPlan === plan.id ? styles.planSelected : ''}`}
                 >
-                  {plan.code === 'plus' && <span className={styles.popularTag}>Mais Popular</span>}
+                  {plan.code.toLowerCase() === 'plus' && (
+                    <span className={styles.popularTag}>Mais Popular</span>
+                  )}
                   <span className={styles.planBadge}>{plan.code}</span>
                   <h3>{plan.name}</h3>
                   <p className={styles.tagline}>{plan.description}</p>
@@ -55,7 +57,12 @@ export function PlansSection({ plansList, setSelectedPlan, selectedPlan }: PlanS
                     </li>
                   </ul>
                   <div className={styles.ctaButton}>
-                    <button onClick={() => setSelectedPlan(plan.id)} type="button">
+                    <button
+                      onClick={() =>
+                        setSelectedPlan({ planId: plan.id, stripePriceId: plan.stripePriceId })
+                      }
+                      type="button"
+                    >
                       Começar agora
                     </button>
                   </div>

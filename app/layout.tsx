@@ -1,40 +1,33 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import { IBM_Plex_Mono, IBM_Plex_Sans } from "next/font/google";
-import { UserProvider } from "./context/userContext";
+import type { Metadata } from 'next';
+import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
+import { UserProvider } from './context/userContext';
+import './globals.css';
 
 export const metadata: Metadata = {
-  title: "blink",
-  description: "Sistema blink",
+  title: 'blink',
+  description: 'Sistema blink',
   icons: {
-    icon: "/apenas-img-blink.png",
+    icon: '/apenas-img-blink.png',
   },
 };
 
 const ibm_plex_sans = IBM_Plex_Sans({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--main-font-sans",
-  weight: ["400", "700"],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--main-font-sans',
+  weight: ['400', '700'],
 });
 
 const ibm_plex_mono = IBM_Plex_Mono({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--main-font-mono",
-  weight: ["400", "700"],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--main-font-mono',
+  weight: ['400', '700'],
 });
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="pt-BR"
-      className={`${ibm_plex_sans.variable} ${ibm_plex_mono.variable}`}
-    >
+    <html lang="pt-BR" className={`${ibm_plex_sans.variable} ${ibm_plex_mono.variable}`}>
       <UserProvider>
         <body className="font-sans antialiased">{children}</body>
       </UserProvider>

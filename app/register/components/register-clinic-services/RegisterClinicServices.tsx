@@ -1,17 +1,23 @@
 'use client';
 
+import InputComponent from '@/app/components/InputComponent/InputComponent';
+import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useState } from 'react';
 import styles from './styles.module.css';
 
 export type ServiceType = {
   name: string;
-  durationMinutes: string;
+  durationMinutes: number;
   priceCents: number;
 };
 
 type RegisterClinicServicesProps = {
   services: ServiceType[];
   setServices: (value: ServiceType[]) => void;
+  chargesEvaluation: boolean;
+  setChargesEvaluation: (value: boolean) => void;
+  evaluationPrice: number;
+  setEvaluationPrice: (value: number) => void;
 };
 
 function parsePriceToCents(raw: string): number {
@@ -29,21 +35,32 @@ function formatPriceCents(cents: number): string {
 export default function RegisterClinicServices({
   services,
   setServices,
+  chargesEvaluation,
+  setChargesEvaluation,
+  evaluationPrice,
+  setEvaluationPrice,
 }: RegisterClinicServicesProps) {
   const [serviceName, setServiceName] = useState('');
-  const [duration, setDuration] = useState('');
+  const [duration, setDuration] = useState(0);
   const [priceDisplay, setPriceDisplay] = useState('');
+  const evaluationPriceDisplay = (evaluationPrice / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 
   const canAdd = serviceName.trim().length > 0;
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setPrice: (value: string) => void,
+  ) => {
     const digits = e.target.value.replace(/\D/g, '');
     if (!digits) {
-      setPriceDisplay('');
+      setPrice('');
       return;
     }
     const cents = parseInt(digits, 10);
-    setPriceDisplay(
+    setPrice(
       (cents / 100).toLocaleString('pt-BR', {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
@@ -57,12 +74,12 @@ export default function RegisterClinicServices({
       ...services,
       {
         name: serviceName.trim(),
-        durationMinutes: duration || '0',
+        durationMinutes: duration || 0,
         priceCents: parsePriceToCents(priceDisplay),
       },
     ]);
     setServiceName('');
-    setDuration('');
+    setDuration(0);
     setPriceDisplay('');
   };
 
@@ -79,8 +96,30 @@ export default function RegisterClinicServices({
       <p className={styles.subtitle}>
         Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
-
-      <div className={styles.inputRow}>
+      <div>
+        <p>Sua clínica cobra por avaliação?</p>
+        <div style={{ marginTop: '1rem' }}>
+          <SwitchComponent
+            handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
+            isOn={chargesEvaluation}
+          />
+          {chargesEvaluation && (
+            <div style={{ marginTop: '0.5rem', width: '200px' }}>
+              <InputComponent
+                value={evaluationPriceDisplay}
+                placeholder="0,00"
+                label="Qual o valor?"
+                handleChangeInput={(e) => {
+                  const digits = e.target.value.replace(/\D/g, '');
+                  const cents = digits ? parseInt(digits, 10) : 0;
+                  setEvaluationPrice(cents);
+                }}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>
           <label className={styles.label}>Serviço</label>
           <input
@@ -100,7 +139,7 @@ export default function RegisterClinicServices({
             type="text"
             placeholder="60"
             value={duration}
-            onChange={(e) => setDuration(e.target.value.replace(/\D/g, ''))}
+            onChange={(e) => setDuration(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
             onKeyDown={handleKeyDown}
           />
         </div>
@@ -112,7 +151,7 @@ export default function RegisterClinicServices({
             type="text"
             placeholder="0,00"
             value={priceDisplay}
-            onChange={handlePriceChange}
+            onChange={(e) => handlePriceChange(e, setPriceDisplay)}
             onKeyDown={handleKeyDown}
           />
         </div>
@@ -135,7 +174,7 @@ export default function RegisterClinicServices({
           services.map((service, index) => (
             <div key={index} className={styles.chip}>
               <span className={styles.chipName}>{service.name}</span>
-              {service.durationMinutes !== '0' && (
+              {service.durationMinutes !== 0 && (
                 <span className={styles.chipBadge}>{service.durationMinutes} min</span>
               )}
               {service.priceCents > 0 && (

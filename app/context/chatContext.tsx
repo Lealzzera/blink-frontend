@@ -1,16 +1,9 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  ReactNode,
-} from "react";
-import SockJS from "sockjs-client";
-import { Client, Message } from "@stomp/stompjs";
-import { createClient } from "@/utils/supabase/client";
+import { createClient } from '@/utils/supabase/client';
+import { Client, Message } from '@stomp/stompjs';
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import SockJS from 'sockjs-client';
 
 export type ChatMessage = {
   phone_number: string;
@@ -30,13 +23,9 @@ type ChatContextType = {
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
-  const [messagesByPhone, setMessagesByPhone] = useState<
-    Record<string, ChatMessage[]>
-  >({});
+  const [messagesByPhone, setMessagesByPhone] = useState<Record<string, ChatMessage[]>>({});
 
-  const [lastMessageByPhone, setLastMessageByPhone] = useState<
-    Record<string, ChatMessage>
-  >({});
+  const [lastMessageByPhone, setLastMessageByPhone] = useState<Record<string, ChatMessage>>({});
 
   const clientRef = useRef<Client | null>(null);
 
@@ -47,7 +36,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       const list = prev[message.phone_number] || [];
 
       const exists = list.some(
-        (m) => m.sent_at === message.sent_at && m.message === message.message
+        (m) => m.sent_at === message.sent_at && m.message === message.message,
       );
       if (exists) return prev;
 
@@ -81,16 +70,14 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       if (!token || !userId || !mounted) return;
 
-      const res = await fetch("/api/ws-config");
+      const res = await fetch('/api/ws-config');
       const { wsUrl } = await res.json();
 
       if (!wsUrl) {
-        throw new Error("WebSocket URL is not defined");
+        throw new Error('WebSocket URL is not defined');
       }
 
-      const socket = new SockJS(
-        `${wsUrl}/wpp-socket/subscribe?token=Bearer%20${token}`
-      );
+      const socket = new SockJS(`${wsUrl}/wpp-socket/subscribe?token=Bearer%20${token}`);
 
       const client = new Client({
         webSocketFactory: () => socket,
@@ -100,12 +87,12 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
           client.subscribe(topic, (msg: Message) => {
             const payload = JSON.parse(msg.body);
-            console.log("message", { payload });
+            console.log('message', { payload });
             pushIncomingMessage(payload);
           });
         },
         onStompError: (frame) => {
-          console.error("❌ Erro STOMP:", frame?.body ?? frame);
+          console.error('❌ Erro STOMP:', frame?.body ?? frame);
         },
       });
 
@@ -138,6 +125,6 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
 export function useChat() {
   const ctx = useContext(ChatContext);
-  if (!ctx) throw new Error("useChat must be used within a ChatProvider");
+  if (!ctx) throw new Error('useChat must be used within a ChatProvider');
   return ctx;
 }

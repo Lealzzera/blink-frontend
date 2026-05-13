@@ -1,24 +1,15 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import ChatCardComponent from "../ChatCardComponent/ChatCardComponent";
-import style from "./style.module.css";
-import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
-import { useRouter } from "next/navigation";
-import formatChatDate from "@/utils/formatChatDate";
-import { ContactSelected, useUser } from "@/app/context/userContext";
-import { useChat } from "@/app/context/chatContext";
-import InputComponent from "@/app/components/InputComponent/InputComponent";
-
-type ChatListItem = {
-  ai_answer: boolean;
-  from_me: boolean;
-  last_message: string;
-  phone_number: string;
-  picture_url: string;
-  sent_at: string;
-  whats_app_name: string;
-};
+import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
+import InputComponent from '@/app/components/InputComponent/InputComponent';
+import { useChat } from '@/app/context/chatContext';
+import { ContactSelected, useUser } from '@/app/context/userContext';
+import { ChatListItem } from '@/app/types/types';
+import formatChatDate from '@/utils/formatChatDate';
+import { useRouter } from 'next/navigation';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import ChatCardComponent from '../ChatCardComponent/ChatCardComponent';
+import style from './style.module.css';
 
 type ChatListComponentProps = {
   chatList: ChatListItem[];
@@ -36,18 +27,17 @@ export default function ChatListComponent({
   numberNotConnected,
 }: ChatListComponentProps) {
   const { contactSelected, handleSetContactSelected } = useUser();
-  const [cardSelected, setCardSelected] = useState<ContactSelected | null>(
-    contactSelected
-  );
+  const { lastMessageByPhone } = useChat();
+  const [cardSelected, setCardSelected] = useState<ContactSelected | null>(contactSelected);
+  const [searchInputValue, setSearchInputValue] = useState('');
+  const [filteredList, setFilteredList] = useState<ChatListItem[]>(chatList);
   const router = useRouter();
   const observer = useRef<IntersectionObserver | null>(null);
-  const { lastMessageByPhone } = useChat();
-  const [searchInputValue, setSearchInputValue] = useState("");
-  const [filteredList, setFilteredList] = useState<ChatListItem[]>(chatList);
+
   const originalListRef = useRef<ChatListItem[]>(chatList);
 
-  const lastListItem = useCallback(
-    (node: HTMLLIElement | null) => {
+  const lastItemRef = useCallback(
+    (node: HTMLLIElement) => {
       if (searchInputValue) return;
       if (loading.firstLoading || loading.loading) return;
       if (observer.current) observer.current.disconnect();
@@ -56,17 +46,13 @@ export default function ChatListComponent({
           const [entry] = entries;
           if (entry.isIntersecting && hasMore) fetchMore();
         },
-        { threshold: 0.5 }
+        {
+          threshold: 0.5,
+        },
       );
       if (node) observer.current.observe(node);
     },
-    [
-      fetchMore,
-      hasMore,
-      loading.firstLoading,
-      loading.loading,
-      searchInputValue,
-    ]
+    [fetchMore, hasMore, loading.firstLoading, loading.loading, searchInputValue],
   );
 
   const handleCardClick = (value: ContactSelected) => {
@@ -85,7 +71,7 @@ export default function ChatListComponent({
   }, [chatList]);
 
   useEffect(() => {
-    const q = String(searchInputValue || "").trim();
+    const q = String(searchInputValue || '').trim();
     if (!q) {
       setFilteredList(originalListRef.current);
       return;
@@ -93,12 +79,12 @@ export default function ChatListComponent({
 
     const lower = q.toLowerCase();
     const newChatListFiltered = originalListRef.current.filter((chat) => {
-      const name = chat.whats_app_name || "";
-      const last = chat.last_message || "";
+      const name = chat.contactName || '';
+      const last = chat.lastMessage.message || '';
       return (
         name.toLowerCase().includes(lower) ||
         last.toLowerCase().includes(lower) ||
-        chat.phone_number.includes(q)
+        chat.phoneNumber.includes(q)
       );
     });
 
@@ -109,13 +95,10 @@ export default function ChatListComponent({
     <div className={style.chatListContainer}>
       {numberNotConnected && !loading.firstLoading && !loading.loading && (
         <div className={style.notConnected}>
-          <p>
-            Você não possui um WhatsApp conectado. Conecte-se acessando a aba de
-            configurações
-          </p>
+          <p>Você não possui um WhatsApp conectado. Conecte-se acessando a aba de configurações</p>
           <ButtonComponent
             text="Configurações"
-            handleClickButton={() => router.push("/settings")}
+            handleClickButton={() => router.push('/settings')}
           />
         </div>
       )}
@@ -134,21 +117,21 @@ export default function ChatListComponent({
               <li key={`skeleton-${i}`} className={style.skeletonCard}></li>
             ))
           : filteredList.map((item, index) => {
-              const isLast = index === filteredList.length - 1;
-              const lastMessage = lastMessageByPhone[item.phone_number]
-                ? lastMessageByPhone[item.phone_number].message
-                : item.last_message;
+              const isLast = !searchInputValue && index === chatList.length - 1;
+              const lastMessage = lastMessageByPhone[item.phoneNumber]
+                ? lastMessageByPhone[item.phoneNumber].message
+                : item.lastMessage.message;
 
               return (
-                <li ref={isLast ? lastListItem : null} key={item.phone_number}>
+                <li ref={isLast ? lastItemRef : null} key={item.phoneNumber}>
                   <ChatCardComponent
                     cardClick={() => handleCardClick(item)}
-                    contactName={item.whats_app_name}
-                    imageUrl={item.picture_url}
+                    contactName={item.contactName}
+                    imageUrl={item.contactPicture}
                     cardSelected={cardSelected}
                     lastMessage={lastMessage}
-                    phoneNumber={item.phone_number}
-                    sentAt={formatChatDate(item.sent_at)}
+                    phoneNumber={item.phoneNumber}
+                    sentAt={formatChatDate(Number(item.lastMessage.sentAt))}
                   />
                 </li>
               );
