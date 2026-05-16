@@ -15,14 +15,14 @@ export async function login({ email, password }: LoginData) {
       password,
     });
 
-    const { accessToken } = response.data;
+    const { access_token } = response.data;
 
     const cookieStore = await cookies();
 
-    cookieStore.set('access_token', accessToken, {
+    cookieStore.set('access_token', access_token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      maxAge: 60 * 60 * 24,
+      maxAge: 60 * 60 * 24 * 14,
       path: '/',
       sameSite: 'lax',
     });
