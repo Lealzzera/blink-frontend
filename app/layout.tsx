@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { IBM_Plex_Mono, IBM_Plex_Sans } from 'next/font/google';
-import { UserProvider } from './context/userContext';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -28,9 +27,7 @@ const ibm_plex_mono = IBM_Plex_Mono({
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="pt-BR" className={`${ibm_plex_sans.variable} ${ibm_plex_mono.variable}`}>
-      <UserProvider>
-        <body className="font-sans antialiased">{children}</body>
-      </UserProvider>
+      <body className="font-sans antialiased">{children}</body>
     </html>
   );
 }
