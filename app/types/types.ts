@@ -109,3 +109,11 @@ export type ChatListItem = {
     sentAt: string;
   };
 };
+
+export type ClinicInfoType = {
+  clinicId: string;
+  userRole: string;
+  clinicType: string;
+  clinicSlug: string;
+  clinicStatus: string;
+};

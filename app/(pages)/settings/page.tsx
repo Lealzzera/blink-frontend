@@ -12,10 +12,8 @@ import style from './style.module.css';
 
 export default function Settings() {
   const router = useRouter();
-  const { clinicId } = useUser();
+  const { clinicInfo } = useUser();
   const { whatsAppStatus, qrCode, loading, error, refresh } = useWhatsApp();
-
-  console.log(whatsAppStatus);
 
   const showQrCode = () => {
     return qrCode && !loading && !error;

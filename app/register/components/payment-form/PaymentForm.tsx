@@ -40,12 +40,10 @@ export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
   const didInit = useRef(false);
 
   useEffect(() => {
-    // Previne dupla execução no StrictMode do React (que desmonta/remonta em dev)
     if (didInit.current) return;
     didInit.current = true;
 
     async function initCheckout() {
-      // 1. Salva o draft no backend — retorna o draftId
       const [firstName, ...rest] = clinicData.userFullName.split(' ');
       const draftData: SignupDraftData = {
         clinicName: clinicData.clinicName,
@@ -75,7 +73,6 @@ export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
         return;
       }
 
-      // 2. Cria a sessão do Stripe com o draftId vinculado
       const session = await postStripeCheckoutSession({
         stripePriceId,
         draftId: draft.draftId,

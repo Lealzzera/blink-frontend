@@ -97,7 +97,7 @@ export default function RegisterClinicServices({
         Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
       <div>
-        <p>Sua clínica cobra por avaliação?</p>
+        <p>Sua clínica cobra por consulta inicial?</p>
         <div style={{ marginTop: '1rem' }}>
           <SwitchComponent
             handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
@@ -119,7 +119,7 @@ export default function RegisterClinicServices({
           )}
         </div>
       </div>
-      <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
+      {/* <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>
           <label className={styles.label}>Serviço</label>
           <input
@@ -165,9 +165,9 @@ export default function RegisterClinicServices({
         >
           +
         </button>
-      </div>
+      </div> */}
 
-      <div className={styles.chipsArea}>
+      {/* <div className={styles.chipsArea}>
         {services.length === 0 ? (
           <p className={styles.empty}>Nenhum serviço adicionado ainda.</p>
         ) : (
@@ -191,7 +191,7 @@ export default function RegisterClinicServices({
             </div>
           ))
         )}
-      </div>
+      </div> */}
     </section>
   );
 }

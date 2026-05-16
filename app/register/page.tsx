@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { getPlansList } from '../actions/getPlansList';
+import getUserEmail from '../actions/getUserEmail';
 import ButtonComponent from '../components/ButtonComponent/ButtonComponent';
 import { Plan, RegisterClinicObject } from '../types/types';
 import { PaymentForm } from './components/payment-form/PaymentForm';
@@ -88,6 +89,7 @@ export default function RegisterPage() {
         !registerObject.city ||
         !registerObject.state ||
         !registerObject.clinicType)) ||
+    (currentStep === 3 && !registerObject.workingHours.length) ||
     (currentStep === 5 && !registerObject.selectedPlan.planId);
 
   const handleChangeObjectValue = <K extends keyof RegisterClinicObject>(
@@ -112,6 +114,13 @@ export default function RegisterPage() {
     if (currentStep === 1 && !emailRegex.test(registerObject.userEmail)) {
       setShowErrorMessage('Email Inválido.');
       return;
+    }
+    if (currentStep === 1 && emailRegex.test(registerObject.userEmail)) {
+      const { exists } = await getUserEmail(registerObject.userEmail);
+      if (exists) {
+        setShowErrorMessage('Email já cadastrado.');
+        return;
+      }
     }
     if (currentStep === 5 && !registerObject.selectedPlan.planId) {
       return;
@@ -170,10 +179,6 @@ export default function RegisterPage() {
     if (!hydrated) return;
     writeRegisterCookie(registerObject);
   }, [registerObject, hydrated]);
-
-  useEffect(() => {
-    console.log({ registerObject });
-  }, [registerObject]);
 
   return (
     <section className={styles.registerSection}>
