@@ -13,7 +13,6 @@ import style from './style.module.css';
 
 type ChatComponentProps = {
   phoneNumber: string;
-  clinicId: number | null;
   contactName?: string;
   imageUrl?: string;
   aiAnswerOn: boolean;
@@ -120,7 +119,7 @@ export default function ChatComponent({
         setLoading(false);
       }
     },
-    [clinicId, phoneNumber, loading],
+    [phoneNumber, loading],
   );
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -146,7 +145,7 @@ export default function ChatComponent({
 
     setMessageList((prev) => [...prev, newMessage]);
 
-    await postMessage({ clinicId, message, phoneNumber });
+    await postMessage({ message, phoneNumber });
 
     if (ulRef.current) {
       ulRef.current.scrollTop = ulRef.current.scrollHeight;
