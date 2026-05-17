@@ -1,38 +1,76 @@
-"use client";
-import { useState } from "react";
-import { EventInput } from "@fullcalendar/core";
-import styles from "./style.module.css";
-import ButtonComponent from "../ButtonComponent/ButtonComponent";
+'use client';
+import { useState } from 'react';
+import { EventInput } from '@fullcalendar/core';
+import styles from './style.module.css';
+import ButtonComponent from '../ButtonComponent/ButtonComponent';
 
-type AppointmentDetailsProps = {
+type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED';
+
+const APPOINTMENT_STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
+  { value: 'PENDING', label: 'Agendado' },
+  { value: 'CONFIRMED', label: 'Confirmado' },
+  { value: 'COMPLETED', label: 'Compareceu' },
+  { value: 'CANCELED', label: 'Não compareceu' },
+];
+
+type EventDetailsComponentProps = {
   event: EventInput;
   onClose: () => void;
-  handleUpdateStatus: (status: { id?: string; status: string }) => void;
+  handleUpdateStatus: (payload: {
+    appointmentId: string;
+    status: AppointmentStatus;
+  }) => void;
+  handleDeleteAppointment: (appointmentId: string) => void;
 };
 
 export default function EventDetailsComponent({
   event,
   onClose,
   handleUpdateStatus,
-}: AppointmentDetailsProps) {
-  const [newStatus, setNewStatus] = useState<{ id?: string; status: string }>({
-    id: "",
-    status: "",
-  });
-  const handleChangeStatus = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setNewStatus({ id: event.id, status: e.target.value });
+  handleDeleteAppointment,
+}: EventDetailsComponentProps) {
+  const currentAppointmentStatus = event.extendedProps?.status as
+    | AppointmentStatus
+    | undefined;
+
+  const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | ''>(
+    currentAppointmentStatus ?? '',
+  );
+
+  const handleChangeStatus = (
+    changeEvent: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
+    setSelectedStatus(changeEvent.target.value as AppointmentStatus);
   };
 
-  const formatDate = () => {
-    return new Date(event.start as string).toLocaleDateString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
+  const handleConfirmUpdate = () => {
+    if (!event.id || !selectedStatus) return;
+    handleUpdateStatus({
+      appointmentId: event.id,
+      status: selectedStatus,
     });
   };
+
+  const handleConfirmDelete = () => {
+    if (!event.id) return;
+    const userConfirmed = window.confirm(
+      'Tem certeza que deseja excluir este agendamento? Esta ação não pode ser desfeita.',
+    );
+    if (!userConfirmed) return;
+    handleDeleteAppointment(event.id);
+  };
+
+  const formatAppointmentDateTime = () => {
+    return new Date(event.start as string).toLocaleDateString('pt-BR', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <div className={styles.modalDetailsBg}>
       <div className={styles.modalContent}>
@@ -44,25 +82,25 @@ export default function EventDetailsComponent({
           Telefone: <span>{event.extendedProps?.phone}</span>
         </p>
         <p>
-          Data: <span>{formatDate()}</span>
+          Data: <span>{formatAppointmentDateTime()}</span>
         </p>
         <p className={styles.notes}>
-          Anotações: <span>{event.extendedProps?.notes}</span>
+          Anotações: <span>{event.extendedProps?.notes ?? '—'}</span>
         </p>
         <div className={styles.selectStatusContainer}>
           <select
-            value={newStatus.status}
+            value={selectedStatus}
             onChange={handleChangeStatus}
             className={styles.selectStatus}
           >
             <option disabled value="">
               Selecione um status
             </option>
-            <option value="CONFIRMADO">Confirmado</option>
-            <option value="AGENDADO">Agendado</option>
-            <option value="CANCELADO">Cancelado</option>
-            <option value="COMPARECEU">Compareceu</option>
-            <option value="NAO_COMPARECEU">Não compareceu</option>
+            {APPOINTMENT_STATUS_OPTIONS.map((statusOption) => (
+              <option key={statusOption.value} value={statusOption.value}>
+                {statusOption.label}
+              </option>
+            ))}
           </select>
         </div>
         <div className={styles.modalButtons}>
@@ -70,14 +108,22 @@ export default function EventDetailsComponent({
             text="Fechar"
             handleClickButton={onClose}
             style={{
-              background: "transparent",
-              color: "var(--red-300)",
-              fontWeight: "600",
+              background: 'transparent',
+              color: 'var(--red-300)',
+              fontWeight: '600',
+            }}
+          />
+          <ButtonComponent
+            text="Excluir"
+            handleClickButton={handleConfirmDelete}
+            style={{
+              background: 'var(--red-300)',
+              color: 'var(--white)',
             }}
           />
           <ButtonComponent
             text="Atualizar"
-            handleClickButton={() => handleUpdateStatus({ ...newStatus })}
+            handleClickButton={handleConfirmUpdate}
           />
         </div>
       </div>

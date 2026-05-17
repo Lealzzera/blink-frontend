@@ -1,7 +1,8 @@
 'use client';
+import { deleteAppointment } from '@/app/actions/deleteAppointment';
 import { getAppointments } from '@/app/actions/getAppointments';
+import { patchAppointment } from '@/app/actions/patchAppointment';
 import { postAppointment } from '@/app/actions/postAppointment';
-import { putAppointmentStatus } from '@/app/actions/putAppointmentStatus';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import EventDetailsComponent from '@/app/components/EventDetailsComponent/EventDetailsComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
@@ -238,13 +239,50 @@ export default function Schedules() {
   }, [fetchAppointments]);
 
   const handleUpdateStatus = useCallback(
-    async (payload: { id?: string; status: string }) => {
+    async (payload: { appointmentId: string; status: AppointmentStatus }) => {
       setSelectedEvent(null);
-      await putAppointmentStatus({
-        appointmentId: String(payload.id),
-        status: payload.status,
-      });
-      await fetchAppointments();
+      try {
+        await patchAppointment({
+          appointmentId: payload.appointmentId,
+          status: payload.status,
+        });
+
+        toast('Agendamento atualizado com sucesso.', {
+          theme: 'colored',
+          type: 'success',
+        });
+
+        await fetchAppointments();
+      } catch (updateError: any) {
+        const backendMessage =
+          updateError?.response?.data?.message ??
+          'Não foi possível atualizar o agendamento. Tente novamente.';
+
+        toast(backendMessage, { theme: 'colored', type: 'error' });
+      }
+    },
+    [fetchAppointments],
+  );
+
+  const handleDeleteAppointment = useCallback(
+    async (appointmentId: string) => {
+      setSelectedEvent(null);
+      try {
+        await deleteAppointment({ appointmentId });
+
+        toast('Agendamento excluído com sucesso.', {
+          theme: 'colored',
+          type: 'success',
+        });
+
+        await fetchAppointments();
+      } catch (deleteError: any) {
+        const backendMessage =
+          deleteError?.response?.data?.message ??
+          'Não foi possível excluir o agendamento. Tente novamente.';
+
+        toast(backendMessage, { theme: 'colored', type: 'error' });
+      }
     },
     [fetchAppointments],
   );
@@ -279,9 +317,10 @@ export default function Schedules() {
       <div className={styles.calendarContainer}>
         {selectedEvent && (
           <EventDetailsComponent
-            handleUpdateStatus={(event) => handleUpdateStatus(event)}
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+            handleUpdateStatus={handleUpdateStatus}
+            handleDeleteAppointment={handleDeleteAppointment}
           />
         )}
         <Calendar
