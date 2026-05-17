@@ -98,6 +98,7 @@ export default function Conversations() {
           contactName={contactSelected.contactName}
           phoneNumber={contactSelected.phoneNumber}
           imageUrl={contactSelected.contactPicture}
+          contactId={contactSelected.id}
         />
       ) : (
         <div className={style.containerText}>

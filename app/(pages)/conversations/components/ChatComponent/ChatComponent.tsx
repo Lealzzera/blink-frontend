@@ -5,6 +5,7 @@ import { postMessage } from '@/app/actions/postMessage';
 import { putAiAnswer } from '@/app/actions/putAiAnswer';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useChat } from '@/app/context/chatContext';
+import { useUser } from '@/app/context/userContext';
 import { Send } from 'lucide-react';
 import Image from 'next/image';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -16,6 +17,7 @@ type ChatComponentProps = {
   contactName?: string;
   imageUrl?: string;
   aiAnswerOn: boolean;
+  contactId: string;
 };
 
 export default function ChatComponent({
@@ -23,7 +25,10 @@ export default function ChatComponent({
   contactName,
   imageUrl,
   aiAnswerOn,
+  contactId,
 }: ChatComponentProps) {
+  const { clinicInfo } = useUser();
+
   const [loading, setLoading] = useState(false);
   const [messageList, setMessageList] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
@@ -132,7 +137,8 @@ export default function ChatComponent({
     textarea.style.height = `${newHeight}px`;
   };
   const handleSendMessage = async () => {
-    if (!phoneNumber || message.length === 0) return;
+    if (!contactId || message.length === 0) return;
+    if (!clinicInfo) return;
     if (!message.trim()) return;
 
     setMessage('');
@@ -145,7 +151,9 @@ export default function ChatComponent({
 
     setMessageList((prev) => [...prev, newMessage]);
 
-    await postMessage({ message, phoneNumber });
+    // TODO: IMPLEMENT IT WHEN WAHA IS READY
+    // await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
+    await postMessage({ chatId: contactId, text: message, session: 'default' });
 
     if (ulRef.current) {
       ulRef.current.scrollTop = ulRef.current.scrollHeight;
