@@ -1,7 +1,8 @@
 'use client';
 
-import { getQrCode } from '@/app/actions/getQrCode';
 import { useEffect, useState } from 'react';
+import { getQrCode } from '../actions/getQrCode';
+import { useUser } from '../context/userContext';
 
 type WhatsAppStatus = {
   connected: boolean;
@@ -13,18 +14,23 @@ type WhatsAppStatus = {
 };
 
 export function useWhatsApp() {
+  const { clinicInfo } = useUser();
   const [whatsAppStatus, setWhatsAppStatus] = useState<WhatsAppStatus | null>(null);
   const [qrCode, setQrCode] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const fetchQrCode = async () => {
     setLoading(true);
     setError(false);
+    if (!clinicInfo?.clinicId) {
+      return;
+    }
 
     try {
-      const response = await getQrCode();
-
+      //TODO: AFTER WAHA PAYMENT IMPLEMENT THIS LOGIC BELOW
+      // const response = await getQrCode(clinicInfo.clinicId);
+      const response = await getQrCode('default');
       if (!response) {
         setError(true);
         return;
@@ -46,7 +52,7 @@ export function useWhatsApp() {
 
   useEffect(() => {
     fetchQrCode();
-  }, []);
+  }, [clinicInfo]);
 
   return { whatsAppStatus, qrCode, loading, error, refresh: fetchQrCode };
 }
