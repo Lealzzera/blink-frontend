@@ -14,6 +14,26 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import styles from './style.module.css';
 
+type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED';
+
+type BackendAppointment = {
+  id: string;
+  clinic_id: string;
+  service_id: string | null;
+  customer_phone_number: string;
+  customer_name: string;
+  appointment_date: string;
+  status: AppointmentStatus;
+  notes: string | null;
+};
+
+const APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS: Record<AppointmentStatus, string> = {
+  PENDING: 'status_AGENDADO',
+  CONFIRMED: 'status_CONFIRMADO',
+  COMPLETED: 'status_COMPARECEU',
+  CANCELED: 'status_NAO_COMPARECEU',
+};
+
 export default function Schedules() {
   const { clinicInfo } = useUser();
   const [events, setEvents] = useState<EventInput[]>([]);
@@ -172,54 +192,46 @@ export default function Schedules() {
     setDateRange({ start: startDateIso, end: endDateIso });
   };
 
-  const handlePresenterAppointmentsList = (appointmentsData: any[]) => {
-    return appointmentsData.flatMap((appointment: any) => {
-      const date = appointment.date;
-      return (appointment.appointments || []).map((appt: any) => {
-        const time = appt.time || '00:00';
-        const isoTime = `${date}T${time}`;
-
-        return {
-          id: String(appt.id),
-          title: appt.patient_name,
-          start: new Date(isoTime).toISOString(),
-          extendedProps: {
-            phone: appt.patient_phone,
-            duration: appt.duration,
-            status: appt.status,
-            notes: appt.notes,
-            dayInfo: {
-              open: appointment.open,
-              close: appointment.close,
-              break_start: appointment.break_start,
-              break_end: appointment.break_end,
-            },
-          },
-        };
-      });
-    });
+  const handlePresenterAppointmentsList = (
+    appointmentsFromBackend: BackendAppointment[],
+  ): EventInput[] => {
+    return appointmentsFromBackend.map((appointment) => ({
+      id: appointment.id,
+      title: appointment.customer_name,
+      start: appointment.appointment_date,
+      extendedProps: {
+        phone: appointment.customer_phone_number,
+        status: appointment.status,
+        notes: appointment.notes,
+      },
+    }));
   };
 
   const fetchAppointments = useCallback(async () => {
     if (!dataRange.start) return;
+    if (!clinicInfo?.clinicId) return;
+
     try {
-      const appointments = await getAppointments({
+      const response = await getAppointments({
+        clinicId: clinicInfo.clinicId,
         startDate: dataRange.start,
         endDate: dataRange.end,
       });
 
-      if (!appointments || !Array.isArray(appointments)) {
-        console.error('Appointments inválido ou não é um array:', appointments);
+      const appointmentsFromBackend = response?.appointments;
+
+      if (!appointmentsFromBackend || !Array.isArray(appointmentsFromBackend)) {
+        console.error('Appointments inválido ou não é um array:', response);
         return;
       }
 
-      const appointmentsFormatted = handlePresenterAppointmentsList(appointments);
+      const appointmentsFormatted = handlePresenterAppointmentsList(appointmentsFromBackend);
 
       setEvents(appointmentsFormatted);
     } catch (fetchError) {
       console.error('Erro ao buscar appointments:', fetchError);
     }
-  }, [dataRange]);
+  }, [dataRange, clinicInfo?.clinicId]);
 
   useEffect(() => {
     fetchAppointments();
@@ -300,9 +312,14 @@ export default function Schedules() {
           }}
           events={events}
           eventClassNames={(arg) => {
-            const status = (arg.event.extendedProps as any)?.status;
-            const key = `status_${String(status || '').toUpperCase()}`;
-            const statusClass = (styles as any)[key];
+            const appointmentStatus = (arg.event.extendedProps as any)
+              ?.status as AppointmentStatus | undefined;
+            const cssClassName = appointmentStatus
+              ? APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS[appointmentStatus]
+              : undefined;
+            const statusClass = cssClassName
+              ? (styles as any)[cssClassName]
+              : undefined;
             return [styles.scheduleItem, statusClass].filter(Boolean) as string[];
           }}
           dayCellClassNames={(arg) => {
