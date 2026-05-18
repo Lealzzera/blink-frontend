@@ -2,8 +2,8 @@
 
 import { deleteAtypicalDay } from '@/app/actions/deleteAtypicalDay';
 import { getAtypicalDaysList } from '@/app/actions/getAtypicalDaysList';
-import { getClinicAvailability } from '@/app/actions/getClinicAvailability';
 import { getClinicConfiguration } from '@/app/actions/getClinicConfiguration';
+import { getClinicWorkingHours } from '@/app/actions/getClinicWorkingHours';
 import postAtypicalDayAvailability from '@/app/actions/postAtypicalDayAvailability';
 import {
   putClinicAvailability,
@@ -11,14 +11,12 @@ import {
 } from '@/app/actions/putClinicAvailability';
 import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
-import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalComponent';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
-import AtypicalDayModalContent from './AtypicalDayModalContent/AtypicalDayModalContent';
 import styles from './style.module.css';
 
 type ClinicDay = {
@@ -79,8 +77,10 @@ export default function ClinicSettingsPage() {
   const [atypicalDaysList, setAtypicalDaysList] = useState<AtypicalDayObject[]>([]);
 
   const fetchClinicAvailability = async () => {
+    if (!clinicInfo?.clinicId.length) return;
     setLoading(true);
-    const response = await getClinicAvailability();
+    const response = await getClinicWorkingHours(clinicInfo.clinicId);
+    console.log({ responseWorking: response });
     if (!response) return;
     const formattedResponse: ClinicDay[] = response.map((day: ClinicDay) => {
       const w = String(day.week_day || '').toUpperCase();
@@ -620,16 +620,16 @@ export default function ClinicSettingsPage() {
       )}
       {activeTab === 'horarios' && !loading && defaultDays.length > 0 && (
         <div className={styles.containerWrapped}>
-          {isModalOpen && (
+          {/* {isModalOpen && (
             <BaseModalComponent handleCloseModal={handleCloseModal}>
-              <AtypicalDayModalContent
+              {/* <AtypicalDayModalContent
                 saveAtypicalConfiguration={saveAtypicalConfiguration}
                 closeModal={handleCloseModal}
                 atypicalConfigurationObject={atypicalDayConfig}
                 handleChangeAtypicalConfigurationObject={handleManageAtypicalDay}
-              />
-            </BaseModalComponent>
-          )}
+              /> */}
+          {/* </BaseModalComponent> */}
+          {/* )} */}
           <div className={styles.containerContent}>
             <div className={styles.containerLegend}>
               <p>Dia da semana</p>
