@@ -13,11 +13,11 @@ import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
-import SelectComponent from '@/app/components/SelectComponent/SelectComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
+import ClinicDataSectionComponent from './components/ClinicDataSectionComponent/ClinicDataSectionComponent';
 import styles from './style.module.css';
 
 type ClinicDay = {
@@ -519,114 +519,41 @@ export default function ClinicSettingsPage() {
       </div>
 
       {activeTab === 'dados' && (
-        <div className={styles.basicDataCard}>
-          <div className={styles.basicDataHeader}>
-            <h2>Dados da clínica</h2>
-            <p className={styles.subtitle}>
-              Defina como sua clínica e seu agente de IA serão identificados.
-            </p>
-          </div>
-          <div className={styles.basicDataForm}>
-            <InputComponent
-              label="Nome da clínica"
-              placeholder="Ex.: Clínica São Lucas"
-              value={clinicName}
-              required
-              error={clinicNameError}
-              handleChangeInput={(e) => {
-                setClinicNameError(false);
-                setClinicName(e.target.value);
-              }}
-            />
-            <InputComponent
-              label="Nome do agente de IA"
-              placeholder="Ex.: Blink"
-              value={aiAgentName}
-              required
-              error={aiAgentNameError}
-              handleChangeInput={(e) => {
-                setAiAgentNameError(false);
-                setAiAgentName(e.target.value);
-              }}
-            />
-            <InputComponent
-              label="Duração do agendamento (minutos)"
-              placeholder="Ex.: 30"
-              type="number"
-              value={appointmentDuration}
-              handleChangeInput={(event) => {
-                const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
-                setAppointmentDuration(sanitizedNumericValue);
-              }}
-            />
-            <InputComponent
-              label="Quantidade de agendamentos no mesmo horário"
-              placeholder="Ex.: 1"
-              type="number"
-              value={maxAppointmentsPerSlot}
-              handleChangeInput={(event) => {
-                const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
-                setMaxAppointmentsPerSlot(sanitizedNumericValue);
-              }}
-            />
-            <SelectComponent
-              labelSelect="Tipo da clínica"
-              idSelect="clinic-type-select"
-              options={CLINIC_TYPE_OPTIONS}
-              value={clinicType}
-              setValue={setClinicType}
-            />
-            <InputComponent
-              label="Endereço"
-              placeholder="Ex.: Rua das Flores, 123"
-              value={clinicAddress}
-              handleChangeInput={(event) => setClinicAddress(event.target.value)}
-            />
-            <InputComponent
-              label="CEP"
-              placeholder="Ex.: 01234-567"
-              value={clinicPostalCode}
-              onBlur={findAddressByPostalCode}
-              handleChangeInput={(event) => handlePostalCodeChange(event.target.value)}
-            />
-            <InputComponent
-              label="Cidade"
-              placeholder="Ex.: São Paulo"
-              value={clinicCity}
-              handleChangeInput={(event) => setClinicCity(event.target.value)}
-            />
-            <InputComponent
-              label="Estado"
-              placeholder="Ex.: SP"
-              value={clinicState}
-              handleChangeInput={(event) => setClinicState(event.target.value)}
-            />
-          </div>
-          <div className={styles.customPromptSection}>
-            <label className={styles.customPromptLabel}>Prompt personalizado da IA</label>
-            <p className={styles.customPromptDescription}>
-              Instrua o agente de IA sobre como ele deve se comportar, responder e interagir com os
-              pacientes.
-            </p>
-            <textarea
-              className={styles.customPromptTextarea}
-              placeholder="Ex.: Você é um assistente simpático da clínica. Sempre cumprimente o paciente pelo nome e ofereça ajuda para agendar consultas..."
-              value={customPrompt}
-              onChange={(e) => setCustomPrompt(e.target.value)}
-              rows={6}
-            />
-          </div>
-          <div className={styles.basicDataActions}>
-            <ButtonComponent text="Salvar dados" handleClickButton={handleSaveClinicBasicData} />
-          </div>
-        </div>
+        <ClinicDataSectionComponent
+          clinicName={clinicName}
+          setClinicName={setClinicName}
+          aiAgentName={aiAgentName}
+          setAiAgentName={setAiAgentName}
+          appointmentDuration={appointmentDuration}
+          setAppointmentDuration={setAppointmentDuration}
+          maxAppointmentsPerSlot={maxAppointmentsPerSlot}
+          setMaxAppointmentsPerSlot={setMaxAppointmentsPerSlot}
+          aiAgentNameError={aiAgentNameError}
+          setAiAgentNameError={setAiAgentNameError}
+          clinicNameError={clinicNameError}
+          setClinicNameError={setClinicNameError}
+          clinicTypeOptions={CLINIC_TYPE_OPTIONS}
+          clinicType={clinicType}
+          setClinicType={setClinicType}
+          clinicAddress={clinicAddress}
+          setClinicAddress={setClinicAddress}
+          handleSaveClinicBasicData={handleSaveClinicBasicData}
+          findAddressByPostalCode={findAddressByPostalCode}
+          handlePostalCodeChange={handlePostalCodeChange}
+          clinicPostalCode={clinicPostalCode}
+          setClinicPostalCode={setClinicPostalCode}
+          clinicCity={clinicCity}
+          setClinicCity={setClinicCity}
+          clinicState={clinicState}
+          setClinicState={setClinicState}
+        />
       )}
 
-      {activeTab === 'horarios' && loading && (
+      {/* {activeTab === 'horarios' && loading && (
         <div className={styles.containerWrapped}>
           <div className={styles.containerSkeleton}></div>
         </div>
-      )}
+      )} */}
       {activeTab === 'horarios' && !loading && defaultDays.length > 0 && (
         <div className={styles.containerWrapped}>
           {/* {isModalOpen && (
