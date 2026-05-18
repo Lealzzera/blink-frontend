@@ -7,6 +7,7 @@ import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import EventDetailsComponent from '@/app/components/EventDetailsComponent/EventDetailsComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import { useUser } from '@/app/context/userContext';
+import { translateAppointmentError } from '@/utils/translateAppointmentError';
 import { EventInput } from '@fullcalendar/core';
 import ptBr from '@fullcalendar/core/locales/pt-br';
 import dayGridPlugin from '@fullcalendar/daygrid';
@@ -114,16 +115,18 @@ export default function Schedules() {
       handleCloseModal();
       await fetchAppointments();
     } catch (requestError: any) {
-      const backendMessage =
-        requestError?.response?.data?.message ??
-        'Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.';
+      const rawBackendMessage = requestError?.response?.data?.message;
+      const userFacingMessage = translateAppointmentError(
+        rawBackendMessage,
+        'Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.',
+      );
 
-      toast(backendMessage, {
+      toast(userFacingMessage, {
         theme: 'colored',
         type: 'error',
       });
 
-      setError(backendMessage);
+      setError(userFacingMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -254,11 +257,13 @@ export default function Schedules() {
 
         await fetchAppointments();
       } catch (updateError: any) {
-        const backendMessage =
-          updateError?.response?.data?.message ??
-          'Não foi possível atualizar o agendamento. Tente novamente.';
+        const rawBackendMessage = updateError?.response?.data?.message;
+        const userFacingMessage = translateAppointmentError(
+          rawBackendMessage,
+          'Não foi possível atualizar o agendamento. Tente novamente.',
+        );
 
-        toast(backendMessage, { theme: 'colored', type: 'error' });
+        toast(userFacingMessage, { theme: 'colored', type: 'error' });
       }
     },
     [fetchAppointments],
@@ -277,11 +282,13 @@ export default function Schedules() {
 
         await fetchAppointments();
       } catch (deleteError: any) {
-        const backendMessage =
-          deleteError?.response?.data?.message ??
-          'Não foi possível excluir o agendamento. Tente novamente.';
+        const rawBackendMessage = deleteError?.response?.data?.message;
+        const userFacingMessage = translateAppointmentError(
+          rawBackendMessage,
+          'Não foi possível excluir o agendamento. Tente novamente.',
+        );
 
-        toast(backendMessage, { theme: 'colored', type: 'error' });
+        toast(userFacingMessage, { theme: 'colored', type: 'error' });
       }
     },
     [fetchAppointments],
