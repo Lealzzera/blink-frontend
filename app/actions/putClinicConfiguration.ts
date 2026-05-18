@@ -12,6 +12,7 @@ export type PutClinicConfigurationBody = {
   allowCancellation: boolean;
   aiAgentName: string;
   clinicName?: string;
+  clinicType?: string;
   address?: string | null;
   postalCode?: string | null;
   city?: string | null;

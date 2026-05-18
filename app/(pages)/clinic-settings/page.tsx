@@ -13,6 +13,7 @@ import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
+import SelectComponent from '@/app/components/SelectComponent/SelectComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
@@ -35,6 +36,13 @@ const CLINIC_TYPE_LABEL_BY_VALUE: Record<string, string> = {
   PSYCHOLOGY: 'Psicologia',
   OTHER: 'Outro',
 };
+
+const CLINIC_TYPE_OPTIONS = Object.entries(CLINIC_TYPE_LABEL_BY_VALUE).map(
+  ([clinicTypeValue, clinicTypeLabel]) => ({
+    value: clinicTypeValue,
+    label: clinicTypeLabel,
+  }),
+);
 
 type AtypicalDayObject = {
   id: number;
@@ -284,6 +292,7 @@ export default function ClinicSettingsPage() {
       await putClinicConfiguration({
         clinicId: clinicInfo.clinicId,
         clinicName: normalizedClinicName,
+        clinicType: clinicType || undefined,
         aiAgentName: normalizedAiAgentName,
         appointmentDurationMinutes: parsedAppointmentDurationMinutes,
         maxAppointmentsPerSlot: parsedMaxAppointmentsPerSlot,
@@ -560,12 +569,12 @@ export default function ClinicSettingsPage() {
                 setMaxAppointmentsPerSlot(sanitizedNumericValue);
               }}
             />
-            <InputComponent
-              label="Tipo da clínica"
-              placeholder="—"
-              value={CLINIC_TYPE_LABEL_BY_VALUE[clinicType] ?? clinicType}
-              disabled
-              handleChangeInput={() => {}}
+            <SelectComponent
+              labelSelect="Tipo da clínica"
+              idSelect="clinic-type-select"
+              options={CLINIC_TYPE_OPTIONS}
+              value={clinicType}
+              setValue={setClinicType}
             />
             <InputComponent
               label="Endereço"
