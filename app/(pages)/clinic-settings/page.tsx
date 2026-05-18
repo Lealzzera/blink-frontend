@@ -30,6 +30,14 @@ type ClinicDay = {
   break_end?: string;
 };
 
+const CLINIC_TYPE_LABEL_BY_VALUE: Record<string, string> = {
+  DENTAL: 'Odontologia',
+  MEDICAL: 'Médica',
+  AESTHETIC: 'Estética',
+  PSYCHOLOGY: 'Psicologia',
+  OTHER: 'Outro',
+};
+
 type AtypicalDayObject = {
   id: number;
   clinic_id: number;
@@ -44,18 +52,23 @@ type AtypicalDayObject = {
 export default function ClinicSettingsPage() {
   const [defaultDays, setDefaultDays] = useState<ClinicDay[]>([]);
   const [loading, setLoading] = useState(true);
-  const { clinicId } = useUser();
+  const { clinicInfo } = useUser();
   const [clinicName, setClinicName] = useState('');
   const [aiAgentName, setAiAgentName] = useState('');
   const [clinicNameError, setClinicNameError] = useState(false);
   const [aiAgentNameError, setAiAgentNameError] = useState(false);
   const [appointmentDuration, setAppointmentDuration] = useState('');
-  const [allowSameTimeBooking, setAllowSameTimeBooking] = useState(false);
+  const [maxAppointmentsPerSlot, setMaxAppointmentsPerSlot] = useState('');
+  const [clinicType, setClinicType] = useState('');
+  const [clinicAddress, setClinicAddress] = useState('');
+  const [clinicPostalCode, setClinicPostalCode] = useState('');
+  const [clinicCity, setClinicCity] = useState('');
+  const [clinicState, setClinicState] = useState('');
   const [customPrompt, setCustomPrompt] = useState('');
   const [activeTab, setActiveTab] = useState<'dados' | 'horarios'>('dados');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] = useState({
-    clinic_id: clinicId,
+    clinic_id: clinicInfo?.clinicId,
     exception_day: '',
     is_working_day: false,
     open: '',
@@ -122,6 +135,45 @@ export default function ClinicSettingsPage() {
     });
 
     setAtypicalDaysList(responseFormatted);
+  };
+
+  const formatPostalCode = (value: string) => {
+    const cleanedPostalCode = value.replace(/\D/g, '');
+    return cleanedPostalCode.replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9);
+  };
+
+  const handlePostalCodeChange = (value: string) => {
+    const cleanedPostalCode = value.replace(/\D/g, '');
+    if (cleanedPostalCode.length > 8) return;
+    const formattedPostalCode = formatPostalCode(cleanedPostalCode);
+    setClinicPostalCode(formattedPostalCode);
+  };
+
+  const findAddressByPostalCode = async () => {
+    const postalCodeWithoutDash = clinicPostalCode.replace('-', '');
+    if (postalCodeWithoutDash.length < 8) return;
+
+    try {
+      const response = await fetch(`https://viacep.com.br/ws/${postalCodeWithoutDash}/json/`);
+      const data = await response.json();
+
+      if (data?.erro) {
+        toast('CEP não encontrado. Verifique e tente novamente.', {
+          type: 'error',
+          theme: 'colored',
+        });
+        return;
+      }
+
+      setClinicAddress(data.logradouro ?? '');
+      setClinicCity(data.localidade ?? '');
+      setClinicState(data.estado ?? data.uf ?? '');
+    } catch {
+      toast('Erro ao buscar endereço pelo CEP. Tente novamente.', {
+        type: 'error',
+        theme: 'colored',
+      });
+    }
   };
 
   const formatTimeValue = (value: string) => {
@@ -217,19 +269,44 @@ export default function ClinicSettingsPage() {
       return;
     }
 
-    const response = await putClinicConfiguration({
-      clinic_name: normalizedClinicName,
-      ai_name: normalizedAiAgentName,
-      appointment_duration: Number(appointmentDuration) || 0,
-      allow_overbooking: allowSameTimeBooking,
-      custom_prompt: customPrompt,
-    });
+    if (!clinicInfo?.clinicId) {
+      toast('Não foi possível identificar a clínica. Recarregue a página.', {
+        type: 'error',
+        theme: 'colored',
+      });
+      return;
+    }
 
-    showToastMessage({
-      success: response === 200 || response === 201 || response === 204,
-      successMessage: 'Dados da clínica salvos com sucesso.',
-      errorMessage: 'Erro ao salvar os dados da clínica.',
-    });
+    const parsedMaxAppointmentsPerSlot = Number(maxAppointmentsPerSlot) || 1;
+    const parsedAppointmentDurationMinutes = Number(appointmentDuration) || 0;
+
+    try {
+      await putClinicConfiguration({
+        clinicId: clinicInfo.clinicId,
+        clinicName: normalizedClinicName,
+        aiAgentName: normalizedAiAgentName,
+        appointmentDurationMinutes: parsedAppointmentDurationMinutes,
+        maxAppointmentsPerSlot: parsedMaxAppointmentsPerSlot,
+        chargesEvaluation: false,
+        evaluationPriceCents: 0,
+        allowRescheduling: true,
+        allowCancellation: true,
+        address: clinicAddress.trim() || null,
+        postalCode: clinicPostalCode.trim() || null,
+        city: clinicCity.trim() || null,
+        state: clinicState.trim() || null,
+      });
+
+      showToastMessage({
+        success: true,
+        successMessage: 'Dados da clínica salvos com sucesso.',
+        errorMessage: 'Erro ao salvar os dados da clínica.',
+      });
+    } catch (saveError: any) {
+      const backendMessage =
+        saveError?.response?.data?.message ?? 'Erro ao salvar os dados da clínica.';
+      toast(backendMessage, { type: 'error', theme: 'colored' });
+    }
   };
 
   const handleSaveConfiguration = async () => {
@@ -237,11 +314,11 @@ export default function ClinicSettingsPage() {
       .map((day: ClinicDay): PutClinicAvailabilityType | undefined => {
         switch (day.week_day) {
           case 'Segunda':
-            return { ...day, week_day: 'SEGUNDA', clinic_id: clinicId };
+            return { ...day, week_day: 'SEGUNDA', clinic_id: clinicInfo?.clinicId };
           case 'Terça':
-            return { ...day, week_day: 'TERCA', clinic_id: clinicId };
+            return { ...day, week_day: 'TERCA', clinic_id: clinicInfo?.clinicId };
           case 'Quarta':
-            return { ...day, week_day: 'QUARTA', clinic_id: clinicId };
+            return { ...day, week_day: 'QUARTA', clinic_id: clinicInfo?.clinicId };
           case 'Quinta':
             return { ...day, week_day: 'QUINTA', clinic_id: clinicId };
           case 'Sexta':
@@ -374,15 +451,30 @@ export default function ClinicSettingsPage() {
   };
 
   const fetchClinicConfiguration = async () => {
-    const response = await getClinicConfiguration();
+    if (!clinicInfo?.clinicId) return;
+
+    const response = await getClinicConfiguration(clinicInfo.clinicId);
+    console.log({ response });
     if (response) {
-      setClinicName(response.clinic_name || '');
-      setAiAgentName(response.ai_name || '');
+      setClinicName(response.clinicName || '');
+      setAiAgentName(response.aiAgentName || '');
       setAppointmentDuration(
-        response.appointment_duration ? String(response.appointment_duration) : '',
+        response.appointmentDurationMinutes !== null &&
+          response.appointmentDurationMinutes !== undefined
+          ? String(response.appointmentDurationMinutes)
+          : '',
       );
-      setAllowSameTimeBooking(response.allow_overbooking || false);
-      setCustomPrompt(response.custom_prompt || '');
+      setMaxAppointmentsPerSlot(
+        response.maxAppointmentsPerSlot !== null && response.maxAppointmentsPerSlot !== undefined
+          ? String(response.maxAppointmentsPerSlot)
+          : '',
+      );
+      setClinicType(response.clinicType || '');
+      setClinicAddress(response.address || '');
+      setClinicPostalCode(response.postalCode ? formatPostalCode(response.postalCode) : '');
+      setClinicCity(response.city || '');
+      setClinicState(response.state || '');
+      // setCustomPrompt(response.custom_prompt || '');
     }
   };
 
@@ -390,7 +482,7 @@ export default function ClinicSettingsPage() {
     fetchClinicConfiguration();
     fetchClinicAvailability();
     fetchAtypicalDaysList();
-  }, []);
+  }, [clinicInfo?.clinicId]);
 
   return (
     <div className={styles.container}>
@@ -453,18 +545,53 @@ export default function ClinicSettingsPage() {
               placeholder="Ex.: 30"
               type="number"
               value={appointmentDuration}
-              handleChangeInput={(e) => {
-                const val = e.target.value.replace(/\D/g, '');
-                setAppointmentDuration(val);
+              handleChangeInput={(event) => {
+                const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
+                setAppointmentDuration(sanitizedNumericValue);
               }}
             />
-            <div className={styles.switchRow}>
-              <span className={styles.switchLabel}>Permitir agendamentos no mesmo horário</span>
-              <SwitchComponent
-                isOn={allowSameTimeBooking}
-                handleToggle={() => setAllowSameTimeBooking((prev) => !prev)}
-              />
-            </div>
+            <InputComponent
+              label="Quantidade de agendamentos no mesmo horário"
+              placeholder="Ex.: 1"
+              type="number"
+              value={maxAppointmentsPerSlot}
+              handleChangeInput={(event) => {
+                const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
+                setMaxAppointmentsPerSlot(sanitizedNumericValue);
+              }}
+            />
+            <InputComponent
+              label="Tipo da clínica"
+              placeholder="—"
+              value={CLINIC_TYPE_LABEL_BY_VALUE[clinicType] ?? clinicType}
+              disabled
+              handleChangeInput={() => {}}
+            />
+            <InputComponent
+              label="Endereço"
+              placeholder="Ex.: Rua das Flores, 123"
+              value={clinicAddress}
+              handleChangeInput={(event) => setClinicAddress(event.target.value)}
+            />
+            <InputComponent
+              label="CEP"
+              placeholder="Ex.: 01234-567"
+              value={clinicPostalCode}
+              onBlur={findAddressByPostalCode}
+              handleChangeInput={(event) => handlePostalCodeChange(event.target.value)}
+            />
+            <InputComponent
+              label="Cidade"
+              placeholder="Ex.: São Paulo"
+              value={clinicCity}
+              handleChangeInput={(event) => setClinicCity(event.target.value)}
+            />
+            <InputComponent
+              label="Estado"
+              placeholder="Ex.: SP"
+              value={clinicState}
+              handleChangeInput={(event) => setClinicState(event.target.value)}
+            />
           </div>
           <div className={styles.customPromptSection}>
             <label className={styles.customPromptLabel}>Prompt personalizado da IA</label>

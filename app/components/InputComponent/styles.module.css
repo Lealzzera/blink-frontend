@@ -12,7 +12,7 @@
 }
 
 .inputLabel {
-  width: 5px;
+  font-size: 14px;
 }
 
 .inputLabel.required::after {
