@@ -33,4 +33,15 @@ export async function getConversationMessages({
 
   //TODO: REMOVE THIS AND IMPLEMENT THIS LOGIC INTO THE BACKEND INSTEAD
 
- 
+  return data.messages.map((m: any) => {
+    const text = m.hasMedia ? (m.message ?? 'Mensagem com arquivo de mídia') : (m.message ?? '');
+    return {
+      id: m.id,
+      message: text,
+      message_text: text,
+      sent_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : '',
+      from_me: m.fromMe,
+      has_media: m.hasMedia,
+    };
+  });
+}
