@@ -5,16 +5,31 @@ import { getRealtimeWebSocketUrl } from '../actions/getRealtimeWebSocketUrl';
 import { useUser } from './userContext';
 
 export type ChatMessage = {
+  chat_id?: string;
   phone_number: string;
-  clinic_id: number;
+  clinic_id: string;
   message: string;
   from_me: boolean;
   sent_at: string;
+  contact_name?: string | null;
+  has_media?: boolean;
+  id?: string;
 };
 
 export type WahaRealtimeMessage = {
   event: string;
   payload: unknown;
+};
+
+type WahaMessageAnyPayload = {
+  eventId?: string;
+  phoneChatId?: string | null;
+  sourceChatId?: string;
+  contactName?: string | null;
+  fromMe?: boolean;
+  hasMedia?: boolean;
+  message?: string;
+  timestamp?: number;
 };
 
 type ChatContextType = {
@@ -27,6 +42,37 @@ type ChatContextType = {
 };
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
+
+function formatChatIdToPhoneNumber(chatId: string) {
+  return chatId.replace(/^(\d{2})(\d{2})(\d{4,5}?)(\d{4})@c\.us$/, '+$1 $2 $3-$4');
+}
+
+function isWahaMessageAnyPayload(payload: unknown): payload is WahaMessageAnyPayload {
+  if (!payload || typeof payload !== 'object') return false;
+
+  const value = payload as WahaMessageAnyPayload;
+
+  return typeof value.phoneChatId === 'string' && typeof value.message === 'string';
+}
+
+function mapWahaMessageAnyToChatMessage(
+  payload: WahaMessageAnyPayload,
+  clinicId: string,
+): ChatMessage | null {
+  if (!payload.phoneChatId || !payload.message) return null;
+
+  return {
+    id: payload.eventId,
+    chat_id: payload.phoneChatId,
+    phone_number: formatChatIdToPhoneNumber(payload.phoneChatId),
+    clinic_id: clinicId,
+    message: payload.message,
+    from_me: Boolean(payload.fromMe),
+    sent_at: payload.timestamp ? new Date(payload.timestamp * 1000).toISOString() : new Date().toISOString(),
+    contact_name: payload.contactName,
+    has_media: Boolean(payload.hasMedia),
+  };
+}
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messagesByPhone, setMessagesByPhone] = useState<Record<string, ChatMessage[]>>({});
@@ -95,6 +141,20 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         if (message.event === 'waha:event') {
           setLastWahaEvent(message);
           setWahaEvents((prev) => [...prev.slice(-49), message]);
+          return;
+        }
+
+        if (message.event === 'message_any' && clinicInfo?.clinicId) {
+          setLastWahaEvent(message);
+          setWahaEvents((prev) => [...prev.slice(-49), message]);
+
+          if (!isWahaMessageAnyPayload(message.payload)) return;
+
+          const chatMessage = mapWahaMessageAnyToChatMessage(message.payload, clinicInfo.clinicId);
+
+          if (chatMessage) {
+            pushIncomingMessage(chatMessage);
+          }
         }
       };
 

@@ -20,6 +20,32 @@ type ChatComponentProps = {
   contactId: string;
 };
 
+function getMessageText(message: any) {
+  return message.message ?? message.message_text ?? '';
+}
+
+function isSameMessage(currentMessage: any, nextMessage: any) {
+  if (currentMessage.id && nextMessage.id) {
+    return currentMessage.id === nextMessage.id;
+  }
+
+  const hasSameText = getMessageText(currentMessage) === getMessageText(nextMessage);
+  const hasSameDirection = currentMessage.from_me === nextMessage.from_me;
+  const sentAtDifferenceInMs = Math.abs(
+    new Date(currentMessage.sent_at).getTime() - new Date(nextMessage.sent_at).getTime(),
+  );
+
+  if (currentMessage.from_me && nextMessage.from_me) {
+    return hasSameText && sentAtDifferenceInMs <= 10000;
+  }
+
+  return (
+    currentMessage.sent_at === nextMessage.sent_at &&
+    hasSameText &&
+    hasSameDirection
+  );
+}
+
 export default function ChatComponent({
   phoneNumber,
   contactName,
@@ -42,6 +68,7 @@ export default function ChatComponent({
 
   const prevScrollTopRef = useRef(0);
   const prevScrollHeightRef = useRef(0);
+  const shouldScrollToBottomAfterNewMessageRef = useRef(false);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -127,9 +154,9 @@ export default function ChatComponent({
     [phoneNumber, loading],
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
-    const value = e.target.value;
+    const value = event.target.value;
     setMessage(value);
     if (!textarea) return;
     textarea.style.height = 'auto';
@@ -144,30 +171,28 @@ export default function ChatComponent({
     setMessage('');
 
     const newMessage = {
+      message,
       message_text: message,
       from_me: true,
       sent_at: new Date().toISOString(),
     };
 
+    shouldScrollToBottomAfterNewMessageRef.current = true;
     setMessageList((prev) => [...prev, newMessage]);
 
     // TODO: IMPLEMENT IT WHEN WAHA IS READY
     // await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
     await postMessage({ chatId: contactId, text: message, session: 'default' });
 
-    if (ulRef.current) {
-      ulRef.current.scrollTop = ulRef.current.scrollHeight;
-    }
-
     if (textareaRef.current) {
       textareaRef.current.style.height = '40px';
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && e.shiftKey) return;
-    if (e.key === 'Enter') {
-      e.preventDefault();
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && event.shiftKey) return;
+    if (event.key === 'Enter') {
+      event.preventDefault();
       handleSendMessage();
     }
   };
@@ -208,12 +233,32 @@ export default function ChatComponent({
   }, [messageList, pageNumber]);
 
   useEffect(() => {
-    const message = lastMessageByPhone[phoneNumber];
-    if (!message) return;
-    if (message.from_me) return;
+    const latestMessage = lastMessageByPhone[phoneNumber];
+    if (!latestMessage) return;
 
-    setMessageList((prev) => [...prev, message]);
-  }, [lastMessageByPhone]);
+    setMessageList((prev) => {
+      const alreadyExists = prev.some((message) => isSameMessage(message, latestMessage));
+
+      if (alreadyExists) return prev;
+
+      shouldScrollToBottomAfterNewMessageRef.current = true;
+      return [...prev, latestMessage];
+    });
+  }, [lastMessageByPhone, phoneNumber]);
+
+  useEffect(() => {
+    if (!shouldScrollToBottomAfterNewMessageRef.current) return;
+
+    const container = ulRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+
+    shouldScrollToBottomAfterNewMessageRef.current = false;
+  }, [messageList]);
 
   return (
     <div ref={chatRef} className={style.chatContainer}>

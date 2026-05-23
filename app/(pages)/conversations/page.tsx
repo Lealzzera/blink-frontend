@@ -1,6 +1,7 @@
 'use client';
 
 import { fetchChatOverview } from '@/app/actions/fetchChatOverview';
+import { useChat } from '@/app/context/chatContext';
 import { useUser } from '@/app/context/userContext';
 import { useWhatsApp } from '@/app/hooks/useWhatsApp';
 import { ChatListItem } from '@/app/types/types';
@@ -14,6 +15,7 @@ const LIMIT = 20;
 export default function Conversations() {
   const { whatsAppStatus } = useWhatsApp();
   const { contactSelected, clinicInfo } = useUser();
+  const { lastMessageByPhone } = useChat();
 
   const [page, setPage] = useState(0);
   const [conversations, setConversations] = useState<ChatListItem[]>([]);
@@ -74,6 +76,51 @@ export default function Conversations() {
   useEffect(() => {
     fetchConversations(0);
   }, [clinicInfo?.clinicId]);
+
+  useEffect(() => {
+    const lastMessages = Object.values(lastMessageByPhone);
+    const lastMessage = lastMessages.at(-1);
+
+    if (!lastMessage) return;
+
+    const sentAt = Math.floor(new Date(lastMessage.sent_at).getTime() / 1000);
+
+    setConversations((prev) => {
+      const existingConversationIndex = prev.findIndex(
+        (conversation) => conversation.phoneNumber === lastMessage.phone_number,
+      );
+
+      const updatedConversation: ChatListItem = {
+        id: lastMessage.chat_id ?? lastMessage.phone_number,
+        phoneNumber: lastMessage.phone_number,
+        contactName: lastMessage.contact_name || lastMessage.phone_number,
+        contactPicture: '',
+        ai_answer: true,
+        lastMessage: {
+          message: lastMessage.message,
+          hasMedia: Boolean(lastMessage.has_media),
+          sentAt: String(sentAt),
+        },
+      };
+
+      if (existingConversationIndex === -1) {
+        return [updatedConversation, ...prev];
+      }
+
+      const nextConversations = [...prev];
+      const existingConversation = nextConversations[existingConversationIndex];
+
+      nextConversations.splice(existingConversationIndex, 1);
+
+      return [
+        {
+          ...existingConversation,
+          lastMessage: updatedConversation.lastMessage,
+        },
+        ...nextConversations,
+      ];
+    });
+  }, [lastMessageByPhone]);
 
   const handleFetchMore = useCallback(() => {
     if (!hasMore || isLoadingRef.current) return;

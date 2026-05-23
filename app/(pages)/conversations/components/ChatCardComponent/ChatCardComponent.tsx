@@ -25,7 +25,7 @@ export default function ChatCardComponent({
     <div
       onClick={cardClick}
       className={`${styles.cardContainer} ${
-        cardSelected?.phone_number === phoneNumber ? styles.cardSelected : ""
+        cardSelected?.phoneNumber === phoneNumber ? styles.cardSelected : ""
       }`}
     >
       <div className={styles.pictureContainer}>

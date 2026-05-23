@@ -121,6 +121,11 @@ export default function ChatListComponent({
               const lastMessage = lastMessageByPhone[item.phoneNumber]
                 ? lastMessageByPhone[item.phoneNumber].message
                 : item.lastMessage.message;
+              const sentAt = lastMessageByPhone[item.phoneNumber]
+                ? Math.floor(
+                    new Date(lastMessageByPhone[item.phoneNumber].sent_at).getTime() / 1000,
+                  )
+                : Number(item.lastMessage.sentAt);
 
               return (
                 <li ref={isLast ? lastItemRef : null} key={item.phoneNumber}>
@@ -131,7 +136,7 @@ export default function ChatListComponent({
                     cardSelected={cardSelected}
                     lastMessage={lastMessage}
                     phoneNumber={item.phoneNumber}
-                    sentAt={formatChatDate(Number(item.lastMessage.sentAt))}
+                    sentAt={formatChatDate(sentAt)}
                   />
                 </li>
               );
