@@ -1,9 +1,8 @@
 'use client';
 
-import { createClient } from '@/utils/supabase/client';
-import { Client, Message } from '@stomp/stompjs';
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
-import SockJS from 'sockjs-client';
+import { getRealtimeWebSocketUrl } from '../actions/getRealtimeWebSocketUrl';
+import { useUser } from './userContext';
 
 export type ChatMessage = {
   phone_number: string;
@@ -13,9 +12,16 @@ export type ChatMessage = {
   sent_at: string;
 };
 
+export type WahaRealtimeMessage = {
+  event: string;
+  payload: unknown;
+};
+
 type ChatContextType = {
   messagesByPhone: Record<string, ChatMessage[]>;
   lastMessageByPhone: Record<string, ChatMessage>;
+  lastWahaEvent: WahaRealtimeMessage | null;
+  wahaEvents: WahaRealtimeMessage[];
   pushIncomingMessage: (msg: ChatMessage) => void;
   pushLocalMessage: (msg: ChatMessage) => void;
 };
@@ -24,10 +30,11 @@ const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messagesByPhone, setMessagesByPhone] = useState<Record<string, ChatMessage[]>>({});
-
   const [lastMessageByPhone, setLastMessageByPhone] = useState<Record<string, ChatMessage>>({});
-
-  const clientRef = useRef<Client | null>(null);
+  const [lastWahaEvent, setLastWahaEvent] = useState<WahaRealtimeMessage | null>(null);
+  const [wahaEvents, setWahaEvents] = useState<WahaRealtimeMessage[]>([]);
+  const { clinicInfo } = useUser();
+  const socketRef = useRef<WebSocket | null>(null);
 
   const pushIncomingMessage = (message: ChatMessage) => {
     if (!message) return;
@@ -57,63 +64,70 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
+    if (!clinicInfo) return;
     let mounted = true;
+    let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
 
-    const init = async () => {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+    const connect = async () => {
+      const wsUrl = await getRealtimeWebSocketUrl(clinicInfo.clinicId);
 
-      const token = session?.access_token;
-      const userId = session?.user?.id;
+      if (!wsUrl || !mounted) return;
 
-      if (!token || !userId || !mounted) return;
+      const socket = new WebSocket(wsUrl);
+      socketRef.current = socket;
 
-      const res = await fetch('/api/ws-config');
-      const { wsUrl } = await res.json();
+      socket.onopen = () => {
+        console.log('Realtime websocket connected');
+      };
 
-      if (!wsUrl) {
-        throw new Error('WebSocket URL is not defined');
-      }
+      socket.onmessage = (event) => {
+        let message: WahaRealtimeMessage;
 
-      const socket = new SockJS(`${wsUrl}/wpp-socket/subscribe?token=Bearer%20${token}`);
+        try {
+          message = JSON.parse(event.data) as WahaRealtimeMessage;
+        } catch {
+          console.warn('Realtime websocket received a non-json message:', event.data);
+          return;
+        }
 
-      const client = new Client({
-        webSocketFactory: () => socket,
-        connectHeaders: { Authorization: `Bearer ${token}` },
-        onConnect: () => {
-          const topic = `/user/${userId}/notify/message-received`;
+        console.log('Realtime websocket message:', message);
 
-          client.subscribe(topic, (msg: Message) => {
-            const payload = JSON.parse(msg.body);
-            console.log('message', { payload });
-            pushIncomingMessage(payload);
-          });
-        },
-        onStompError: (frame) => {
-          console.error('❌ Erro STOMP:', frame?.body ?? frame);
-        },
-      });
+        if (message.event === 'waha:event') {
+          setLastWahaEvent(message);
+          setWahaEvents((prev) => [...prev.slice(-49), message]);
+        }
+      };
 
-      clientRef.current = client;
-      client.activate();
+      socket.onerror = (event) => {
+        console.error('Realtime websocket error:', event);
+      };
+
+      socket.onclose = () => {
+        socketRef.current = null;
+
+        if (!mounted) return;
+
+        reconnectTimeout = setTimeout(connect, 3000);
+      };
     };
 
-    init();
+    connect();
 
     return () => {
       mounted = false;
-      clientRef.current?.deactivate();
-      clientRef.current = null;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      socketRef.current?.close();
+      socketRef.current = null;
     };
-  }, []);
+  }, [clinicInfo?.clinicId]);
 
   return (
     <ChatContext.Provider
       value={{
         messagesByPhone,
         lastMessageByPhone,
+        lastWahaEvent,
+        wahaEvents,
         pushIncomingMessage,
         pushLocalMessage,
       }}
