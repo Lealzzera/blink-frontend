@@ -12,6 +12,7 @@ export type ChatMessage = {
   from_me: boolean;
   sent_at: string;
   contact_name?: string | null;
+  contact_picture?: string | null;
   has_media?: boolean;
   id?: string;
 };
@@ -26,17 +27,28 @@ type WahaMessageAnyPayload = {
   phoneChatId?: string | null;
   sourceChatId?: string;
   contactName?: string | null;
+  contactPicture?: string | null;
   fromMe?: boolean;
   hasMedia?: boolean;
   message?: string;
   timestamp?: number;
 };
 
+type WahaMessageAckPayload = {
+  ack?: number;
+  eventId?: string;
+  fromMe?: boolean;
+  phoneChatId?: string | null;
+};
+
 type ChatContextType = {
   messagesByPhone: Record<string, ChatMessage[]>;
   lastMessageByPhone: Record<string, ChatMessage>;
+  latestChatMessage: ChatMessage | null;
   lastWahaEvent: WahaRealtimeMessage | null;
+  unreadCountByPhone: Record<string, number>;
   wahaEvents: WahaRealtimeMessage[];
+  clearUnreadMessages: (phoneNumber: string) => void;
   pushIncomingMessage: (msg: ChatMessage) => void;
   pushLocalMessage: (msg: ChatMessage) => void;
 };
@@ -55,6 +67,14 @@ function isWahaMessageAnyPayload(payload: unknown): payload is WahaMessageAnyPay
   return typeof value.phoneChatId === 'string' && typeof value.message === 'string';
 }
 
+function isWahaMessageAckPayload(payload: unknown): payload is WahaMessageAckPayload {
+  if (!payload || typeof payload !== 'object') return false;
+
+  const value = payload as WahaMessageAckPayload;
+
+  return typeof value.phoneChatId === 'string' && typeof value.ack === 'number';
+}
+
 function mapWahaMessageAnyToChatMessage(
   payload: WahaMessageAnyPayload,
   clinicId: string,
@@ -70,6 +90,7 @@ function mapWahaMessageAnyToChatMessage(
     from_me: Boolean(payload.fromMe),
     sent_at: payload.timestamp ? new Date(payload.timestamp * 1000).toISOString() : new Date().toISOString(),
     contact_name: payload.contactName,
+    contact_picture: payload.contactPicture,
     has_media: Boolean(payload.hasMedia),
   };
 }
@@ -77,10 +98,54 @@ function mapWahaMessageAnyToChatMessage(
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messagesByPhone, setMessagesByPhone] = useState<Record<string, ChatMessage[]>>({});
   const [lastMessageByPhone, setLastMessageByPhone] = useState<Record<string, ChatMessage>>({});
+  const [latestChatMessage, setLatestChatMessage] = useState<ChatMessage | null>(null);
   const [lastWahaEvent, setLastWahaEvent] = useState<WahaRealtimeMessage | null>(null);
+  const [unreadMessageIdsByPhone, setUnreadMessageIdsByPhone] = useState<Record<string, string[]>>({});
   const [wahaEvents, setWahaEvents] = useState<WahaRealtimeMessage[]>([]);
-  const { clinicInfo } = useUser();
+  const { clinicInfo, contactSelected } = useUser();
   const socketRef = useRef<WebSocket | null>(null);
+  const selectedPhoneNumberRef = useRef<string | null>(null);
+
+  const unreadCountByPhone = Object.fromEntries(
+    Object.entries(unreadMessageIdsByPhone).map(([phoneNumber, unreadMessageIds]) => [
+      phoneNumber,
+      unreadMessageIds.length,
+    ]),
+  );
+
+  const addUnreadMessage = (phoneNumber: string, messageId: string) => {
+    setUnreadMessageIdsByPhone((prev) => {
+      const unreadMessageIds = prev[phoneNumber] ?? [];
+
+      if (unreadMessageIds.includes(messageId)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [phoneNumber]: [...unreadMessageIds, messageId],
+      };
+    });
+  };
+
+  const clearUnreadMessages = (phoneNumber: string) => {
+    setUnreadMessageIdsByPhone((prev) => {
+      if (!prev[phoneNumber]?.length) return prev;
+
+      const next = { ...prev };
+      delete next[phoneNumber];
+
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    selectedPhoneNumberRef.current = contactSelected?.phoneNumber ?? null;
+
+    if (contactSelected?.phoneNumber) {
+      clearUnreadMessages(contactSelected.phoneNumber);
+    }
+  }, [contactSelected?.phoneNumber]);
 
   const pushIncomingMessage = (message: ChatMessage) => {
     if (!message) return;
@@ -103,6 +168,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       ...prev,
       [message.phone_number]: message,
     }));
+    setLatestChatMessage(message);
   };
 
   const pushLocalMessage = (msg: ChatMessage) => {
@@ -154,6 +220,35 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
           if (chatMessage) {
             pushIncomingMessage(chatMessage);
+
+            if (!chatMessage.from_me && selectedPhoneNumberRef.current !== chatMessage.phone_number) {
+              addUnreadMessage(chatMessage.phone_number, chatMessage.id ?? chatMessage.sent_at);
+            }
+          }
+
+          return;
+        }
+
+        if (message.event === 'message_ack') {
+          setLastWahaEvent(message);
+          setWahaEvents((prev) => [...prev.slice(-49), message]);
+
+          if (!isWahaMessageAckPayload(message.payload)) return;
+          if (!message.payload.phoneChatId) return;
+
+          const phoneNumber = formatChatIdToPhoneNumber(message.payload.phoneChatId);
+          const messageId = message.payload.eventId ?? `${phoneNumber}:${message.payload.ack}`;
+
+          if (
+            message.payload.ack === 2 &&
+            !message.payload.fromMe &&
+            selectedPhoneNumberRef.current !== phoneNumber
+          ) {
+            addUnreadMessage(phoneNumber, messageId);
+          }
+
+          if (message.payload.ack === 3) {
+            clearUnreadMessages(phoneNumber);
           }
         }
       };
@@ -186,8 +281,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       value={{
         messagesByPhone,
         lastMessageByPhone,
+        latestChatMessage,
         lastWahaEvent,
+        unreadCountByPhone,
         wahaEvents,
+        clearUnreadMessages,
         pushIncomingMessage,
         pushLocalMessage,
       }}

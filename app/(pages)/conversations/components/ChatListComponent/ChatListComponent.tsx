@@ -27,7 +27,7 @@ export default function ChatListComponent({
   numberNotConnected,
 }: ChatListComponentProps) {
   const { contactSelected, handleSetContactSelected } = useUser();
-  const { lastMessageByPhone } = useChat();
+  const { clearUnreadMessages, lastMessageByPhone, unreadCountByPhone } = useChat();
   const [cardSelected, setCardSelected] = useState<ContactSelected | null>(contactSelected);
   const [searchInputValue, setSearchInputValue] = useState('');
   const [filteredList, setFilteredList] = useState<ChatListItem[]>(chatList);
@@ -58,6 +58,7 @@ export default function ChatListComponent({
   const handleCardClick = (value: ContactSelected) => {
     setCardSelected(value);
     handleSetContactSelected(value);
+    clearUnreadMessages(value.phoneNumber);
   };
 
   const handleSearchChat = (event: any) => {
@@ -137,6 +138,7 @@ export default function ChatListComponent({
                     lastMessage={lastMessage}
                     phoneNumber={item.phoneNumber}
                     sentAt={formatChatDate(sentAt)}
+                    unreadCount={unreadCountByPhone[item.phoneNumber] ?? 0}
                   />
                 </li>
               );

@@ -15,7 +15,7 @@ const LIMIT = 20;
 export default function Conversations() {
   const { whatsAppStatus } = useWhatsApp();
   const { contactSelected, clinicInfo } = useUser();
-  const { lastMessageByPhone } = useChat();
+  const { latestChatMessage } = useChat();
 
   const [page, setPage] = useState(0);
   const [conversations, setConversations] = useState<ChatListItem[]>([]);
@@ -78,8 +78,7 @@ export default function Conversations() {
   }, [clinicInfo?.clinicId]);
 
   useEffect(() => {
-    const lastMessages = Object.values(lastMessageByPhone);
-    const lastMessage = lastMessages.at(-1);
+    const lastMessage = latestChatMessage;
 
     if (!lastMessage) return;
 
@@ -94,7 +93,7 @@ export default function Conversations() {
         id: lastMessage.chat_id ?? lastMessage.phone_number,
         phoneNumber: lastMessage.phone_number,
         contactName: lastMessage.contact_name || lastMessage.phone_number,
-        contactPicture: '',
+        contactPicture: lastMessage.contact_picture || '',
         ai_answer: true,
         lastMessage: {
           message: lastMessage.message,
@@ -115,12 +114,18 @@ export default function Conversations() {
       return [
         {
           ...existingConversation,
+          contactName:
+            existingConversation.contactName ||
+            updatedConversation.contactName,
+          contactPicture:
+            existingConversation.contactPicture ||
+            updatedConversation.contactPicture,
           lastMessage: updatedConversation.lastMessage,
         },
         ...nextConversations,
       ];
     });
-  }, [lastMessageByPhone]);
+  }, [latestChatMessage]);
 
   const handleFetchMore = useCallback(() => {
     if (!hasMore || isLoadingRef.current) return;
