@@ -97,6 +97,19 @@ function formatPostalCode(value: string) {
   return cleanedPostalCode.replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9);
 }
 
+function splitAddressAndNumber(address: string | null) {
+  if (!address) {
+    return { street: '', number: '' };
+  }
+
+  const [street, ...addressNumberParts] = address.split(',');
+
+  return {
+    street: street.trim(),
+    number: addressNumberParts.join(',').trim(),
+  };
+}
+
 function formatTimeValue(value: string) {
   const digits = value.replace(/\D/g, '');
   let formatted = '';
@@ -219,9 +232,12 @@ export default function ClinicSettingsPage() {
   const [maxAppointmentsPerSlot, setMaxAppointmentsPerSlot] = useState('');
   const [clinicType, setClinicType] = useState('');
   const [clinicAddress, setClinicAddress] = useState('');
+  const [clinicAddressNumber, setClinicAddressNumber] = useState('');
   const [clinicPostalCode, setClinicPostalCode] = useState('');
   const [clinicCity, setClinicCity] = useState('');
   const [clinicState, setClinicState] = useState('');
+  const [chargesEvaluation, setChargesEvaluation] = useState(false);
+  const [evaluationPriceCents, setEvaluationPriceCents] = useState(0);
   const [activeTab, setActiveTab] = useState<'dados' | 'horarios'>('dados');
   const [isAtypicalFormOpen, setIsAtypicalFormOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] =
@@ -276,7 +292,7 @@ export default function ClinicSettingsPage() {
             ...day,
             isWorkDay: weekdayPeriods.length > 0,
             open: firstPeriod?.startTime ?? '',
-            break_start: secondPeriod ? firstPeriod?.endTime ?? '' : '',
+            break_start: secondPeriod ? (firstPeriod?.endTime ?? '') : '',
             break_end: secondPeriod?.startTime ?? '',
             close: secondPeriod?.endTime ?? firstPeriod?.endTime ?? '',
           };
@@ -314,7 +330,7 @@ export default function ClinicSettingsPage() {
               exception_day: formatDateToDisplay(item.date),
               is_working_day: item.isOpen,
               open: firstPeriod?.startTime ?? '',
-              break_start: secondPeriod ? firstPeriod?.endTime ?? '' : '',
+              break_start: secondPeriod ? (firstPeriod?.endTime ?? '') : '',
               break_end: secondPeriod?.startTime ?? '',
               close: secondPeriod?.endTime ?? firstPeriod?.endTime ?? '',
             };
@@ -387,13 +403,27 @@ export default function ClinicSettingsPage() {
   const handleSaveClinicBasicData = async () => {
     const normalizedClinicName = clinicName.trim();
     const normalizedAiAgentName = aiAgentName.trim();
-    const clinicError = normalizedClinicName.length === 0;
-    const agentError = normalizedAiAgentName.length === 0;
+    const requiredFields = [
+      normalizedClinicName,
+      normalizedAiAgentName,
+      appointmentDuration,
+      maxAppointmentsPerSlot,
+      clinicType,
+      clinicAddress.trim(),
+      clinicAddressNumber.trim(),
+      clinicPostalCode.trim(),
+      clinicCity.trim(),
+      clinicState.trim(),
+    ];
+    const clinicError = !normalizedClinicName;
+    const agentError = !normalizedAiAgentName;
+    const hasEmptyRequiredField = requiredFields.some((value) => !value);
+    const hasInvalidEvaluationPrice = chargesEvaluation && evaluationPriceCents <= 0;
 
     setClinicNameError(clinicError);
     setAiAgentNameError(agentError);
 
-    if (clinicError || agentError) {
+    if (hasEmptyRequiredField || hasInvalidEvaluationPrice) {
       toast('Preencha os campos obrigatorios.', {
         type: 'error',
         theme: 'colored',
@@ -417,11 +447,11 @@ export default function ClinicSettingsPage() {
         aiAgentName: normalizedAiAgentName,
         appointmentDurationMinutes: Number(appointmentDuration) || 0,
         maxAppointmentsPerSlot: Number(maxAppointmentsPerSlot) || 1,
-        chargesEvaluation: false,
-        evaluationPriceCents: 0,
+        chargesEvaluation,
+        evaluationPriceCents: chargesEvaluation ? evaluationPriceCents : 0,
         allowRescheduling: true,
         allowCancellation: true,
-        address: clinicAddress.trim() || null,
+        address: `${clinicAddress.trim()}, ${clinicAddressNumber.trim()}`,
         postalCode: clinicPostalCode.trim() || null,
         city: clinicCity.trim() || null,
         state: clinicState.trim() || null,
@@ -632,10 +662,14 @@ export default function ClinicSettingsPage() {
           : '',
       );
       setClinicType(response.clinicType || '');
-      setClinicAddress(response.address || '');
+      const { street, number } = splitAddressAndNumber(response.address);
+      setClinicAddress(street);
+      setClinicAddressNumber(number);
       setClinicPostalCode(response.postalCode ? formatPostalCode(response.postalCode) : '');
       setClinicCity(response.city || '');
       setClinicState(response.state || '');
+      setChargesEvaluation(Boolean(response.chargesEvaluation));
+      setEvaluationPriceCents(response.evaluationPriceCents ?? 0);
     }
   };
 
@@ -649,9 +683,9 @@ export default function ClinicSettingsPage() {
     <div className={styles.container}>
       <ToastContainer />
       <div className={styles.header}>
-        <h1>Configuracoes da clinica</h1>
+        <h1>Configurações da clínica</h1>
         <p className={styles.subtitle}>
-          Gerencie os dados e horarios de funcionamento da sua clinica.
+          Gerencie os dados e horários de funcionamento da sua clínica.
         </p>
       </div>
 
@@ -660,13 +694,13 @@ export default function ClinicSettingsPage() {
           className={`${styles.tabButton} ${activeTab === 'dados' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('dados')}
         >
-          Dados da clinica
+          Dados da clínica
         </button>
         <button
           className={`${styles.tabButton} ${activeTab === 'horarios' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('horarios')}
         >
-          Horarios de funcionamento
+          Horários de funcionamento
         </button>
       </div>
 
@@ -689,6 +723,8 @@ export default function ClinicSettingsPage() {
           setClinicType={setClinicType}
           clinicAddress={clinicAddress}
           setClinicAddress={setClinicAddress}
+          clinicAddressNumber={clinicAddressNumber}
+          setClinicAddressNumber={setClinicAddressNumber}
           handleSaveClinicBasicData={handleSaveClinicBasicData}
           findAddressByPostalCode={findAddressByPostalCode}
           handlePostalCodeChange={handlePostalCodeChange}
@@ -698,6 +734,10 @@ export default function ClinicSettingsPage() {
           setClinicCity={setClinicCity}
           clinicState={clinicState}
           setClinicState={setClinicState}
+          chargesEvaluation={chargesEvaluation}
+          setChargesEvaluation={setChargesEvaluation}
+          evaluationPriceCents={evaluationPriceCents}
+          setEvaluationPriceCents={setEvaluationPriceCents}
         />
       )}
 
@@ -733,10 +773,7 @@ export default function ClinicSettingsPage() {
                   <SwitchComponent
                     isOn={atypicalDayConfig.is_working_day}
                     handleToggle={() =>
-                      handleManageAtypicalDay(
-                        'is_working_day',
-                        !atypicalDayConfig.is_working_day,
-                      )
+                      handleManageAtypicalDay('is_working_day', !atypicalDayConfig.is_working_day)
                     }
                   />
                   {(['open', 'break_start', 'break_end', 'close'] as const).map((field) => (

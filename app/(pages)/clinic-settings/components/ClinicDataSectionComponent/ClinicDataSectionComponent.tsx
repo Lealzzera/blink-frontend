@@ -1,6 +1,7 @@
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SelectComponent from '@/app/components/SelectComponent/SelectComponent';
+import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import styles from '../../style.module.css';
 
 type ClinicDataSectionComponentProps = {
@@ -21,6 +22,8 @@ type ClinicDataSectionComponentProps = {
   setClinicType: (value: string) => void;
   clinicAddress: string;
   setClinicAddress: (value: string) => void;
+  clinicAddressNumber: string;
+  setClinicAddressNumber: (value: string) => void;
   handleSaveClinicBasicData: () => void;
   findAddressByPostalCode: () => void;
   handlePostalCodeChange: (value: string) => void;
@@ -30,7 +33,20 @@ type ClinicDataSectionComponentProps = {
   setClinicCity: (value: string) => void;
   clinicState: string;
   setClinicState: (value: string) => void;
+  chargesEvaluation: boolean;
+  setChargesEvaluation: (value: boolean) => void;
+  evaluationPriceCents: number;
+  setEvaluationPriceCents: (value: number) => void;
 };
+
+function formatPriceCents(cents: number): string {
+  if (cents <= 0) return '';
+
+  return (cents / 100).toLocaleString('pt-BR', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
 
 export default function ClinicDataSectionComponent({
   clinicName,
@@ -50,6 +66,8 @@ export default function ClinicDataSectionComponent({
   setClinicType,
   clinicAddress,
   setClinicAddress,
+  clinicAddressNumber,
+  setClinicAddressNumber,
   handleSaveClinicBasicData,
   findAddressByPostalCode,
   handlePostalCodeChange,
@@ -59,7 +77,24 @@ export default function ClinicDataSectionComponent({
   setClinicCity,
   clinicState,
   setClinicState,
+  chargesEvaluation,
+  setChargesEvaluation,
+  evaluationPriceCents,
+  setEvaluationPriceCents,
 }: ClinicDataSectionComponentProps) {
+  const isSaveDisabled =
+    !clinicName.trim() ||
+    !aiAgentName.trim() ||
+    !appointmentDuration.trim() ||
+    !maxAppointmentsPerSlot.trim() ||
+    !clinicType.trim() ||
+    !clinicAddress.trim() ||
+    !clinicAddressNumber.trim() ||
+    !clinicPostalCode.trim() ||
+    !clinicCity.trim() ||
+    !clinicState.trim() ||
+    (chargesEvaluation && evaluationPriceCents <= 0);
+
   return (
     <div className={styles.basicDataCard}>
       <div className={styles.basicDataHeader}>
@@ -95,6 +130,7 @@ export default function ClinicDataSectionComponent({
           label="Duração do agendamento (minutos)"
           placeholder="Ex.: 30"
           type="number"
+          required
           value={appointmentDuration}
           handleChangeInput={(event) => {
             const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
@@ -105,6 +141,7 @@ export default function ClinicDataSectionComponent({
           label="Quantidade de agendamentos no mesmo horário"
           placeholder="Ex.: 1"
           type="number"
+          required
           value={maxAppointmentsPerSlot}
           handleChangeInput={(event) => {
             const sanitizedNumericValue = event.target.value.replace(/\D/g, '');
@@ -117,16 +154,26 @@ export default function ClinicDataSectionComponent({
           options={clinicTypeOptions}
           value={clinicType}
           setValue={setClinicType}
+          required
         />
         <InputComponent
           label="Endereço"
-          placeholder="Ex.: Rua das Flores, 123"
+          placeholder="Ex.: Rua das Flores"
+          required
           value={clinicAddress}
           handleChangeInput={(event) => setClinicAddress(event.target.value)}
         />
         <InputComponent
+          label="Número"
+          placeholder="Ex.: 123"
+          required
+          value={clinicAddressNumber}
+          handleChangeInput={(event) => setClinicAddressNumber(event.target.value)}
+        />
+        <InputComponent
           label="CEP"
           placeholder="Ex.: 01234-567"
+          required
           value={clinicPostalCode}
           onBlur={findAddressByPostalCode}
           handleChangeInput={(event) => handlePostalCodeChange(event.target.value)}
@@ -134,15 +181,40 @@ export default function ClinicDataSectionComponent({
         <InputComponent
           label="Cidade"
           placeholder="Ex.: São Paulo"
+          required
           value={clinicCity}
           handleChangeInput={(event) => setClinicCity(event.target.value)}
         />
         <InputComponent
           label="Estado"
           placeholder="Ex.: SP"
+          required
           value={clinicState}
           handleChangeInput={(event) => setClinicState(event.target.value)}
         />
+        <div className={styles.evaluationSection}>
+          <div className={styles.evaluationHeader}>
+            <p className={styles.evaluationLabel}>Sua clínica cobra por consulta inicial?</p>
+            <SwitchComponent
+              isOn={chargesEvaluation}
+              handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
+            />
+          </div>
+          {chargesEvaluation && (
+            <div className={styles.evaluationInput}>
+              <InputComponent
+                label="Valor da consulta inicial"
+                placeholder="0,00"
+                required
+                value={formatPriceCents(evaluationPriceCents)}
+                handleChangeInput={(event) => {
+                  const digits = event.target.value.replace(/\D/g, '');
+                  setEvaluationPriceCents(digits ? parseInt(digits, 10) : 0);
+                }}
+              />
+            </div>
+          )}
+        </div>
       </div>
       {/* <div className={styles.customPromptSection}>
         <label className={styles.customPromptLabel}>Prompt personalizado da IA</label>
@@ -159,7 +231,11 @@ export default function ClinicDataSectionComponent({
         />
       </div> */}
       <div className={styles.basicDataActions}>
-        <ButtonComponent text="Salvar dados" handleClickButton={handleSaveClinicBasicData} />
+        <ButtonComponent
+          disabled={isSaveDisabled}
+          text="Salvar dados"
+          handleClickButton={handleSaveClinicBasicData}
+        />
       </div>
     </div>
   );

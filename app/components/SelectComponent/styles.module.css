@@ -6,6 +6,11 @@
     display: block;
 }
 
+.required::after {
+    content: " *";
+    color: var(--red-300);
+}
+
 .selectContainer select {
     width: 100%;
     padding: 10px;

@@ -199,6 +199,32 @@
   font-size: 0.875rem;
 }
 
+.evaluationSection {
+  grid-column: 1 / -1;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.evaluationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.evaluationLabel {
+  color: var(--gray-100);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.evaluationInput {
+  margin-top: 1rem;
+  max-width: 240px;
+}
+
 .listDays li {
   display: grid;
   grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
