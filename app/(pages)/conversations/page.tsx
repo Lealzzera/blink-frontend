@@ -12,10 +12,25 @@ import style from './style.module.css';
 
 const LIMIT = 20;
 
+function getInitialUnreadCount(chat: ChatListItem) {
+  if (chat.unreadCount && chat.unreadCount > 0) {
+    return chat.unreadCount;
+  }
+
+  const lastMessageAck = chat.lastMessage.ack;
+  const isLastMessageFromMe = Boolean(chat.lastMessage.fromMe);
+
+  if (lastMessageAck === 2 && !isLastMessageFromMe) {
+    return 1;
+  }
+
+  return 0;
+}
+
 export default function Conversations() {
   const { whatsAppStatus } = useWhatsApp();
   const { contactSelected, clinicInfo } = useUser();
-  const { latestChatMessage } = useChat();
+  const { hydrateUnreadCounts, latestChatMessage } = useChat();
 
   const [page, setPage] = useState(0);
   const [conversations, setConversations] = useState<ChatListItem[]>([]);
@@ -50,15 +65,27 @@ export default function Conversations() {
           pagination: { limit: LIMIT, offset: pageNum * LIMIT },
         });
 
-        if (!response.length) {
+        const chatOverview = response as ChatListItem[];
+
+        if (!chatOverview.length) {
           setHasMore(false);
           isLoadingRef.current = false;
           setLoading({ firstLoading: false, loading: false });
           return;
         }
 
+        const unreadCountsByPhone = chatOverview.reduce<Record<string, number>>(
+          (accumulator, chat) => {
+            accumulator[chat.phoneNumber] = getInitialUnreadCount(chat);
+            return accumulator;
+          },
+          {},
+        );
+
+        hydrateUnreadCounts(unreadCountsByPhone);
+
         setConversations((prev) => {
-          const merged = [...prev, ...response];
+          const merged = [...prev, ...chatOverview];
           return merged;
         });
         setPage(pageNum);
@@ -70,7 +97,7 @@ export default function Conversations() {
         setLoading({ firstLoading: false, loading: false });
       }
     },
-    [clinicInfo?.clinicId],
+    [clinicInfo?.clinicId, hydrateUnreadCounts],
   );
 
   useEffect(() => {

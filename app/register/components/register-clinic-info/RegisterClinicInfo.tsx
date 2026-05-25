@@ -17,6 +17,8 @@ type RegisterClinicInfoComponentProps = {
   setClinicPostalCode: (value: string) => void;
   clinicAddress: string;
   setClinicAddress: (value: string) => void;
+  clinicAddressNumber: string;
+  setClinicAddressNumber: (value: string) => void;
   clinicCity: string;
   setClinicCity: (value: string) => void;
   clinicState: string;
@@ -51,6 +53,8 @@ export default function RegisterClinicInfo({
   setClinicPhoneNumber,
   clinicAddress,
   setClinicAddress,
+  clinicAddressNumber,
+  setClinicAddressNumber,
   clinicCity,
   setClinicCity,
   clinicState,
@@ -110,7 +114,7 @@ export default function RegisterClinicInfo({
     <section className={styles.clinicInfoSection}>
       <h2>Informações da clínica</h2>
       <p>Agora nos conte mais sobre o seu negócio.</p>
-      <div>
+      <div className={styles.formGrid}>
         <div className={styles.clinicNameContainer}>
           <InputComponent
             type="text"
@@ -154,6 +158,13 @@ export default function RegisterClinicInfo({
             label="Endereço"
             value={clinicAddress ?? ''}
             handleChangeInput={(e) => setClinicAddress(e.target.value)}
+          />
+          <InputComponent
+            required
+            type="text"
+            label="Número"
+            value={clinicAddressNumber ?? ''}
+            handleChangeInput={(event) => setClinicAddressNumber(event.target.value)}
           />
         </div>
         <div className={styles.cityContainer}>

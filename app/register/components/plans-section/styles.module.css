@@ -1,5 +1,7 @@
 .planSection {
   width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
 }
 
 .planSectionHeader {
@@ -17,6 +19,7 @@
   gap: 1.25rem;
   justify-content: center;
   margin-top: 2rem;
+  flex-wrap: wrap;
 }
 
 .basicCard,
@@ -26,7 +29,7 @@
   flex-direction: column;
   background-color: var(--gray-600);
   border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 12px;
+  border-radius: 8px;
   padding: 2rem 1.75rem;
   width: 320px;
   flex-shrink: 0;
@@ -36,6 +39,13 @@
     transform 0.2s ease,
     box-shadow 0.2s ease;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+@media (max-width: 720px) {
+  .basicCard,
+  .plusCard {
+    width: min(100%, 320px);
+  }
 }
 
 .basicCard:hover,
@@ -214,7 +224,7 @@
   right: 0;
   height: 3px;
   background: linear-gradient(90deg, var(--blue-400), #01ddf5);
-  border-radius: 12px 12px 0 0;
+  border-radius: 8px 8px 0 0;
 }
 
 .plusCard .planBadge {

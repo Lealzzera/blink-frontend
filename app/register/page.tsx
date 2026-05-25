@@ -1,5 +1,7 @@
 'use client';
 
+import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { getPlansList } from '../actions/getPlansList';
 import getUserEmail from '../actions/getUserEmail';
@@ -23,6 +25,7 @@ const INITIAL_REGISTER_OBJECT: RegisterClinicObject = {
   clinicType: '',
   phone: '',
   address: '',
+  addressNumber: '',
   city: '',
   postalCode: '',
   state: '',
@@ -40,6 +43,14 @@ const INITIAL_REGISTER_OBJECT: RegisterClinicObject = {
 
 const REGISTER_COOKIE_NAME = 'blink_register_draft';
 const REGISTER_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
+
+const REGISTER_STEPS = [
+  { step: 1, title: 'Acesso', description: 'Dados do usuário' },
+  { step: 2, title: 'Clínica', description: 'Identificação e endereço' },
+  { step: 3, title: 'Horários', description: 'Agenda de atendimento' },
+  { step: 4, title: 'Serviços', description: 'Consulta inicial' },
+  { step: 5, title: 'Plano', description: 'Escolha da assinatura' },
+];
 
 function readRegisterCookie(): Partial<RegisterClinicObject> | null {
   if (typeof document === 'undefined') return null;
@@ -85,11 +96,17 @@ export default function RegisterPage() {
         !registerObject.userEmail)) ||
     (currentStep === 2 &&
       (!registerObject.clinicName ||
+        !registerObject.phone ||
+        !registerObject.postalCode ||
         !registerObject.address ||
+        !registerObject.addressNumber ||
         !registerObject.city ||
         !registerObject.state ||
         !registerObject.clinicType)) ||
     (currentStep === 3 && !registerObject.workingHours.length) ||
+    (currentStep === 4 &&
+      registerObject.settings.chargesEvaluation &&
+      registerObject.settings.evaluationPriceCents <= 0) ||
     (currentStep === 5 && !registerObject.selectedPlan.planId);
 
   const handleChangeObjectValue = <K extends keyof RegisterClinicObject>(
@@ -136,7 +153,9 @@ export default function RegisterPage() {
       password: registerObject.confirmPassword,
       clinicName: registerObject.clinicName.trim(),
       clinicType: registerObject.clinicType,
-      address: registerObject.address.trim(),
+      phone: registerObject.phone,
+      address: `${registerObject.address.trim()}, ${registerObject.addressNumber.trim()}`,
+      addressNumber: registerObject.addressNumber.trim(),
       postalCode: registerObject.postalCode.split('-').join(''),
       city: registerObject.city,
       state: registerObject.state,
@@ -147,8 +166,7 @@ export default function RegisterPage() {
         ...registerObject.settings,
         evaluationPriceCents: !registerObject.settings.chargesEvaluation
           ? 0
-          : Number(registerObject.settings.evaluationPriceCents.toString().replace(/[.,]/g, '')) *
-            100,
+          : registerObject.settings.evaluationPriceCents,
       },
     };
     return clinicData;
@@ -182,106 +200,141 @@ export default function RegisterPage() {
 
   return (
     <section className={styles.registerSection}>
-      {currentStep < 5 && (
-        <div className={styles.pageHeader}>
-          <h1 className={styles.pageTitle}>Cadastro</h1>
-          <p className={styles.pageSubtitle}>Siga os passos abaixo para criar a sua conta</p>
-        </div>
-      )}
-      {currentStep < 5 && (
-        <div className={styles.registerContainer}>
-          {currentStep === 1 && (
-            <RegisterUserInfoComponent
-              showErrorMessage={showErrorMessage.length > 0}
-              password={registerObject.password}
-              setPassword={(value) => handleChangeObjectValue('password', value)}
-              confirmPassword={registerObject.confirmPassword}
-              setConfirmPassword={(value) => handleChangeObjectValue('confirmPassword', value)}
-              setEmailValue={(value) => handleChangeObjectValue('userEmail', value)}
-              emailValue={registerObject.userEmail}
-              nameValue={registerObject.name}
-              setNameValue={(value) => handleChangeObjectValue('name', value)}
-              lastNameValue={registerObject.lastName}
-              setLastNameValue={(value) => handleChangeObjectValue('lastName', value)}
-            />
-          )}
-          {currentStep === 2 && (
-            <RegisterClinicInfo
-              clinicPostalCode={registerObject.postalCode}
-              setClinicPostalCode={(value) => handleChangeObjectValue('postalCode', value)}
-              clinicTypeValue={registerObject.clinicType}
-              setClinicTypeValue={(value) => handleChangeObjectValue('clinicType', value)}
-              clinicTypeOptions={clinicTypeOptions}
-              clinicNameValue={registerObject.clinicName}
-              setClinicNameValue={(value) => handleChangeObjectValue('clinicName', value)}
-              clinicPhoneNumber={registerObject.phone}
-              setClinicPhoneNumber={(value) => handleChangeObjectValue('phone', value)}
-              clinicAddress={registerObject.address}
-              setClinicAddress={(value) => handleChangeObjectValue('address', value)}
-              clinicCity={registerObject.city}
-              setClinicCity={(value) => handleChangeObjectValue('city', value)}
-              clinicState={registerObject.state}
-              setClinicState={(value) => handleChangeObjectValue('state', value)}
-            />
-          )}
-          {currentStep === 3 && (
-            <RegisterClinicWorkingHours
-              workingHours={registerObject.workingHours}
-              setWorkingHours={(value) => handleChangeObjectValue('workingHours', value)}
-            />
-          )}
-          {currentStep === 4 && (
-            <RegisterClinicServices
-              services={registerObject.services}
-              evaluationPrice={registerObject.settings.evaluationPriceCents}
-              setEvaluationPrice={(value) =>
-                handleChangeSettingsValue('evaluationPriceCents', value)
-              }
-              chargesEvaluation={registerObject.settings.chargesEvaluation}
-              setChargesEvaluation={(value) =>
-                handleChangeSettingsValue('chargesEvaluation', value)
-              }
-              setServices={(value) => handleChangeObjectValue('services', value)}
-            />
-          )}
-        </div>
-      )}
+      <header className={styles.registerHeader}>
+        <Link href="/" className={styles.logoLink} aria-label="Voltar para o login">
+          <Image src="/images/apenas-img-blink.png" alt="Logo da Blink" width={38} height={38} />
+          <span>Blink</span>
+        </Link>
+      </header>
+      {currentStep < 6 ? (
+        <div className={styles.registerShell}>
+          <aside className={styles.stepSidebar}>
+            <div className={styles.pageHeader}>
+              <h1 className={styles.pageTitle}>Cadastro</h1>
+              <p className={styles.pageSubtitle}>Siga os passos abaixo para criar a sua conta</p>
+            </div>
+            <ol className={styles.stepList}>
+              {REGISTER_STEPS.map((registerStep) => (
+                <li
+                  key={registerStep.step}
+                  className={`${styles.stepItem} ${
+                    currentStep === registerStep.step ? styles.stepItemActive : ''
+                  } ${currentStep > registerStep.step ? styles.stepItemDone : ''}`}
+                >
+                  <span className={styles.stepNumber}>{registerStep.step}</span>
+                  <span>
+                    <strong>{registerStep.title}</strong>
+                    <small>{registerStep.description}</small>
+                  </span>
+                </li>
+              ))}
+            </ol>
+          </aside>
 
-      {currentStep === 5 && (
-        <PlansSection
-          plansList={plansList}
-          setSelectedPlan={(value) => handleChangeObjectValue('selectedPlan', value)}
-          selectedPlan={registerObject.selectedPlan.planId}
-        />
-      )}
-      {currentStep === 6 && (
-        <PaymentForm
-          stripePriceId={registerObject.selectedPlan.stripePriceId}
-          clinicData={createClinicAndUser()}
-        />
-      )}
+          <main className={styles.registerContent}>
+            <div className={styles.registerContainer}>
+              {currentStep === 1 && (
+                <RegisterUserInfoComponent
+                  showErrorMessage={showErrorMessage.length > 0}
+                  password={registerObject.password}
+                  setPassword={(value) => handleChangeObjectValue('password', value)}
+                  confirmPassword={registerObject.confirmPassword}
+                  setConfirmPassword={(value) => handleChangeObjectValue('confirmPassword', value)}
+                  setEmailValue={(value) => handleChangeObjectValue('userEmail', value)}
+                  emailValue={registerObject.userEmail}
+                  nameValue={registerObject.name}
+                  setNameValue={(value) => handleChangeObjectValue('name', value)}
+                  lastNameValue={registerObject.lastName}
+                  setLastNameValue={(value) => handleChangeObjectValue('lastName', value)}
+                />
+              )}
+              {currentStep === 2 && (
+                <RegisterClinicInfo
+                  clinicPostalCode={registerObject.postalCode}
+                  setClinicPostalCode={(value) => handleChangeObjectValue('postalCode', value)}
+                  clinicTypeValue={registerObject.clinicType}
+                  setClinicTypeValue={(value) => handleChangeObjectValue('clinicType', value)}
+                  clinicTypeOptions={clinicTypeOptions}
+                  clinicNameValue={registerObject.clinicName}
+                  setClinicNameValue={(value) => handleChangeObjectValue('clinicName', value)}
+                  clinicPhoneNumber={registerObject.phone}
+                  setClinicPhoneNumber={(value) => handleChangeObjectValue('phone', value)}
+                  clinicAddress={registerObject.address}
+                  setClinicAddress={(value) => handleChangeObjectValue('address', value)}
+                  clinicAddressNumber={registerObject.addressNumber}
+                  setClinicAddressNumber={(value) => handleChangeObjectValue('addressNumber', value)}
+                  clinicCity={registerObject.city}
+                  setClinicCity={(value) => handleChangeObjectValue('city', value)}
+                  clinicState={registerObject.state}
+                  setClinicState={(value) => handleChangeObjectValue('state', value)}
+                />
+              )}
+              {currentStep === 3 && (
+                <RegisterClinicWorkingHours
+                  workingHours={registerObject.workingHours}
+                  setWorkingHours={(value) => handleChangeObjectValue('workingHours', value)}
+                />
+              )}
+              {currentStep === 4 && (
+                <RegisterClinicServices
+                  services={registerObject.services}
+                  evaluationPrice={registerObject.settings.evaluationPriceCents}
+                  setEvaluationPrice={(value) =>
+                    handleChangeSettingsValue('evaluationPriceCents', value)
+                  }
+                  chargesEvaluation={registerObject.settings.chargesEvaluation}
+                  setChargesEvaluation={(value) =>
+                    handleChangeSettingsValue('chargesEvaluation', value)
+                  }
+                  setServices={(value) => handleChangeObjectValue('services', value)}
+                />
+              )}
+              {currentStep === 5 && (
+                <PlansSection
+                  plansList={plansList}
+                  setSelectedPlan={(value) => handleChangeObjectValue('selectedPlan', value)}
+                  selectedPlan={registerObject.selectedPlan.planId}
+                />
+              )}
+            </div>
 
-      <div className={styles.navRow}>
-        {showErrorMessage && <p className={styles.errorMessage}>{showErrorMessage}</p>}
-        <div className={styles.navButtonsContainer}>
-          <div className={styles.navBtn}>
-            <ButtonComponent
-              disabled={currentStep === 1}
-              text="Voltar"
-              handleClickButton={() => setCurrentStep((prev) => prev - 1)}
-            />
-          </div>
-          {currentStep < 6 && (
+            <div className={styles.navRow}>
+              {showErrorMessage && <p className={styles.errorMessage}>{showErrorMessage}</p>}
+              <div className={styles.navButtonsContainer}>
+                <div className={styles.navBtn}>
+                  <ButtonComponent
+                    disabled={currentStep === 1}
+                    text="Voltar"
+                    handleClickButton={() => setCurrentStep((prev) => prev - 1)}
+                  />
+                </div>
+                <div className={styles.navBtn}>
+                  <ButtonComponent
+                    disabled={disableNext}
+                    text={'Próximo'}
+                    handleClickButton={handleManageNextStep}
+                  />
+                </div>
+              </div>
+            </div>
+          </main>
+        </div>
+      ) : (
+        <div className={styles.paymentStep}>
+          <PaymentForm
+            stripePriceId={registerObject.selectedPlan.stripePriceId}
+            clinicData={createClinicAndUser()}
+          />
+          <div className={styles.paymentNav}>
             <div className={styles.navBtn}>
               <ButtonComponent
-                disabled={disableNext}
-                text={'Próximo'}
-                handleClickButton={handleManageNextStep}
+                text="Voltar"
+                handleClickButton={() => setCurrentStep((prev) => prev - 1)}
               />
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

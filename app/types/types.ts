@@ -37,6 +37,7 @@ export type RegisterClinicObject = {
   clinicType: string;
   phone: string;
   address: string;
+  addressNumber: string;
   city: string;
   postalCode: string;
   state: string;
@@ -88,6 +89,7 @@ export type SignupDraftData = {
   clinicType: 'MEDICAL' | 'DENTAL' | 'OTHER' | 'PSYCHOLOGY' | 'AESTHETICAL';
   phone: string;
   address: string;
+  addressNumber: string;
   postalCode: string;
   city: string;
   state: string;
@@ -103,10 +105,13 @@ export type ChatListItem = {
   id: string;
   phoneNumber: string;
   contactPicture: string;
+  unreadCount?: number;
   lastMessage: {
     hasMedia: boolean;
     message: string;
     sentAt: string;
+    ack?: number | null;
+    fromMe?: boolean;
   };
 };
 

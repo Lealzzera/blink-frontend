@@ -1,39 +1,71 @@
 .clinicInfoSection {
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: stretch;
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto 1rem;
   overflow: auto;
-  margin-bottom: 1rem;
   scrollbar-width: none;
   -ms-overflow-style: none;
+}
+
+.clinicInfoSection h2,
+.clinicInfoSection p {
+  text-align: center;
+}
+
+.clinicInfoSection h2 {
+  margin-bottom: 0.25rem;
+}
+
+.clinicInfoSection p {
+  color: var(--gray-300);
 }
 
 .clinicInfoSection::-webkit-scrollbar {
   display: none;
 }
 
-.clinicNameContainer {
-  display: flex;
+.formGrid {
+  display: grid;
   gap: 1rem;
   margin-top: 1.5rem;
+}
+
+.clinicNameContainer {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(220px, 0.8fr);
+  gap: 1rem;
   width: 100%;
 }
 
 .phoneContainer {
-  margin-top: 1rem;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 0.8fr);
   gap: 1rem;
   width: 100%;
 }
 
 .addressContainer {
-  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 160px);
+  gap: 1rem;
   width: 100%;
 }
 
 .cityContainer {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 180px);
   gap: 1rem;
   width: 100%;
-  margin-top: 1rem;
+}
+
+@media (max-width: 720px) {
+  .clinicNameContainer,
+  .phoneContainer,
+  .addressContainer,
+  .cityContainer {
+    grid-template-columns: 1fr;
+  }
 }

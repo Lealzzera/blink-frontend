@@ -1,24 +1,49 @@
 
 .userInfoSection {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.userInfoSection h2,
+.userInfoSection p {
+  text-align: center;
+}
+
+.userInfoSection h2 {
+  margin-bottom: 0.25rem;
+}
+
+.userInfoSection p {
+  color: var(--gray-300);
 }
 
 .nameContainer {
-    display: flex;
-    gap: 1rem;
-    margin-top: 1.5rem;
-    width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+  width: 100%;
 }
 
 .passwordContainer {
-    margin-top: 1rem;
-    display: flex;
-    gap: 1rem;
+  margin-top: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
 }
 
 .emailContainer {
-    margin-top: 1rem;
-    width: 100%;
+  margin-top: 1rem;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .nameContainer,
+  .passwordContainer {
+    grid-template-columns: 1fr;
+  }
 }

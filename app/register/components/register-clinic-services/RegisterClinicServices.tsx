@@ -43,10 +43,13 @@ export default function RegisterClinicServices({
   const [serviceName, setServiceName] = useState('');
   const [duration, setDuration] = useState(0);
   const [priceDisplay, setPriceDisplay] = useState('');
-  const evaluationPriceDisplay = (evaluationPrice / 100).toLocaleString('pt-BR', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
+  const evaluationPriceDisplay =
+    evaluationPrice > 0
+      ? (evaluationPrice / 100).toLocaleString('pt-BR', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })
+      : '';
 
   const canAdd = serviceName.trim().length > 0;
 
@@ -96,28 +99,29 @@ export default function RegisterClinicServices({
       <p className={styles.subtitle}>
         Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
-      <div>
-        <p>Sua clínica cobra por consulta inicial?</p>
-        <div style={{ marginTop: '1rem' }}>
+      <div className={styles.evaluationBox}>
+        <div className={styles.evaluationHeader}>
+          <p className={styles.evaluationLabel}>Sua clínica cobra por consulta inicial?</p>
           <SwitchComponent
             handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
             isOn={chargesEvaluation}
           />
-          {chargesEvaluation && (
-            <div style={{ marginTop: '0.5rem', width: '200px' }}>
-              <InputComponent
-                value={evaluationPriceDisplay}
-                placeholder="0,00"
-                label="Qual o valor?"
-                handleChangeInput={(e) => {
-                  const digits = e.target.value.replace(/\D/g, '');
-                  const cents = digits ? parseInt(digits, 10) : 0;
-                  setEvaluationPrice(cents);
-                }}
-              />
-            </div>
-          )}
         </div>
+        {chargesEvaluation && (
+          <div className={styles.evaluationInput}>
+            <InputComponent
+              required
+              value={evaluationPriceDisplay}
+              placeholder="0,00"
+              label="Qual o valor?"
+              handleChangeInput={(event) => {
+                const digits = event.target.value.replace(/\D/g, '');
+                const cents = digits ? parseInt(digits, 10) : 0;
+                setEvaluationPrice(cents);
+              }}
+            />
+          </div>
+        )}
       </div>
       {/* <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>

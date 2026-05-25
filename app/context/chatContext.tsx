@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getRealtimeWebSocketUrl } from '../actions/getRealtimeWebSocketUrl';
 import { useUser } from './userContext';
 
@@ -49,6 +49,7 @@ type ChatContextType = {
   unreadCountByPhone: Record<string, number>;
   wahaEvents: WahaRealtimeMessage[];
   clearUnreadMessages: (phoneNumber: string) => void;
+  hydrateUnreadCounts: (countsByPhone: Record<string, number>) => void;
   pushIncomingMessage: (msg: ChatMessage) => void;
   pushLocalMessage: (msg: ChatMessage) => void;
 };
@@ -127,6 +128,44 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       };
     });
   };
+
+  const hydrateUnreadCounts = useCallback((countsByPhone: Record<string, number>) => {
+    setUnreadMessageIdsByPhone((prev) => {
+      const next = { ...prev };
+      let hasChanges = false;
+
+      Object.entries(countsByPhone).forEach(([phoneNumber, count]) => {
+        if (selectedPhoneNumberRef.current === phoneNumber) return;
+
+        const unreadCount = Math.max(0, Number(count) || 0);
+        const currentUnreadMessageIds = next[phoneNumber] ?? [];
+
+        if (unreadCount === 0) {
+          if (currentUnreadMessageIds.length) {
+            delete next[phoneNumber];
+            hasChanges = true;
+          }
+          return;
+        }
+
+        if (currentUnreadMessageIds.length >= unreadCount) return;
+
+        const missingCount = unreadCount - currentUnreadMessageIds.length;
+        const hydratedUnreadMessageIds: string[] = [];
+
+        for (let index = 0; index < missingCount; index += 1) {
+          hydratedUnreadMessageIds.push(
+            `overview:${phoneNumber}:${currentUnreadMessageIds.length + index}`,
+          );
+        }
+
+        next[phoneNumber] = [...currentUnreadMessageIds, ...hydratedUnreadMessageIds];
+        hasChanges = true;
+      });
+
+      return hasChanges ? next : prev;
+    });
+  }, []);
 
   const clearUnreadMessages = (phoneNumber: string) => {
     setUnreadMessageIdsByPhone((prev) => {
@@ -286,6 +325,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         unreadCountByPhone,
         wahaEvents,
         clearUnreadMessages,
+        hydrateUnreadCounts,
         pushIncomingMessage,
         pushLocalMessage,
       }}

@@ -25,7 +25,7 @@ function getMessageText(message: any) {
 }
 
 function isSameMessage(currentMessage: any, nextMessage: any) {
-  if (currentMessage.id && nextMessage.id) {
+  if (currentMessage.id && nextMessage.id && !String(currentMessage.id).startsWith('local:')) {
     return currentMessage.id === nextMessage.id;
   }
 
@@ -44,6 +44,10 @@ function isSameMessage(currentMessage: any, nextMessage: any) {
     hasSameText &&
     hasSameDirection
   );
+}
+
+function getPendingMessageKey(phoneNumber: string, text: string) {
+  return `${phoneNumber}:${text.trim()}`;
 }
 
 export default function ChatComponent({
@@ -69,6 +73,7 @@ export default function ChatComponent({
   const prevScrollTopRef = useRef(0);
   const prevScrollHeightRef = useRef(0);
   const shouldScrollToBottomAfterNewMessageRef = useRef(false);
+  const pendingLocalMessagesRef = useRef<Record<string, string>>({});
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -170,13 +175,17 @@ export default function ChatComponent({
 
     setMessage('');
 
+    const localMessageId = `local:${Date.now()}`;
     const newMessage = {
+      id: localMessageId,
       message,
       message_text: message,
       from_me: true,
       sent_at: new Date().toISOString(),
+      is_local: true,
     };
 
+    pendingLocalMessagesRef.current[getPendingMessageKey(phoneNumber, message)] = localMessageId;
     shouldScrollToBottomAfterNewMessageRef.current = true;
     setMessageList((prev) => [...prev, newMessage]);
 
@@ -240,6 +249,26 @@ export default function ChatComponent({
       const alreadyExists = prev.some((message) => isSameMessage(message, latestMessage));
 
       if (alreadyExists) return prev;
+
+      if (latestMessage.from_me) {
+        const pendingMessageKey = getPendingMessageKey(phoneNumber, latestMessage.message);
+        const pendingLocalMessageId = pendingLocalMessagesRef.current[pendingMessageKey];
+
+        if (pendingLocalMessageId) {
+          const nextMessageList = prev.map((message) =>
+            message.id === pendingLocalMessageId
+              ? {
+                  ...latestMessage,
+                  message_text: latestMessage.message,
+                }
+              : message,
+          );
+
+          delete pendingLocalMessagesRef.current[pendingMessageKey];
+          shouldScrollToBottomAfterNewMessageRef.current = true;
+          return nextMessageList;
+        }
+      }
 
       shouldScrollToBottomAfterNewMessageRef.current = true;
       return [...prev, latestMessage];

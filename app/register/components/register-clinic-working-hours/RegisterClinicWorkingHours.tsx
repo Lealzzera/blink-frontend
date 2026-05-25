@@ -33,7 +33,7 @@ const WEEK_DAYS = [
 ];
 
 const DEFAULT_PERIODS = [
-  { startTime: '08:00', endTime: '12:00' },
+  { startTime: '09:00', endTime: '12:00' },
   { startTime: '13:00', endTime: '18:00' },
 ];
 

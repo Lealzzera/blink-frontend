@@ -1,4 +1,4 @@
-import type { RegisterClinicObject } from '../page';
+import type { RegisterClinicObject } from '@/app/types/types';
 
 export type RegisterPayload = {
   userFullName: string;
@@ -42,27 +42,27 @@ export function buildRegisterPayload(obj: RegisterClinicObject): RegisterPayload
     password: obj.password,
     clinicName: obj.clinicName.trim(),
     clinicType: obj.clinicType,
-    address: obj.address.trim(),
+    address: `${obj.address.trim()}, ${obj.addressNumber.trim()}`,
     postalCode: obj.postalCode.replace(/\D/g, ''),
     city: obj.city.trim(),
     state: obj.state.trim(),
-    planId: obj.planId,
-    workingHours: obj.workingHours.map((wh) => ({
-      weekday: wh.weekday,
-      startTime: wh.startTime,
-      endTime: wh.endTime,
+    planId: obj.selectedPlan.planId,
+    workingHours: obj.workingHours.map((workingHour) => ({
+      weekday: workingHour.weekday,
+      startTime: workingHour.startTime,
+      endTime: workingHour.endTime,
     })),
-    services: obj.services.map((s) => ({
-      name: s.name,
-      durationMinutes: Number(s.durationMinutes) || 0,
-      priceCents: s.priceCents,
+    services: obj.services.map((service) => ({
+      name: service.name,
+      durationMinutes: Number(service.durationMinutes) || 0,
+      priceCents: service.priceCents,
     })),
     settings: {
       chargesEvaluation: obj.settings.chargesEvaluation,
       evaluationPriceCents: obj.settings.evaluationPriceCents,
-      maxAppointmentsPerSlot: obj.settings.maxAppointmentsPerSlot,
-      appointmentDurationMinutes: obj.settings.appointmentDurationMinutes,
-      aiAgentName: obj.settings.aiAgentName,
+      maxAppointmentsPerSlot: 1,
+      appointmentDurationMinutes: 60,
+      aiAgentName: 'Blink',
     },
   };
 }

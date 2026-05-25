@@ -17,7 +17,9 @@ type PaymentFormProps = {
     password: string;
     clinicName: string;
     clinicType: string;
+    phone: string;
     address: string;
+    addressNumber: string;
     postalCode: string;
     city: string;
     state: string;
@@ -48,8 +50,9 @@ export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
       const draftData: SignupDraftData = {
         clinicName: clinicData.clinicName,
         clinicType: clinicData.clinicType as SignupDraftData['clinicType'],
-        phone: '',
+        phone: clinicData.phone,
         address: clinicData.address,
+        addressNumber: clinicData.addressNumber,
         postalCode: clinicData.postalCode,
         city: clinicData.city,
         state: clinicData.state,
