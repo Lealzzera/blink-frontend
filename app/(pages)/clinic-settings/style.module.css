@@ -9,32 +9,49 @@
 
 .containerWrapped {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  align-items: stretch;
   flex-direction: column;
+  width: 700px;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow-y: auto;
+  padding-bottom: 2rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
 .containerContent {
-  margin-top: 3rem;
+  width: 100%;
+  margin-top: 1.5rem;
   background-color: var(--gray-600);
   border-radius: 6px;
-  padding: 1rem;
-  max-width: 1000px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.atypicalModalContent {
+  width: 100%;
+  padding: 1.5rem;
+}
+
+.workingHoursCard {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .containerButton {
-  width: 680px;
-  margin-top: 2rem;
-  max-width: 1000px;
+  width: 100%;
+  margin-top: 1.25rem;
   display: flex;
+  align-items: center;
   justify-content: flex-end;
+  gap: 1rem;
 }
 
 .atypicalDayButton {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-right: 1rem;
 }
 
 .atypicalDayButton p {
@@ -43,11 +60,22 @@
   color: var(--gray-100);
 }
 
+.atypicalTabActions {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
 .containerLegend {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(110px, 1.2fr) 80px repeat(4, minmax(78px, 1fr));
+  gap: 0.75rem;
   font-weight: 600;
+  color: var(--gray-300);
+  font-size: 0.8rem;
   margin-bottom: 1rem;
+  align-items: center;
 }
 
 .header {
@@ -96,7 +124,7 @@
   background-color: var(--gray-600);
   border-radius: 6px;
   padding: 1.5rem;
-  width: 700px;
+  width: 720px;
   max-width: 1000px;
   margin: 0 auto 2rem auto;
   overflow-y: auto;
@@ -227,13 +255,14 @@
 
 .listDays li {
   display: grid;
-  grid-template-columns: 2fr 1fr 1fr 1fr 1fr 1fr;
+  grid-template-columns: minmax(110px, 1.2fr) 80px repeat(4, minmax(78px, 1fr));
+  gap: 0.75rem;
   align-items: center;
-  justify-content: center;
+  padding: 0.25rem 0;
 }
 
 .inputContainer {
-  width: 70px;
+  min-width: 0;
 }
 
 .containerSkeleton {
@@ -268,22 +297,36 @@
 }
 
 .atypicalDaysList {
-  width: 680px;
-  margin-top: 2.5rem;
-  max-width: 1000px;
+  width: 100%;
+  margin-top: 2rem;
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .atypicalDaysUl {
   overflow: auto;
   max-height: 400px;
   margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 .atypicalDayCard {
-  display: flex;
-  gap: 1rem;
+  display: grid;
+  grid-template-columns: minmax(110px, 1.2fr) 80px repeat(4, minmax(78px, 1fr));
+  gap: 0.75rem;
   align-items: center;
-  justify-content: center;
+  padding: 1rem;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.atypicalDayNote {
+  grid-column: 1 / -1;
 }
 
 .emptyContentContainer {
@@ -292,16 +335,152 @@
 }
 
 .atypicalDayInput {
-  width: 105px;
+  min-width: 0;
 }
 
 .atypicalDayTime {
-  width: 65px;
+  min-width: 0;
 }
 
 .deleteAtypicalButtonContainer {
-  margin-top: 0.5rem;
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: 1rem;
+}
+
+.atypicalFormHeader,
+.atypicalDaysHeader {
+  margin-bottom: 1rem;
+}
+
+.atypicalFormHeader h2,
+.atypicalDaysHeader h2 {
+  font-size: 1rem;
+  color: var(--gray-100);
+}
+
+.atypicalFormHeader p {
+  margin-top: 0.35rem;
+  color: var(--gray-300);
+  font-size: 0.875rem;
+}
+
+.atypicalModalContent .containerLegend {
+  grid-template-columns: minmax(130px, 1.2fr) 80px repeat(4, minmax(82px, 1fr));
+}
+
+.atypicalModalContent .listDays li {
+  grid-template-columns: minmax(130px, 1.2fr) 80px repeat(4, minmax(82px, 1fr));
+}
+
+.atypicalModalContent .deleteAtypicalButtonContainer {
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.atypicalModalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.atypicalModalSwitch {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.atypicalModalSwitch span {
+  color: var(--gray-100);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.atypicalModalTimes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.atypicalModalNote,
+.atypicalDayNote {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.atypicalModalNote label,
+.atypicalDayNote label {
+  color: var(--gray-100);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.atypicalModalNote textarea,
+.atypicalDayNote textarea {
+  width: 100%;
+  min-height: 88px;
+  padding: 0.75rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  font-family: inherit;
+  font-size: 0.875rem;
+  resize: none;
+}
+
+.atypicalModalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+@media (max-width: 900px) {
+  .container {
+    overflow: auto;
+  }
+
+  .tabsContainer,
+  .basicDataCard {
+    width: 100%;
+  }
+
+  .containerLegend {
+    display: none;
+  }
+
+  .listDays li,
+  .atypicalDayCard,
+  .atypicalModalContent .listDays li {
+    grid-template-columns: 1fr 80px;
+  }
+
+  .inputContainer,
+  .atypicalDayInput,
+  .atypicalDayTime {
+    grid-column: 1 / -1;
+  }
+
+  .containerButton {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .atypicalModalTimes {
+    grid-template-columns: 1fr;
+  }
+
+  .atypicalModalActions {
+    flex-direction: column;
+  }
 }

@@ -5,34 +5,27 @@ import { getAtypicalDaysList } from '@/app/actions/getAtypicalDaysList';
 import { getClinicConfiguration } from '@/app/actions/getClinicConfiguration';
 import { getClinicWorkingHours } from '@/app/actions/getClinicWorkingHours';
 import postAtypicalDayAvailability from '@/app/actions/postAtypicalDayAvailability';
-import {
-  putClinicAvailability,
-  PutClinicAvailabilityType,
-} from '@/app/actions/putClinicAvailability';
+import { putClinicAvailability } from '@/app/actions/putClinicAvailability';
 import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
+import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalComponent';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
+import RegisterClinicWorkingHours, {
+  WorkingHour,
+} from '../../register/components/register-clinic-working-hours/RegisterClinicWorkingHours';
 import ClinicDataSectionComponent from './components/ClinicDataSectionComponent/ClinicDataSectionComponent';
 import styles from './style.module.css';
-
-type ClinicDay = {
-  weekday: string;
-  isWorkDay: boolean;
-  open: string;
-  close: string;
-  break_start: string;
-  break_end: string;
-};
 
 type AtypicalDayObject = {
   specialDate: string;
   exception_day: string;
   is_working_day: boolean;
+  note: string;
   open: string;
   close: string;
   break_start: string;
@@ -56,36 +49,10 @@ const CLINIC_TYPE_OPTIONS = Object.entries(CLINIC_TYPE_LABEL_BY_VALUE).map(
   }),
 );
 
-const WEEKDAY_LABEL_BY_VALUE: Record<string, string> = {
-  MONDAY: 'Segunda',
-  TUESDAY: 'Terca',
-  WEDNESDAY: 'Quarta',
-  THURSDAY: 'Quinta',
-  FRIDAY: 'Sexta',
-  SATURDAY: 'Sabado',
-  SUNDAY: 'Domingo',
-};
-
-const WEEKDAY_VALUE_BY_LABEL = Object.entries(WEEKDAY_LABEL_BY_VALUE).reduce(
-  (accumulator, [weekdayValue, weekdayLabel]) => ({
-    ...accumulator,
-    [weekdayLabel]: weekdayValue,
-  }),
-  {} as Record<string, string>,
-);
-
-const DEFAULT_WEEK_DAYS: ClinicDay[] = Object.values(WEEKDAY_LABEL_BY_VALUE).map((weekday) => ({
-  weekday,
-  isWorkDay: false,
-  open: '',
-  close: '',
-  break_start: '',
-  break_end: '',
-}));
-
 const EMPTY_ATYPICAL_DAY_FORM: AtypicalDayForm = {
   exception_day: '',
   is_working_day: false,
+  note: '',
   open: '',
   close: '',
   break_start: '',
@@ -185,43 +152,8 @@ function buildSpecialDatePeriods(day: AtypicalDayForm | AtypicalDayObject) {
   return periods;
 }
 
-function buildWorkingHourPeriods(day: ClinicDay): PutClinicAvailabilityType[] {
-  const weekday = WEEKDAY_VALUE_BY_LABEL[day.weekday];
-
-  if (!day.isWorkDay) {
-    return [];
-  }
-
-  if (day.open && day.break_start && day.break_end && day.close) {
-    return [
-      {
-        weekday,
-        startTime: day.open,
-        endTime: day.break_start,
-      },
-      {
-        weekday,
-        startTime: day.break_end,
-        endTime: day.close,
-      },
-    ];
-  }
-
-  if (day.open && day.close) {
-    return [
-      {
-        weekday,
-        startTime: day.open,
-        endTime: day.close,
-      },
-    ];
-  }
-
-  return [];
-}
-
 export default function ClinicSettingsPage() {
-  const [defaultDays, setDefaultDays] = useState<ClinicDay[]>(DEFAULT_WEEK_DAYS);
+  const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
   const [loading, setLoading] = useState(true);
   const { clinicInfo } = useUser();
   const [clinicName, setClinicName] = useState('');
@@ -238,7 +170,7 @@ export default function ClinicSettingsPage() {
   const [clinicState, setClinicState] = useState('');
   const [chargesEvaluation, setChargesEvaluation] = useState(false);
   const [evaluationPriceCents, setEvaluationPriceCents] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dados' | 'horarios'>('dados');
+  const [activeTab, setActiveTab] = useState<'dados' | 'horarios' | 'dias-atipicos'>('dados');
   const [isAtypicalFormOpen, setIsAtypicalFormOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] =
     useState<AtypicalDayForm>(EMPTY_ATYPICAL_DAY_FORM);
@@ -266,37 +198,14 @@ export default function ClinicSettingsPage() {
 
     try {
       const response = await getClinicWorkingHours(clinicInfo.clinicId);
-      const workingHours = response?.clinicWorkingHour ?? [];
-      const workingHoursByWeekday = new Map<
-        string,
-        { weekday: string; startTime: string; endTime: string }[]
-      >();
+      const clinicWorkingHours = response?.clinicWorkingHour ?? [];
 
-      for (const workingHour of workingHours as {
-        weekday: string;
-        startTime: string;
-        endTime: string;
-      }[]) {
-        const weekdayPeriods = workingHoursByWeekday.get(workingHour.weekday) ?? [];
-        workingHoursByWeekday.set(workingHour.weekday, [...weekdayPeriods, workingHour]);
-      }
-
-      setDefaultDays(
-        DEFAULT_WEEK_DAYS.map((day) => {
-          const weekdayValue = WEEKDAY_VALUE_BY_LABEL[day.weekday];
-          const weekdayPeriods = workingHoursByWeekday.get(weekdayValue) ?? [];
-          const firstPeriod = weekdayPeriods[0];
-          const secondPeriod = weekdayPeriods[1];
-
-          return {
-            ...day,
-            isWorkDay: weekdayPeriods.length > 0,
-            open: firstPeriod?.startTime ?? '',
-            break_start: secondPeriod ? (firstPeriod?.endTime ?? '') : '',
-            break_end: secondPeriod?.startTime ?? '',
-            close: secondPeriod?.endTime ?? firstPeriod?.endTime ?? '',
-          };
-        }),
+      setWorkingHours(
+        clinicWorkingHours.map((workingHour: WorkingHour) => ({
+          weekday: workingHour.weekday,
+          startTime: workingHour.startTime,
+          endTime: workingHour.endTime,
+        })),
       );
     } catch {
       toast('Erro ao carregar horarios de funcionamento.', {
@@ -320,6 +229,7 @@ export default function ClinicSettingsPage() {
           (item: {
             date: string;
             isOpen: boolean;
+            note: string | null;
             periods: { startTime: string; endTime: string }[];
           }) => {
             const firstPeriod = item.periods[0];
@@ -329,6 +239,7 @@ export default function ClinicSettingsPage() {
               specialDate: item.date,
               exception_day: formatDateToDisplay(item.date),
               is_working_day: item.isOpen,
+              note: item.note ?? '',
               open: firstPeriod?.startTime ?? '',
               break_start: secondPeriod ? (firstPeriod?.endTime ?? '') : '',
               break_end: secondPeriod?.startTime ?? '',
@@ -376,28 +287,6 @@ export default function ClinicSettingsPage() {
         theme: 'colored',
       });
     }
-  };
-
-  const handleUpdateProperty = ({
-    weekday,
-    key,
-    value,
-  }: {
-    key: keyof ClinicDay;
-    value: string | boolean;
-    weekday: string;
-  }) => {
-    setDefaultDays((previousDays) =>
-      previousDays.map((day) => {
-        if (day.weekday !== weekday) return day;
-
-        if (key === 'open' || key === 'close' || key === 'break_start' || key === 'break_end') {
-          return { ...day, [key]: formatTimeValue(String(value)) };
-        }
-
-        return { ...day, [key]: value };
-      }),
-    );
   };
 
   const handleSaveClinicBasicData = async () => {
@@ -472,8 +361,6 @@ export default function ClinicSettingsPage() {
   const handleSaveConfiguration = async () => {
     if (!clinicInfo?.clinicId) return;
 
-    const workingHours = defaultDays.flatMap((day) => buildWorkingHourPeriods(day));
-
     try {
       await putClinicAvailability(clinicInfo.clinicId, workingHours);
 
@@ -513,6 +400,10 @@ export default function ClinicSettingsPage() {
         return { ...previousConfig, [objectKey]: formatDateValue(String(value)) };
       }
 
+      if (objectKey === 'note') {
+        return { ...previousConfig, note: String(value) };
+      }
+
       return { ...previousConfig, [objectKey]: Boolean(value) };
     });
   };
@@ -527,6 +418,7 @@ export default function ClinicSettingsPage() {
         clinicId: clinicInfo.clinicId,
         specialDate,
         isOpen: atypicalDayConfig.is_working_day,
+        note: atypicalDayConfig.note.trim() || undefined,
         periods: buildSpecialDatePeriods(atypicalDayConfig),
       });
 
@@ -558,6 +450,10 @@ export default function ClinicSettingsPage() {
 
         if (objectKey === 'exception_day') {
           return { ...day, exception_day: formatDateValue(String(value)) };
+        }
+
+        if (objectKey === 'note') {
+          return { ...day, note: String(value) };
         }
 
         if (
@@ -592,12 +488,14 @@ export default function ClinicSettingsPage() {
           clinicId: clinicInfo.clinicId,
           specialDate: nextSpecialDate,
           isOpen: atypicalDayToUpdate.is_working_day,
+          note: atypicalDayToUpdate.note.trim() || undefined,
           periods: buildSpecialDatePeriods(atypicalDayToUpdate),
         });
       } else {
         await putUpdateAtypicalDay(
           {
             isOpen: atypicalDayToUpdate.is_working_day,
+            note: atypicalDayToUpdate.note.trim() || undefined,
             periods: buildSpecialDatePeriods(atypicalDayToUpdate),
           },
           clinicInfo.clinicId,
@@ -702,6 +600,12 @@ export default function ClinicSettingsPage() {
         >
           Horários de funcionamento
         </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'dias-atipicos' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('dias-atipicos')}
+        >
+          Dias atipicos
+        </button>
       </div>
 
       {activeTab === 'dados' && (
@@ -749,112 +653,111 @@ export default function ClinicSettingsPage() {
 
       {activeTab === 'horarios' && !loading && (
         <div className={styles.containerWrapped}>
-          {isAtypicalFormOpen && (
-            <div className={styles.containerContent}>
-              <div className={styles.containerLegend}>
-                <p>Data</p>
-                <p>Ativar</p>
-                <p>Abertura</p>
-                <p>Pausa</p>
-                <p>Retorno</p>
-                <p>Fechamento</p>
-              </div>
-              <ul className={styles.listDays}>
-                <li>
-                  <div className={styles.atypicalDayInput}>
-                    <InputComponent
-                      value={atypicalDayConfig.exception_day}
-                      handleChangeInput={(event) =>
-                        handleManageAtypicalDay('exception_day', event.target.value)
-                      }
-                      placeholder="DD/MM/AAAA"
-                    />
-                  </div>
-                  <SwitchComponent
-                    isOn={atypicalDayConfig.is_working_day}
-                    handleToggle={() =>
-                      handleManageAtypicalDay('is_working_day', !atypicalDayConfig.is_working_day)
-                    }
-                  />
-                  {(['open', 'break_start', 'break_end', 'close'] as const).map((field) => (
-                    <div className={styles.inputContainer} key={field}>
-                      <InputComponent
-                        value={atypicalDayConfig[field]}
-                        disabled={!atypicalDayConfig.is_working_day}
-                        handleChangeInput={(event) =>
-                          handleManageAtypicalDay(field, event.target.value)
-                        }
-                        placeholder="00:00"
-                      />
-                    </div>
-                  ))}
-                </li>
-              </ul>
-              <div className={styles.deleteAtypicalButtonContainer}>
-                <ButtonComponent
-                  style={{ background: 'var(--red-300)' }}
-                  text="Cancelar"
-                  handleClickButton={handleCloseAtypicalDayForm}
-                />
-                <ButtonComponent text="Salvar" handleClickButton={saveAtypicalConfiguration} />
-              </div>
-            </div>
-          )}
-
-          <div className={styles.containerContent}>
-            <div className={styles.containerLegend}>
-              <p>Dia da semana</p>
-              <p>Ativar</p>
-              <p>Abertura</p>
-              <p>Pausa</p>
-              <p>Retorno</p>
-              <p>Fechamento</p>
-            </div>
-            <ul className={styles.listDays}>
-              {defaultDays.map((day) => (
-                <li key={day.weekday}>
-                  <p>{day.weekday}</p>
-                  <SwitchComponent
-                    isOn={day.isWorkDay}
-                    handleToggle={() =>
-                      handleUpdateProperty({
-                        key: 'isWorkDay',
-                        weekday: day.weekday,
-                        value: !day.isWorkDay,
-                      })
-                    }
-                  />
-                  {(['open', 'break_start', 'break_end', 'close'] as const).map((field) => (
-                    <div className={styles.inputContainer} key={field}>
-                      <InputComponent
-                        label=""
-                        placeholder="00:00"
-                        value={day[field]}
-                        disabled={!day.isWorkDay}
-                        handleChangeInput={(event) =>
-                          handleUpdateProperty({
-                            key: field,
-                            weekday: day.weekday,
-                            value: event.target.value,
-                          })
-                        }
-                      />
-                    </div>
-                  ))}
-                </li>
-              ))}
-            </ul>
+          <div className={styles.workingHoursCard}>
+            <RegisterClinicWorkingHours
+              workingHours={workingHours}
+              setWorkingHours={setWorkingHours}
+            />
           </div>
 
           <div className={styles.containerButton}>
-            <div className={styles.atypicalDayButton}>
-              <p onClick={() => setIsAtypicalFormOpen(true)}>Adicionar dia atipico</p>
-            </div>
             <ButtonComponent text="Salvar" handleClickButton={handleSaveConfiguration} />
           </div>
+        </div>
+      )}
 
+      {activeTab === 'dias-atipicos' && (
+        <div className={styles.containerWrapped}>
+          {isAtypicalFormOpen && (
+            <BaseModalComponent handleCloseModal={handleCloseAtypicalDayForm}>
+              <div className={styles.atypicalModalContent}>
+                <div className={styles.atypicalFormHeader}>
+                  <h2>Novo dia atipico</h2>
+                  <p>Configure uma excecao de atendimento para uma data especifica.</p>
+                </div>
+                <div className={styles.atypicalModalForm}>
+                  <InputComponent
+                    label="Data"
+                    value={atypicalDayConfig.exception_day}
+                    handleChangeInput={(event) =>
+                      handleManageAtypicalDay('exception_day', event.target.value)
+                    }
+                    placeholder="DD/MM/AAAA"
+                  />
+                  <div className={styles.atypicalModalSwitch}>
+                    <span>Clínica aberta nesta data?</span>
+                    <SwitchComponent
+                      isOn={atypicalDayConfig.is_working_day}
+                      handleToggle={() =>
+                        handleManageAtypicalDay('is_working_day', !atypicalDayConfig.is_working_day)
+                      }
+                    />
+                  </div>
+                  <div className={styles.atypicalModalTimes}>
+                    <InputComponent
+                      label="Abertura"
+                      value={atypicalDayConfig.open}
+                      disabled={!atypicalDayConfig.is_working_day}
+                      handleChangeInput={(event) => handleManageAtypicalDay('open', event.target.value)}
+                      placeholder="00:00"
+                    />
+                    <InputComponent
+                      label="Pausa"
+                      value={atypicalDayConfig.break_start}
+                      disabled={!atypicalDayConfig.is_working_day}
+                      handleChangeInput={(event) =>
+                        handleManageAtypicalDay('break_start', event.target.value)
+                      }
+                      placeholder="00:00"
+                    />
+                    <InputComponent
+                      label="Retorno"
+                      value={atypicalDayConfig.break_end}
+                      disabled={!atypicalDayConfig.is_working_day}
+                      handleChangeInput={(event) =>
+                        handleManageAtypicalDay('break_end', event.target.value)
+                      }
+                      placeholder="00:00"
+                    />
+                    <InputComponent
+                      label="Fechamento"
+                      value={atypicalDayConfig.close}
+                      disabled={!atypicalDayConfig.is_working_day}
+                      handleChangeInput={(event) => handleManageAtypicalDay('close', event.target.value)}
+                      placeholder="00:00"
+                    />
+                  </div>
+                  <div className={styles.atypicalModalNote}>
+                    <label>Observação</label>
+                    <textarea
+                      value={atypicalDayConfig.note}
+                      onChange={(event) => handleManageAtypicalDay('note', event.target.value)}
+                      placeholder="Ex.: Feriado municipal, manutenção interna, evento da clínica..."
+                    />
+                  </div>
+                </div>
+                <div className={styles.atypicalModalActions}>
+                  <ButtonComponent
+                    style={{ background: 'var(--red-300)' }}
+                    text="Cancelar"
+                    handleClickButton={handleCloseAtypicalDayForm}
+                  />
+                  <ButtonComponent text="Salvar" handleClickButton={saveAtypicalConfiguration} />
+                </div>
+              </div>
+            </BaseModalComponent>
+          )}
+
+          <div className={styles.atypicalTabActions}>
+            <ButtonComponent
+              text="Adicionar dia atipico"
+              handleClickButton={() => setIsAtypicalFormOpen(true)}
+            />
+          </div>
           <div className={styles.atypicalDaysList}>
-            <h2>Lista de dias atipicos</h2>
+            <div className={styles.atypicalDaysHeader}>
+              <h2>Lista de dias atipicos</h2>
+            </div>
             <ul className={styles.atypicalDaysUl}>
               {atypicalDaysList.length > 0 ? (
                 atypicalDaysList.map((atypicalDay) => (
@@ -898,6 +801,20 @@ export default function ClinicSettingsPage() {
                         />
                       </div>
                     ))}
+                    <div className={styles.atypicalDayNote}>
+                      <label>Observação</label>
+                      <textarea
+                        value={atypicalDay.note}
+                        onChange={(event) =>
+                          handleChangeAtypicalDayCard(
+                            atypicalDay.specialDate,
+                            'note',
+                            event.target.value,
+                          )
+                        }
+                        placeholder="Observação opcional"
+                      />
+                    </div>
                     <div className={styles.deleteAtypicalButtonContainer}>
                       <ButtonComponent
                         style={{ background: 'var(--red-300)' }}

@@ -123,7 +123,7 @@ export default function RegisterClinicServices({
           </div>
         )}
       </div>
-      {/* <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
+      <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>
           <label className={styles.label}>Serviço</label>
           <input
@@ -169,9 +169,8 @@ export default function RegisterClinicServices({
         >
           +
         </button>
-      </div> */}
-
-      {/* <div className={styles.chipsArea}>
+      </div>
+      <div className={styles.chipsArea}>
         {services.length === 0 ? (
           <p className={styles.empty}>Nenhum serviço adicionado ainda.</p>
         ) : (
@@ -195,7 +194,7 @@ export default function RegisterClinicServices({
             </div>
           ))
         )}
-      </div> */}
+      </div>
     </section>
   );
 }
