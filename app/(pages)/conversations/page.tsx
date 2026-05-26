@@ -27,6 +27,45 @@ function getInitialUnreadCount(chat: ChatListItem) {
   return 0;
 }
 
+function mergeConversationsByPhoneNumber(
+  currentConversations: ChatListItem[],
+  nextConversations: ChatListItem[],
+) {
+  const conversationsByPhoneNumber = new Map<string, ChatListItem>();
+
+  for (const conversation of currentConversations) {
+    conversationsByPhoneNumber.set(conversation.phoneNumber, conversation);
+  }
+
+  for (const conversation of nextConversations) {
+    const existingConversation = conversationsByPhoneNumber.get(conversation.phoneNumber);
+
+    if (!existingConversation) {
+      conversationsByPhoneNumber.set(conversation.phoneNumber, conversation);
+      continue;
+    }
+
+    conversationsByPhoneNumber.set(conversation.phoneNumber, {
+      ...existingConversation,
+      ...conversation,
+      contactName: existingConversation.contactName || conversation.contactName,
+      contactPicture: existingConversation.contactPicture || conversation.contactPicture,
+      lastMessage:
+        Number(conversation.lastMessage?.sentAt ?? 0) >=
+        Number(existingConversation.lastMessage?.sentAt ?? 0)
+          ? conversation.lastMessage
+          : existingConversation.lastMessage,
+      unreadCount: conversation.unreadCount ?? existingConversation.unreadCount,
+    });
+  }
+
+  return Array.from(conversationsByPhoneNumber.values()).sort(
+    (firstConversation, secondConversation) =>
+      Number(secondConversation.lastMessage?.sentAt ?? 0) -
+      Number(firstConversation.lastMessage?.sentAt ?? 0),
+  );
+}
+
 export default function Conversations() {
   const { whatsAppStatus } = useWhatsApp();
   const { contactSelected, clinicInfo } = useUser();
@@ -85,8 +124,11 @@ export default function Conversations() {
         hydrateUnreadCounts(unreadCountsByPhone);
 
         setConversations((prev) => {
-          const merged = [...prev, ...chatOverview];
-          return merged;
+          if (pageNum === 0) {
+            return mergeConversationsByPhoneNumber(prev, chatOverview);
+          }
+
+          return mergeConversationsByPhoneNumber(prev, chatOverview);
         });
         setPage(pageNum);
         isLoadingRef.current = false;
