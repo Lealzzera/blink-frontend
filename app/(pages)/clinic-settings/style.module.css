@@ -134,6 +134,15 @@
   scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
 }
 
+.servicesCard {
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  padding: 1.5rem;
+  width: 100%;
+  margin: 1rem auto 2rem auto;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 .basicDataCard::-webkit-scrollbar {
   width: 4px;
 }
@@ -214,6 +223,52 @@
   margin-top: 1.25rem;
   display: flex;
   justify-content: flex-end;
+}
+
+.serviceAddRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(160px, 0.8fr) auto;
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.serviceAddButton {
+  min-width: 120px;
+}
+
+.servicesList {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.serviceItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(140px, 0.75fr) auto;
+  align-items: flex-end;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.serviceItemActions {
+  min-width: 110px;
+}
+
+.servicesActions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.servicesActions > div {
+  width: auto;
+  min-width: 180px;
 }
 
 .switchRow {
@@ -478,6 +533,21 @@
 
   .atypicalModalTimes {
     grid-template-columns: 1fr;
+  }
+
+  .serviceAddRow,
+  .serviceItem {
+    grid-template-columns: 1fr;
+  }
+
+  .serviceAddButton,
+  .serviceItemActions {
+    min-width: 0;
+  }
+
+  .servicesActions > div {
+    width: 100%;
+    min-width: 0;
   }
 
   .atypicalModalActions {

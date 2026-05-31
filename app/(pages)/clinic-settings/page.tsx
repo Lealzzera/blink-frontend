@@ -3,10 +3,12 @@
 import { deleteAtypicalDay } from '@/app/actions/deleteAtypicalDay';
 import { getAtypicalDaysList } from '@/app/actions/getAtypicalDaysList';
 import { getClinicConfiguration } from '@/app/actions/getClinicConfiguration';
+import { getClinicServices } from '@/app/actions/getClinicServices';
 import { getClinicWorkingHours } from '@/app/actions/getClinicWorkingHours';
 import postAtypicalDayAvailability from '@/app/actions/postAtypicalDayAvailability';
 import { putClinicAvailability } from '@/app/actions/putClinicAvailability';
 import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
+import { putClinicServices } from '@/app/actions/putClinicServices';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
 import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalComponent';
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
@@ -18,7 +20,9 @@ import { toast, ToastContainer } from 'react-toastify';
 import RegisterClinicWorkingHours, {
   WorkingHour,
 } from '../../register/components/register-clinic-working-hours/RegisterClinicWorkingHours';
+import type { ServiceType } from '../../register/components/register-clinic-services/RegisterClinicServices';
 import ClinicDataSectionComponent from './components/ClinicDataSectionComponent/ClinicDataSectionComponent';
+import ClinicServicesSectionComponent from './components/ClinicServicesSectionComponent/ClinicServicesSectionComponent';
 import styles from './style.module.css';
 
 type AtypicalDayObject = {
@@ -154,6 +158,7 @@ function buildSpecialDatePeriods(day: AtypicalDayForm | AtypicalDayObject) {
 
 export default function ClinicSettingsPage() {
   const [workingHours, setWorkingHours] = useState<WorkingHour[]>([]);
+  const [clinicServices, setClinicServices] = useState<ServiceType[]>([]);
   const [loading, setLoading] = useState(true);
   const { clinicInfo } = useUser();
   const [clinicName, setClinicName] = useState('');
@@ -171,7 +176,9 @@ export default function ClinicSettingsPage() {
   const [clinicState, setClinicState] = useState('');
   const [chargesEvaluation, setChargesEvaluation] = useState(false);
   const [evaluationPriceCents, setEvaluationPriceCents] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dados' | 'horarios' | 'dias-atipicos'>('dados');
+  const [activeTab, setActiveTab] = useState<'dados' | 'servicos' | 'horarios' | 'dias-atipicos'>(
+    'dados',
+  );
   const [isAtypicalFormOpen, setIsAtypicalFormOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] =
     useState<AtypicalDayForm>(EMPTY_ATYPICAL_DAY_FORM);
@@ -251,6 +258,27 @@ export default function ClinicSettingsPage() {
       );
     } catch {
       toast('Erro ao carregar dias atipicos.', {
+        type: 'error',
+        theme: 'colored',
+      });
+    }
+  };
+
+  const fetchClinicServices = async () => {
+    if (!clinicInfo?.clinicId) return;
+
+    try {
+      const response = await getClinicServices(clinicInfo.clinicId);
+      setClinicServices(
+        (response?.services ?? []).map((service) => ({
+          id: service.id,
+          name: service.name,
+          durationMinutes: service.durationMinutes,
+          priceCents: service.priceCents ?? 0,
+        })),
+      );
+    } catch {
+      toast('Erro ao carregar serviços.', {
         type: 'error',
         theme: 'colored',
       });
@@ -378,6 +406,43 @@ export default function ClinicSettingsPage() {
         success: false,
         successMessage: 'Configuracoes atualizadas com sucesso.',
         errorMessage: 'Houve um erro ao atualizar as configuracoes.',
+      });
+    }
+  };
+
+  const handleSaveServices = async () => {
+    if (!clinicInfo?.clinicId) return;
+
+    try {
+      const response = await putClinicServices(
+        clinicInfo.clinicId,
+        clinicServices.map((service) => ({
+          id: service.id,
+          name: service.name.trim(),
+          durationMinutes: service.durationMinutes || 0,
+          priceCents: service.priceCents ?? 0,
+        })),
+      );
+
+      setClinicServices(
+        (response?.services ?? []).map((service) => ({
+          id: service.id,
+          name: service.name,
+          durationMinutes: service.durationMinutes,
+          priceCents: service.priceCents ?? 0,
+        })),
+      );
+
+      showToastMessage({
+        success: true,
+        successMessage: 'Serviços salvos com sucesso.',
+        errorMessage: 'Houve um erro ao salvar os serviços.',
+      });
+    } catch {
+      showToastMessage({
+        success: false,
+        successMessage: 'Serviços salvos com sucesso.',
+        errorMessage: 'Houve um erro ao salvar os serviços.',
       });
     }
   };
@@ -577,6 +642,7 @@ export default function ClinicSettingsPage() {
   useEffect(() => {
     fetchClinicConfiguration();
     fetchClinicAvailability();
+    fetchClinicServices();
     fetchAtypicalDaysList();
   }, [clinicInfo?.clinicId]);
 
@@ -596,6 +662,12 @@ export default function ClinicSettingsPage() {
           onClick={() => setActiveTab('dados')}
         >
           Dados da clínica
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'servicos' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('servicos')}
+        >
+          Serviços
         </button>
         <button
           className={`${styles.tabButton} ${activeTab === 'horarios' ? styles.tabButtonActive : ''}`}
@@ -648,6 +720,16 @@ export default function ClinicSettingsPage() {
           evaluationPriceCents={evaluationPriceCents}
           setEvaluationPriceCents={setEvaluationPriceCents}
         />
+      )}
+
+      {activeTab === 'servicos' && (
+        <div className={styles.containerWrapped}>
+          <ClinicServicesSectionComponent
+            services={clinicServices}
+            setServices={setClinicServices}
+            handleSaveServices={handleSaveServices}
+          />
+        </div>
       )}
 
       {activeTab === 'horarios' && loading && (

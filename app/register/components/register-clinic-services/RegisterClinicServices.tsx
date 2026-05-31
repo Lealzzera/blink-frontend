@@ -7,6 +7,7 @@ import { useState } from 'react';
 import styles from './styles.module.css';
 
 export type ServiceType = {
+  id?: string;
   name: string;
   durationMinutes: number;
   priceCents: number;
@@ -21,6 +22,8 @@ type RegisterClinicServicesProps = {
   setEvaluationPrice: (value: number) => void;
   textAreaValue: string;
   setTextAreaValue: (value: string) => void;
+  showEvaluationSection?: boolean;
+  showAdditionalInformation?: boolean;
 };
 
 function parsePriceToCents(raw: string): number {
@@ -44,6 +47,8 @@ export default function RegisterClinicServices({
   setEvaluationPrice,
   textAreaValue,
   setTextAreaValue,
+  showEvaluationSection = true,
+  showAdditionalInformation = true,
 }: RegisterClinicServicesProps) {
   const [serviceName, setServiceName] = useState('');
   const [duration, setDuration] = useState(0);
@@ -104,6 +109,7 @@ export default function RegisterClinicServices({
       <p className={styles.subtitle}>
         Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
+      {showEvaluationSection && (
       <div className={styles.evaluationBox}>
         <div className={styles.evaluationHeader}>
           <p className={styles.evaluationLabel}>Sua clínica cobra por consulta inicial?</p>
@@ -128,6 +134,7 @@ export default function RegisterClinicServices({
           </div>
         )}
       </div>
+      )}
       <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>
           <label className={styles.label}>Serviço</label>
@@ -180,7 +187,7 @@ export default function RegisterClinicServices({
           <p className={styles.empty}>Nenhum serviço adicionado ainda.</p>
         ) : (
           services.map((service, index) => (
-            <div key={index} className={styles.chip}>
+            <div key={service.id ?? index} className={styles.chip}>
               <span className={styles.chipName}>{service.name}</span>
               {/* {service.durationMinutes !== 0 && (
                 <span className={styles.chipBadge}>{service.durationMinutes} min</span>
@@ -200,6 +207,7 @@ export default function RegisterClinicServices({
           ))
         )}
       </div>
+      {showAdditionalInformation && (
       <div className={styles.moreInformationArea}>
         <h3>Informações adicionais</h3>
         <p>Adicione informações importantes a respeito da sua clínica.</p>
@@ -214,6 +222,7 @@ export default function RegisterClinicServices({
           />
         </div>
       </div>
+      )}
     </section>
   );
 }
