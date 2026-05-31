@@ -2,6 +2,7 @@ import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SelectComponent from '@/app/components/SelectComponent/SelectComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { TextAreaComponent } from '@/app/components/TextAreaComponent/TextAreaComponent';
 import styles from '../../style.module.css';
 
 type ClinicDataSectionComponentProps = {
@@ -9,6 +10,8 @@ type ClinicDataSectionComponentProps = {
   setClinicName: (value: string) => void;
   aiAgentName: string;
   setAiAgentName: (value: string) => void;
+  additionalInformation: string;
+  setAdditionalInformation: (value: string) => void;
   appointmentDuration: string;
   setAppointmentDuration: (value: string) => void;
   maxAppointmentsPerSlot: string;
@@ -53,6 +56,8 @@ export default function ClinicDataSectionComponent({
   setClinicName,
   aiAgentName,
   setAiAgentName,
+  additionalInformation,
+  setAdditionalInformation,
   appointmentDuration,
   setAppointmentDuration,
   maxAppointmentsPerSlot,
@@ -216,20 +221,20 @@ export default function ClinicDataSectionComponent({
           )}
         </div>
       </div>
-      {/* <div className={styles.customPromptSection}>
-        <label className={styles.customPromptLabel}>Prompt personalizado da IA</label>
+      <div className={styles.customPromptSection}>
+        <label className={styles.customPromptLabel}>Informações adicionais</label>
         <p className={styles.customPromptDescription}>
-          Instrua o agente de IA sobre como ele deve se comportar, responder e interagir com os
-          pacientes.
+          Adicione detalhes sobre a clínica para orientar o atendimento da IA.
         </p>
-        <textarea
-          className={styles.customPromptTextarea}
+        <TextAreaComponent
+          id="clinic-additional-information"
+          name="clinicAdditionalInformation"
           placeholder="Ex.: Você é um assistente simpático da clínica. Sempre cumprimente o paciente pelo nome e ofereça ajuda para agendar consultas..."
-          value={customPrompt}
-          onChange={(e) => setCustomPrompt(e.target.value)}
+          value={additionalInformation}
+          onChange={setAdditionalInformation}
           rows={6}
         />
-      </div> */}
+      </div>
       <div className={styles.basicDataActions}>
         <ButtonComponent
           disabled={isSaveDisabled}

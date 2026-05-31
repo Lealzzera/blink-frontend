@@ -39,11 +39,7 @@ function isSameMessage(currentMessage: any, nextMessage: any) {
     return hasSameText && sentAtDifferenceInMs <= 10000;
   }
 
-  return (
-    currentMessage.sent_at === nextMessage.sent_at &&
-    hasSameText &&
-    hasSameDirection
-  );
+  return currentMessage.sent_at === nextMessage.sent_at && hasSameText && hasSameDirection;
 }
 
 function getPendingMessageKey(phoneNumber: string, text: string) {
@@ -327,6 +323,7 @@ export default function ChatComponent({
       )}
       <ul ref={ulRef} className={style.chatUl}>
         {messageList.map((message, index) => {
+          console.log(message);
           const isFirst = index === 0;
           return (
             <li

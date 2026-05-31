@@ -42,6 +42,7 @@ export async function getConversationMessages({
       sent_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : '',
       from_me: m.fromMe,
       has_media: m.hasMedia,
+      ack: m.ack,
     };
   });
 }

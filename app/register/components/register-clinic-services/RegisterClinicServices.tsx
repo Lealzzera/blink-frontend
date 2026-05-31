@@ -2,6 +2,7 @@
 
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { TextAreaComponent } from '@/app/components/TextAreaComponent/TextAreaComponent';
 import { useState } from 'react';
 import styles from './styles.module.css';
 
@@ -18,6 +19,8 @@ type RegisterClinicServicesProps = {
   setChargesEvaluation: (value: boolean) => void;
   evaluationPrice: number;
   setEvaluationPrice: (value: number) => void;
+  textAreaValue: string;
+  setTextAreaValue: (value: string) => void;
 };
 
 function parsePriceToCents(raw: string): number {
@@ -39,6 +42,8 @@ export default function RegisterClinicServices({
   setChargesEvaluation,
   evaluationPrice,
   setEvaluationPrice,
+  textAreaValue,
+  setTextAreaValue,
 }: RegisterClinicServicesProps) {
   const [serviceName, setServiceName] = useState('');
   const [duration, setDuration] = useState(0);
@@ -135,7 +140,7 @@ export default function RegisterClinicServices({
             onKeyDown={handleKeyDown}
           />
         </div>
-
+        {/*
         <div className={styles.field} style={{ flex: 1 }}>
           <label className={styles.label}>Duração (min)</label>
           <input
@@ -146,7 +151,7 @@ export default function RegisterClinicServices({
             onChange={(e) => setDuration(parseInt(e.target.value.replace(/\D/g, ''), 10) || 0)}
             onKeyDown={handleKeyDown}
           />
-        </div>
+        </div> */}
 
         <div className={styles.field} style={{ flex: 2 }}>
           <label className={styles.label}>Preço</label>
@@ -177,9 +182,9 @@ export default function RegisterClinicServices({
           services.map((service, index) => (
             <div key={index} className={styles.chip}>
               <span className={styles.chipName}>{service.name}</span>
-              {service.durationMinutes !== 0 && (
+              {/* {service.durationMinutes !== 0 && (
                 <span className={styles.chipBadge}>{service.durationMinutes} min</span>
-              )}
+              )} */}
               {service.priceCents > 0 && (
                 <span className={styles.chipBadge}>{formatPriceCents(service.priceCents)}</span>
               )}
@@ -194,6 +199,20 @@ export default function RegisterClinicServices({
             </div>
           ))
         )}
+      </div>
+      <div className={styles.moreInformationArea}>
+        <h3>Informações adicionais</h3>
+        <p>Adicione informações importantes a respeito da sua clínica.</p>
+        <div className={styles.textAreaContainer}>
+          <TextAreaComponent
+            value={textAreaValue}
+            onChange={setTextAreaValue}
+            name="moreInformation"
+            id="moreInformation"
+            resize={false}
+            placeholder="Ex.: especialidades, observações de atendimento, instruções importantes para pacientes..."
+          />
+        </div>
       </div>
     </section>
   );

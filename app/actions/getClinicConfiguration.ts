@@ -16,6 +16,7 @@ export type ClinicConfigurationResponse = {
   allowRescheduling: boolean;
   allowCancellation: boolean;
   aiAgentName: string | null;
+  additionalInformation: string | null;
 };
 
 export async function getClinicConfiguration(

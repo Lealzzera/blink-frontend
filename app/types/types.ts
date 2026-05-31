@@ -41,6 +41,7 @@ export type RegisterClinicObject = {
   city: string;
   postalCode: string;
   state: string;
+  additionalInformation: string;
   selectedPlan: {
     planId: string;
     stripePriceId: string;
@@ -93,6 +94,7 @@ export type SignupDraftData = {
   postalCode: string;
   city: string;
   state: string;
+  additionalInformation?: string;
   planId: string;
   workingHours: IWorkingHourInput[];
   services: IServiceInput[];

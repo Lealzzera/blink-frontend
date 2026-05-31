@@ -158,6 +158,7 @@ export default function ClinicSettingsPage() {
   const { clinicInfo } = useUser();
   const [clinicName, setClinicName] = useState('');
   const [aiAgentName, setAiAgentName] = useState('');
+  const [additionalInformation, setAdditionalInformation] = useState('');
   const [clinicNameError, setClinicNameError] = useState(false);
   const [aiAgentNameError, setAiAgentNameError] = useState(false);
   const [appointmentDuration, setAppointmentDuration] = useState('');
@@ -344,6 +345,7 @@ export default function ClinicSettingsPage() {
         postalCode: clinicPostalCode.trim() || null,
         city: clinicCity.trim() || null,
         state: clinicState.trim() || null,
+        additionalInformation: additionalInformation.trim() || null,
       });
 
       showToastMessage({
@@ -566,6 +568,7 @@ export default function ClinicSettingsPage() {
       setClinicPostalCode(response.postalCode ? formatPostalCode(response.postalCode) : '');
       setClinicCity(response.city || '');
       setClinicState(response.state || '');
+      setAdditionalInformation(response.additionalInformation || '');
       setChargesEvaluation(Boolean(response.chargesEvaluation));
       setEvaluationPriceCents(response.evaluationPriceCents ?? 0);
     }
@@ -614,6 +617,8 @@ export default function ClinicSettingsPage() {
           setClinicName={setClinicName}
           aiAgentName={aiAgentName}
           setAiAgentName={setAiAgentName}
+          additionalInformation={additionalInformation}
+          setAdditionalInformation={setAdditionalInformation}
           appointmentDuration={appointmentDuration}
           setAppointmentDuration={setAppointmentDuration}
           maxAppointmentsPerSlot={maxAppointmentsPerSlot}

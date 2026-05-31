@@ -29,6 +29,7 @@ const INITIAL_REGISTER_OBJECT: RegisterClinicObject = {
   city: '',
   postalCode: '',
   state: '',
+  additionalInformation: '',
   selectedPlan: {
     planId: '',
     stripePriceId: '',
@@ -159,6 +160,7 @@ export default function RegisterPage() {
       postalCode: registerObject.postalCode.split('-').join(''),
       city: registerObject.city,
       state: registerObject.state,
+      additionalInformation: registerObject.additionalInformation.trim(),
       planId: registerObject.selectedPlan.planId,
       workingHours: registerObject.workingHours,
       services: registerObject.services,
@@ -287,6 +289,10 @@ export default function RegisterPage() {
                     handleChangeSettingsValue('chargesEvaluation', value)
                   }
                   setServices={(value) => handleChangeObjectValue('services', value)}
+                  textAreaValue={registerObject.additionalInformation}
+                  setTextAreaValue={(value) =>
+                    handleChangeObjectValue('additionalInformation', value)
+                  }
                 />
               )}
               {currentStep === 5 && (

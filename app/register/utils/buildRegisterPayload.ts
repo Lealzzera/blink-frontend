@@ -10,6 +10,7 @@ export type RegisterPayload = {
   postalCode: string;
   city: string;
   state: string;
+  additionalInformation?: string;
   planId: string;
   workingHours: {
     weekday: string;
@@ -46,6 +47,7 @@ export function buildRegisterPayload(obj: RegisterClinicObject): RegisterPayload
     postalCode: obj.postalCode.replace(/\D/g, ''),
     city: obj.city.trim(),
     state: obj.state.trim(),
+    additionalInformation: obj.additionalInformation.trim(),
     planId: obj.selectedPlan.planId,
     workingHours: obj.workingHours.map((workingHour) => ({
       weekday: workingHour.weekday,

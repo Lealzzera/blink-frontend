@@ -23,6 +23,7 @@ type PaymentFormProps = {
     postalCode: string;
     city: string;
     state: string;
+    additionalInformation: string;
     planId: string;
     workingHours: WorkingHour[];
     services: ServiceType[];
@@ -56,6 +57,7 @@ export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
         postalCode: clinicData.postalCode,
         city: clinicData.city,
         state: clinicData.state,
+        additionalInformation: clinicData.additionalInformation,
         planId: clinicData.planId,
         workingHours: clinicData.workingHours as SignupDraftData['workingHours'],
         services: clinicData.services,

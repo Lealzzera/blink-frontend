@@ -128,6 +128,30 @@
   gap: 0.5rem;
   align-content: flex-start;
   min-height: 40px;
+  max-height: 100px;
+  overflow: auto;
+}
+
+.chipsArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chipsArea::-webkit-scrollbar-thumb {
+  background-color: var(--gray-600);
+  border-radius: 3px;
+}
+
+.moreInformationArea {
+  margin-top: 1.25rem;
+}
+
+.moreInformationArea p {
+  color: var(--gray-300);
+}
+
+.textAreaContainer {
+  width: 100%;
+  margin-top: 1rem;
 }
 
 .empty {
