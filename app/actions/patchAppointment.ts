@@ -1,8 +1,7 @@
 'use server';
 
+import { AppointmentStatus } from '../types/types';
 import { serverApi } from './serverApi';
-
-type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED';
 
 type PatchAppointmentParams = {
   appointmentId: string;

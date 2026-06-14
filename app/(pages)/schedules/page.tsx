@@ -16,7 +16,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import styles from './style.module.css';
 
-type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED';
+type AppointmentStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'CANCELED_BY_PATIENT'
+  | 'COMPLETED'
+  | 'CANCELED_BY_CLINIC'
+  | 'NOT_ATTENDED';
 
 type BackendAppointment = {
   id: string;
@@ -33,7 +39,9 @@ const APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS: Record<AppointmentStatus, string> 
   PENDING: 'status_AGENDADO',
   CONFIRMED: 'status_CONFIRMADO',
   COMPLETED: 'status_COMPARECEU',
-  CANCELED: 'status_NAO_COMPARECEU',
+  CANCELED_BY_PATIENT: 'status_CANCELADO_PELO_PACIENTE',
+  CANCELED_BY_CLINIC: 'status_CANCELADO_PELA_CLINICA',
+  NOT_ATTENDED: 'status_NAO_COMPARECEU',
 };
 
 export default function Schedules() {
@@ -303,21 +311,33 @@ export default function Schedules() {
           Novo agendamento
         </button>
         <div className={styles.legend}>
-          <div>
-            <div className={styles.scheduled}></div>
-            <span>Agendado</span>
+          <div className={styles.legendContent}>
+            <div>
+              <div className={styles.scheduled}></div>
+              <span>Agendado</span>
+            </div>
+            <div>
+              <div className={styles.confirmed}></div>
+              <span>Confirmado</span>
+            </div>
+            <div>
+              <div className={styles.showedUp}></div>
+              <span>Compareceu</span>
+            </div>
           </div>
-          <div>
-            <div className={styles.confirmed}></div>
-            <span>Confirmado</span>
-          </div>
-          <div>
-            <div className={styles.showedUp}></div>
-            <span>Compareceu</span>
-          </div>
-          <div>
-            <div className={styles.notShowedUp}></div>
-            <span>Não compareceu</span>
+          <div className={styles.legendContent}>
+            <div>
+              <div className={styles.canceledByPatient}></div>
+              <span>Cancelado pelo paciente</span>
+            </div>
+            <div>
+              <div className={styles.canceledByClinic}></div>
+              <span>Cancelado pela clínica</span>
+            </div>
+            <div>
+              <div className={styles.notShowedUp}></div>
+              <span>Não compareceu</span>
+            </div>
           </div>
         </div>
       </div>
@@ -358,14 +378,13 @@ export default function Schedules() {
           }}
           events={events}
           eventClassNames={(arg) => {
-            const appointmentStatus = (arg.event.extendedProps as any)
-              ?.status as AppointmentStatus | undefined;
+            const appointmentStatus = (arg.event.extendedProps as any)?.status as
+              | AppointmentStatus
+              | undefined;
             const cssClassName = appointmentStatus
               ? APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS[appointmentStatus]
               : undefined;
-            const statusClass = cssClassName
-              ? (styles as any)[cssClassName]
-              : undefined;
+            const statusClass = cssClassName ? (styles as any)[cssClassName] : undefined;
             return [styles.scheduleItem, statusClass].filter(Boolean) as string[];
           }}
           dayCellClassNames={(arg) => {

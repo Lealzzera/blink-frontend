@@ -1,25 +1,22 @@
 'use client';
-import { useState } from 'react';
+import { AppointmentStatus } from '@/app/types/types';
 import { EventInput } from '@fullcalendar/core';
-import styles from './style.module.css';
+import { useState } from 'react';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
-
-type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'CANCELED' | 'COMPLETED';
+import styles from './style.module.css';
 
 const APPOINTMENT_STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
   { value: 'PENDING', label: 'Agendado' },
   { value: 'CONFIRMED', label: 'Confirmado' },
   { value: 'COMPLETED', label: 'Compareceu' },
-  { value: 'CANCELED', label: 'Não compareceu' },
+  { value: 'CANCELED_BY_PATIENT', label: 'Cancelado pelo paciente' },
+  { value: 'CANCELED_BY_CLINIC', label: 'Cancelado pela clínica' },
 ];
 
 type EventDetailsComponentProps = {
   event: EventInput;
   onClose: () => void;
-  handleUpdateStatus: (payload: {
-    appointmentId: string;
-    status: AppointmentStatus;
-  }) => void;
+  handleUpdateStatus: (payload: { appointmentId: string; status: AppointmentStatus }) => void;
   handleDeleteAppointment: (appointmentId: string) => void;
 };
 
@@ -29,17 +26,13 @@ export default function EventDetailsComponent({
   handleUpdateStatus,
   handleDeleteAppointment,
 }: EventDetailsComponentProps) {
-  const currentAppointmentStatus = event.extendedProps?.status as
-    | AppointmentStatus
-    | undefined;
+  const currentAppointmentStatus = event.extendedProps?.status as AppointmentStatus | undefined;
 
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | ''>(
     currentAppointmentStatus ?? '',
   );
 
-  const handleChangeStatus = (
-    changeEvent: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
+  const handleChangeStatus = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedStatus(changeEvent.target.value as AppointmentStatus);
   };
 
@@ -121,10 +114,7 @@ export default function EventDetailsComponent({
               color: 'var(--white)',
             }}
           />
-          <ButtonComponent
-            text="Atualizar"
-            handleClickButton={handleConfirmUpdate}
-          />
+          <ButtonComponent text="Atualizar" handleClickButton={handleConfirmUpdate} />
         </div>
       </div>
     </div>

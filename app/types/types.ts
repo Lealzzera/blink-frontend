@@ -124,3 +124,11 @@ export type ClinicInfoType = {
   clinicSlug: string;
   clinicStatus: string;
 };
+
+export type AppointmentStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'CANCELED_BY_PATIENT'
+  | 'CANCELED_BY_CLINIC'
+  | 'COMPLETED'
+  | 'NOT_ATTENDED';
