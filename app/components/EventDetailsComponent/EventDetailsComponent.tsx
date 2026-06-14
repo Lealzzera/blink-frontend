@@ -1,8 +1,10 @@
 'use client';
 import { AppointmentStatus } from '@/app/types/types';
 import { EventInput } from '@fullcalendar/core';
-import { useState } from 'react';
+import { Pencil } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import ButtonComponent from '../ButtonComponent/ButtonComponent';
+import { TextAreaComponent } from '../TextAreaComponent/TextAreaComponent';
 import styles from './style.module.css';
 
 const APPOINTMENT_STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] = [
@@ -16,14 +18,18 @@ const APPOINTMENT_STATUS_OPTIONS: { value: AppointmentStatus; label: string }[] 
 type EventDetailsComponentProps = {
   event: EventInput;
   onClose: () => void;
-  handleUpdateStatus: (payload: { appointmentId: string; status: AppointmentStatus }) => void;
+  handleUpdateAppointment: (payload: {
+    appointmentId: string;
+    status: AppointmentStatus;
+    notes: string | null;
+  }) => void;
   handleDeleteAppointment: (appointmentId: string) => void;
 };
 
 export default function EventDetailsComponent({
   event,
   onClose,
-  handleUpdateStatus,
+  handleUpdateAppointment,
   handleDeleteAppointment,
 }: EventDetailsComponentProps) {
   const currentAppointmentStatus = event.extendedProps?.status as AppointmentStatus | undefined;
@@ -31,6 +37,14 @@ export default function EventDetailsComponent({
   const [selectedStatus, setSelectedStatus] = useState<AppointmentStatus | ''>(
     currentAppointmentStatus ?? '',
   );
+  const [isEditingNotes, setIsEditingNotes] = useState(false);
+  const [notesText, setNotesText] = useState(event.extendedProps?.notes ?? '');
+
+  useEffect(() => {
+    setSelectedStatus(currentAppointmentStatus ?? '');
+    setNotesText(event.extendedProps?.notes ?? '');
+    setIsEditingNotes(false);
+  }, [currentAppointmentStatus, event.extendedProps?.notes, event.id]);
 
   const handleChangeStatus = (changeEvent: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedStatus(changeEvent.target.value as AppointmentStatus);
@@ -38,10 +52,15 @@ export default function EventDetailsComponent({
 
   const handleConfirmUpdate = () => {
     if (!event.id || !selectedStatus) return;
-    handleUpdateStatus({
+    handleUpdateAppointment({
       appointmentId: event.id,
       status: selectedStatus,
+      notes: notesText.trim() || null,
     });
+  };
+
+  const handleEditNotes = () => {
+    setIsEditingNotes(true);
   };
 
   const handleConfirmDelete = () => {
@@ -77,9 +96,25 @@ export default function EventDetailsComponent({
         <p>
           Data: <span>{formatAppointmentDateTime()}</span>
         </p>
-        <p className={styles.notes}>
-          Anotações: <span>{event.extendedProps?.notes ?? '—'}</span>
-        </p>
+        <div className={styles.notesContainer}>
+          <div className={styles.notesHeader}>
+            <p>Anotações:</p>
+            <p className={styles.editButton}>
+              <Pencil width={16} onClick={handleEditNotes} />
+            </p>
+          </div>
+          {isEditingNotes ? (
+            <TextAreaComponent
+              value={notesText}
+              onChange={setNotesText}
+              name="notes"
+              id="notes"
+              rows={2}
+            />
+          ) : (
+            <p className={styles.notesText}>{event.extendedProps?.notes ?? '—'}</p>
+          )}
+        </div>
         <div className={styles.selectStatusContainer}>
           <select
             value={selectedStatus}

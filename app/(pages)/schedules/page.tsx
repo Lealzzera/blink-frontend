@@ -249,13 +249,18 @@ export default function Schedules() {
     fetchAppointments();
   }, [fetchAppointments]);
 
-  const handleUpdateStatus = useCallback(
-    async (payload: { appointmentId: string; status: AppointmentStatus }) => {
+  const handleUpdateAppointment = useCallback(
+    async (payload: {
+      appointmentId: string;
+      status: AppointmentStatus;
+      notes: string | null;
+    }) => {
       setSelectedEvent(null);
       try {
         await patchAppointment({
           appointmentId: payload.appointmentId,
           status: payload.status,
+          notes: payload.notes,
         });
 
         toast('Agendamento atualizado com sucesso.', {
@@ -346,7 +351,7 @@ export default function Schedules() {
           <EventDetailsComponent
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
-            handleUpdateStatus={handleUpdateStatus}
+            handleUpdateAppointment={handleUpdateAppointment}
             handleDeleteAppointment={handleDeleteAppointment}
           />
         )}

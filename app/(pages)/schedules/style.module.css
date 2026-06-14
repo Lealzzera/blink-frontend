@@ -105,6 +105,16 @@
   color: var(--white);
 }
 
+.status_CANCELADO_PELO_PACIENTE:hover {
+  background: var(--orange-400);
+  color: var(--white);
+}
+
+.status_CANCELADO_PELA_CLINICA:hover {
+  background: var(--purple-500);
+  color: var(--white);
+}
+
 .status_CONFIRMADO:hover {
   background: var(--green-400);
   color: var(--white);

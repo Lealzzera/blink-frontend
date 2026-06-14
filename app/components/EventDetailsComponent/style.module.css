@@ -33,10 +33,39 @@
   overflow-y: auto;
 }
 
-.notes {
+.notesContainer {
   flex-direction: column;
   gap: 0px;
   margin-top: 1rem;
+}
+
+.notesText {
+  margin-top: 8px;
+  max-height: 100px;
+  overflow-y: auto;
+}
+
+.notesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.editButton {
+  cursor: pointer;
+}
+
+.notesText::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notesText::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.notesText::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .modalContent p span::-webkit-scrollbar {
