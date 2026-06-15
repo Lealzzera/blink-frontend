@@ -229,7 +229,7 @@ export default function ClinicDataSectionComponent({
         <TextAreaComponent
           id="clinic-additional-information"
           name="clinicAdditionalInformation"
-          placeholder="Ex.: Você é um assistente simpático da clínica. Sempre cumprimente o paciente pelo nome e ofereça ajuda para agendar consultas..."
+          placeholder="Ex.: especialidades, observações de atendimento, instruções importantes para pacientes, formas de pagamento..."
           value={additionalInformation}
           onChange={setAdditionalInformation}
           rows={6}

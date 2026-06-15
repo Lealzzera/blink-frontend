@@ -110,30 +110,30 @@ export default function RegisterClinicServices({
         Agora preencha abaixo os serviços realizados pela sua clínica
       </p>
       {showEvaluationSection && (
-      <div className={styles.evaluationBox}>
-        <div className={styles.evaluationHeader}>
-          <p className={styles.evaluationLabel}>Sua clínica cobra por consulta inicial?</p>
-          <SwitchComponent
-            handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
-            isOn={chargesEvaluation}
-          />
-        </div>
-        {chargesEvaluation && (
-          <div className={styles.evaluationInput}>
-            <InputComponent
-              required
-              value={evaluationPriceDisplay}
-              placeholder="0,00"
-              label="Qual o valor?"
-              handleChangeInput={(event) => {
-                const digits = event.target.value.replace(/\D/g, '');
-                const cents = digits ? parseInt(digits, 10) : 0;
-                setEvaluationPrice(cents);
-              }}
+        <div className={styles.evaluationBox}>
+          <div className={styles.evaluationHeader}>
+            <p className={styles.evaluationLabel}>Sua clínica cobra por consulta inicial?</p>
+            <SwitchComponent
+              handleToggle={() => setChargesEvaluation(!chargesEvaluation)}
+              isOn={chargesEvaluation}
             />
           </div>
-        )}
-      </div>
+          {chargesEvaluation && (
+            <div className={styles.evaluationInput}>
+              <InputComponent
+                required
+                value={evaluationPriceDisplay}
+                placeholder="0,00"
+                label="Qual o valor?"
+                handleChangeInput={(event) => {
+                  const digits = event.target.value.replace(/\D/g, '');
+                  const cents = digits ? parseInt(digits, 10) : 0;
+                  setEvaluationPrice(cents);
+                }}
+              />
+            </div>
+          )}
+        </div>
       )}
       <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
         <div className={styles.field} style={{ flex: 3 }}>
@@ -208,20 +208,20 @@ export default function RegisterClinicServices({
         )}
       </div>
       {showAdditionalInformation && (
-      <div className={styles.moreInformationArea}>
-        <h3>Informações adicionais</h3>
-        <p>Adicione informações importantes a respeito da sua clínica.</p>
-        <div className={styles.textAreaContainer}>
-          <TextAreaComponent
-            value={textAreaValue}
-            onChange={setTextAreaValue}
-            name="moreInformation"
-            id="moreInformation"
-            resize={false}
-            placeholder="Ex.: especialidades, observações de atendimento, instruções importantes para pacientes..."
-          />
+        <div className={styles.moreInformationArea}>
+          <h3>Informações adicionais</h3>
+          <p>Adicione informações importantes a respeito da sua clínica.</p>
+          <div className={styles.textAreaContainer}>
+            <TextAreaComponent
+              value={textAreaValue}
+              onChange={setTextAreaValue}
+              name="moreInformation"
+              id="moreInformation"
+              resize={false}
+              placeholder="Ex.: especialidades, observações de atendimento, instruções importantes para pacientes, formas de pagamento..."
+            />
+          </div>
         </div>
-      </div>
       )}
     </section>
   );
