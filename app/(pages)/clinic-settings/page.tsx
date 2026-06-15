@@ -17,10 +17,10 @@ import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
+import type { ServiceType } from '../../register/components/register-clinic-services/RegisterClinicServices';
 import RegisterClinicWorkingHours, {
   WorkingHour,
 } from '../../register/components/register-clinic-working-hours/RegisterClinicWorkingHours';
-import type { ServiceType } from '../../register/components/register-clinic-services/RegisterClinicServices';
 import ClinicDataSectionComponent from './components/ClinicDataSectionComponent/ClinicDataSectionComponent';
 import ClinicServicesSectionComponent from './components/ClinicServicesSectionComponent/ClinicServicesSectionComponent';
 import styles from './style.module.css';
@@ -673,7 +673,7 @@ export default function ClinicSettingsPage() {
           className={`${styles.tabButton} ${activeTab === 'horarios' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('horarios')}
         >
-          Horários de funcionamento
+          Horários
         </button>
         <button
           className={`${styles.tabButton} ${activeTab === 'dias-atipicos' ? styles.tabButtonActive : ''}`}
@@ -785,7 +785,9 @@ export default function ClinicSettingsPage() {
                       label="Abertura"
                       value={atypicalDayConfig.open}
                       disabled={!atypicalDayConfig.is_working_day}
-                      handleChangeInput={(event) => handleManageAtypicalDay('open', event.target.value)}
+                      handleChangeInput={(event) =>
+                        handleManageAtypicalDay('open', event.target.value)
+                      }
                       placeholder="00:00"
                     />
                     <InputComponent
@@ -810,7 +812,9 @@ export default function ClinicSettingsPage() {
                       label="Fechamento"
                       value={atypicalDayConfig.close}
                       disabled={!atypicalDayConfig.is_working_day}
-                      handleChangeInput={(event) => handleManageAtypicalDay('close', event.target.value)}
+                      handleChangeInput={(event) =>
+                        handleManageAtypicalDay('close', event.target.value)
+                      }
                       placeholder="00:00"
                     />
                   </div>

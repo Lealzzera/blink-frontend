@@ -160,7 +160,7 @@ export default function RegisterClinicServices({
           />
         </div> */}
 
-        <div className={styles.field} style={{ flex: 2 }}>
+        {/* <div className={styles.field} style={{ flex: 2 }}>
           <label className={styles.label}>Preço</label>
           <input
             className={styles.input}
@@ -170,7 +170,7 @@ export default function RegisterClinicServices({
             onChange={(e) => handlePriceChange(e, setPriceDisplay)}
             onKeyDown={handleKeyDown}
           />
-        </div>
+        </div> */}
 
         <button
           type="button"
