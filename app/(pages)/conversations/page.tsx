@@ -183,12 +183,8 @@ export default function Conversations() {
       return [
         {
           ...existingConversation,
-          contactName:
-            existingConversation.contactName ||
-            updatedConversation.contactName,
-          contactPicture:
-            existingConversation.contactPicture ||
-            updatedConversation.contactPicture,
+          contactName: existingConversation.contactName || updatedConversation.contactName,
+          contactPicture: existingConversation.contactPicture || updatedConversation.contactPicture,
           lastMessage: updatedConversation.lastMessage,
         },
         ...nextConversations,
@@ -215,7 +211,6 @@ export default function Conversations() {
 
       {contactSelected?.id ? (
         <ChatComponent
-          aiAnswerOn={true}
           contactName={contactSelected.contactName}
           phoneNumber={contactSelected.phoneNumber}
           imageUrl={contactSelected.contactPicture}

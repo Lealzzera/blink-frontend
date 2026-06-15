@@ -1,8 +1,9 @@
 'use client';
 
 import { getConversationMessages } from '@/app/actions/getConversationMessages';
+import { getWhatsappConversation } from '@/app/actions/getWhatsappConversation';
+import { patchWhatsappConversation } from '@/app/actions/patchWhatsappConversation';
 import { postMessage } from '@/app/actions/postMessage';
-import { putAiAnswer } from '@/app/actions/putAiAnswer';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
 import { useChat } from '@/app/context/chatContext';
 import { useUser } from '@/app/context/userContext';
@@ -16,7 +17,6 @@ type ChatComponentProps = {
   phoneNumber: string;
   contactName?: string;
   imageUrl?: string;
-  aiAnswerOn: boolean;
   contactId: string;
 };
 
@@ -46,11 +46,12 @@ function getPendingMessageKey(phoneNumber: string, text: string) {
   return `${phoneNumber}:${text.trim()}`;
 }
 
+const WHATSAPP_SESSION_NAME = 'default';
+
 export default function ChatComponent({
   phoneNumber,
   contactName,
   imageUrl,
-  aiAnswerOn,
   contactId,
 }: ChatComponentProps) {
   const { clinicInfo } = useUser();
@@ -60,7 +61,8 @@ export default function ChatComponent({
   const [hasMore, setHasMore] = useState(true);
   const [message, setMessage] = useState('');
   const [pageNumber, setPageNumber] = useState(0);
-  const [isSwitchOn, setIsSwitchOn] = useState(aiAnswerOn);
+  const [isSwitchOn, setIsSwitchOn] = useState<boolean | null>(null);
+  const [isAiSwitchLoading, setIsAiSwitchLoading] = useState(false);
   const { lastMessageByPhone } = useChat();
 
   const chatRef = useRef<HTMLDivElement | null>(null);
@@ -187,12 +189,39 @@ export default function ChatComponent({
 
     // TODO: IMPLEMENT IT WHEN WAHA IS READY
     // await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
-    await postMessage({ chatId: contactId, text: message, session: 'default' });
+    await postMessage({ chatId: contactId, text: message, session: WHATSAPP_SESSION_NAME });
 
     if (textareaRef.current) {
       textareaRef.current.style.height = '40px';
     }
   };
+
+  const handleToggleSwitch = useCallback(async () => {
+    if (!clinicInfo?.clinicId || !contactId) return;
+    if (isAiSwitchLoading) return;
+
+    const previousSwitchState = Boolean(isSwitchOn);
+    const nextSwitchState = !previousSwitchState;
+    setIsSwitchOn(nextSwitchState);
+    setIsAiSwitchLoading(true);
+
+    try {
+      const conversation = await patchWhatsappConversation({
+        clinicId: clinicInfo.clinicId,
+        chatId: contactId,
+        aiEnabled: nextSwitchState,
+        session: WHATSAPP_SESSION_NAME,
+        phoneNumber,
+      });
+
+      setIsSwitchOn(conversation?.aiEnabled ?? nextSwitchState);
+    } catch (error) {
+      console.error('Failed to update WhatsApp conversation AI config', error);
+      setIsSwitchOn(previousSwitchState);
+    } finally {
+      setIsAiSwitchLoading(false);
+    }
+  }, [clinicInfo?.clinicId, contactId, isAiSwitchLoading, isSwitchOn, phoneNumber]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && event.shiftKey) return;
@@ -211,8 +240,40 @@ export default function ChatComponent({
   }, [phoneNumber]);
 
   useEffect(() => {
-    setIsSwitchOn(aiAnswerOn);
-  }, [aiAnswerOn, phoneNumber]);
+    if (!clinicInfo?.clinicId) return;
+    if (!contactId) return;
+    const clinicId = clinicInfo.clinicId;
+    let shouldIgnoreResponse = false;
+
+    setIsSwitchOn(null);
+    setIsAiSwitchLoading(true);
+
+    async function loadWhatsappConversation() {
+      try {
+        const conversation = await getWhatsappConversation({
+          clinicId,
+          chatId: contactId,
+        });
+
+        if (shouldIgnoreResponse) return;
+        setIsSwitchOn(conversation?.aiEnabled ?? true);
+      } catch (error) {
+        if (shouldIgnoreResponse) return;
+        console.error('Failed to load WhatsApp conversation AI config', error);
+        setIsSwitchOn(true);
+      } finally {
+        if (!shouldIgnoreResponse) {
+          setIsAiSwitchLoading(false);
+        }
+      }
+    }
+
+    loadWhatsappConversation();
+
+    return () => {
+      shouldIgnoreResponse = true;
+    };
+  }, [clinicInfo?.clinicId, contactId]);
 
   useEffect(() => {
     const container = ulRef.current;
@@ -301,18 +362,13 @@ export default function ChatComponent({
             className={style.imageContact}
           />
         </div>
-        <SwitchComponent
-          isOn={isSwitchOn}
-          handleToggle={async () => {
-            try {
-              const newValue = await putAiAnswer(phoneNumber);
-              setIsSwitchOn(newValue);
-            } catch (err) {
-              console.error('Error toggling AI answer:', err);
-            }
-          }}
-          label={isSwitchOn ? 'Desligar IA' : 'Ligar IA'}
-        />
+        <div className={style.switchContainer}>
+          <p>{isSwitchOn ? 'Desligar Secretária Virtual' : 'Ligar Secretária Virtual'}</p>
+          <SwitchComponent
+            isOn={isSwitchOn || false}
+            handleToggle={isAiSwitchLoading ? () => {} : handleToggleSwitch}
+          />
+        </div>
       </div>
       {loading && pageNumber > 0 && (
         <div className={style.dots}>
