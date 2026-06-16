@@ -90,6 +90,7 @@ export default function Conversations() {
   });
   const [hasMore, setHasMore] = useState(true);
   const isLoadingRef = useRef(false);
+  const hasLoadedConversationsRef = useRef(false);
   const isWhatsAppConnected = Boolean(whatsAppStatus?.connected);
 
   const showWhatsAppIsNotConnected =
@@ -207,6 +208,7 @@ export default function Conversations() {
 
     if (!isWhatsAppConnected) {
       isLoadingRef.current = false;
+      hasLoadedConversationsRef.current = false;
       setConversations([]);
       setWhatsappConversationList([]);
       setHasMore(false);
@@ -216,6 +218,9 @@ export default function Conversations() {
       return;
     }
 
+    if (hasLoadedConversationsRef.current) return;
+
+    hasLoadedConversationsRef.current = true;
     setHasMore(true);
     fetchConversations(0);
     fetchWhatsappConversationsList(clinicInfo?.clinicId || '');

@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import { getClinicId } from '../actions/getClinicId';
 import { ClinicInfoType } from '../types/types';
 
@@ -35,17 +35,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [clinicInfo, setClinicInfo] = useState<ClinicInfoType | null>(null);
   const [contactSelected, setContactSelected] = useState<ContactSelected | null>(null);
 
-  function handleSetUser(data: User) {
+  const handleSetUser = useCallback((data: User) => {
     setUserInfo(data);
-  }
+  }, []);
 
-  function handleClearUser() {
+  const handleClearUser = useCallback(() => {
     setUserInfo(null);
-  }
+  }, []);
 
-  function handleSetContactSelected(contactSelected: ContactSelected | null) {
+  const handleSetContactSelected = useCallback((contactSelected: ContactSelected | null) => {
     setContactSelected(contactSelected);
-  }
+  }, []);
 
   const pathname = usePathname();
 
