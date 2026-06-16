@@ -12,7 +12,7 @@ import style from './style.module.css';
 
 export default function Settings() {
   const router = useRouter();
-  const { clinicInfo } = useUser();
+  const { clinicInfo, handleSetContactSelected } = useUser();
   const { whatsAppStatus, qrCode, loading, error, refresh } = useWhatsApp();
 
   const showQrCode = () => {
@@ -30,6 +30,7 @@ export default function Settings() {
   const handleDisconnectWhatsapp = async () => {
     const response = await deleteWhatsappConnection('default');
     if (response?.status === 'STOPPED' || response?.status === 'DISCONNECTED') {
+      handleSetContactSelected(null);
       toast('WhatsApp desconectado com sucesso.', {
         type: 'success',
         theme: 'colored',

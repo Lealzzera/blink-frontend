@@ -18,6 +18,12 @@ type ChatComponentProps = {
   contactName?: string;
   imageUrl?: string;
   contactId: string;
+  onAiConfigChange?: (conversation: {
+    id: string;
+    chatId: string;
+    phoneNumber: string;
+    aiEnabled: boolean;
+  }) => void | Promise<void>;
 };
 
 function getMessageText(message: any) {
@@ -53,6 +59,7 @@ export default function ChatComponent({
   contactName,
   imageUrl,
   contactId,
+  onAiConfigChange,
 }: ChatComponentProps) {
   const { clinicInfo } = useUser();
 
@@ -215,13 +222,23 @@ export default function ChatComponent({
       });
 
       setIsSwitchOn(conversation?.aiEnabled ?? nextSwitchState);
+      if (conversation) {
+        await onAiConfigChange?.(conversation);
+      }
     } catch (error) {
       console.error('Failed to update WhatsApp conversation AI config', error);
       setIsSwitchOn(previousSwitchState);
     } finally {
       setIsAiSwitchLoading(false);
     }
-  }, [clinicInfo?.clinicId, contactId, isAiSwitchLoading, isSwitchOn, phoneNumber]);
+  }, [
+    clinicInfo?.clinicId,
+    contactId,
+    isAiSwitchLoading,
+    isSwitchOn,
+    onAiConfigChange,
+    phoneNumber,
+  ]);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && event.shiftKey) return;

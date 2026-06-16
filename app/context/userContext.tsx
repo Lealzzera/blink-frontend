@@ -25,7 +25,7 @@ type UserContextType = {
   contactSelected: ContactSelected | null;
   handleSetUser: (data: User) => void;
   handleClearUser: () => void;
-  handleSetContactSelected: (contactSelected: ContactSelected) => void;
+  handleSetContactSelected: (contactSelected: ContactSelected | null) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
@@ -43,7 +43,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserInfo(null);
   }
 
-  function handleSetContactSelected(contactSelected: ContactSelected) {
+  function handleSetContactSelected(contactSelected: ContactSelected | null) {
     setContactSelected(contactSelected);
   }
 

@@ -49,9 +49,14 @@ type ChatContextType = {
   unreadCountByPhone: Record<string, number>;
   wahaEvents: WahaRealtimeMessage[];
   clearUnreadMessages: (phoneNumber: string) => void;
-  hydrateUnreadCounts: (countsByPhone: Record<string, number>) => void;
+  hydrateUnreadCounts: (countsByPhone: Record<string, HydrateUnreadCount>) => void;
   pushIncomingMessage: (msg: ChatMessage) => void;
   pushLocalMessage: (msg: ChatMessage) => void;
+};
+
+type HydrateUnreadCount = {
+  count: number;
+  lastMessageSentAt?: string | number | null;
 };
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -96,6 +101,49 @@ function mapWahaMessageAnyToChatMessage(
   };
 }
 
+function getReadMessagesStorageKey(clinicId?: string) {
+  return clinicId ? `blink:read-whatsapp-chats:${clinicId}` : null;
+}
+
+function parseSentAtToMs(value?: string | number | null) {
+  if (!value) return 0;
+
+  if (typeof value === 'number') {
+    return value > 9999999999 ? value : value * 1000;
+  }
+
+  const numericValue = Number(value);
+
+  if (!Number.isNaN(numericValue)) {
+    return numericValue > 9999999999 ? numericValue : numericValue * 1000;
+  }
+
+  const dateValue = new Date(value).getTime();
+  return Number.isNaN(dateValue) ? 0 : dateValue;
+}
+
+function readStoredReadMessages(clinicId?: string) {
+  if (typeof window === 'undefined') return {};
+
+  const storageKey = getReadMessagesStorageKey(clinicId);
+  if (!storageKey) return {};
+
+  try {
+    return JSON.parse(window.localStorage.getItem(storageKey) ?? '{}') as Record<string, number>;
+  } catch {
+    return {};
+  }
+}
+
+function writeStoredReadMessages(clinicId: string | undefined, readMessages: Record<string, number>) {
+  if (typeof window === 'undefined') return;
+
+  const storageKey = getReadMessagesStorageKey(clinicId);
+  if (!storageKey) return;
+
+  window.localStorage.setItem(storageKey, JSON.stringify(readMessages));
+}
+
 export function ChatProvider({ children }: { children: ReactNode }) {
   const [messagesByPhone, setMessagesByPhone] = useState<Record<string, ChatMessage[]>>({});
   const [lastMessageByPhone, setLastMessageByPhone] = useState<Record<string, ChatMessage>>({});
@@ -106,6 +154,7 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const { clinicInfo, contactSelected } = useUser();
   const socketRef = useRef<WebSocket | null>(null);
   const selectedPhoneNumberRef = useRef<string | null>(null);
+  const readMessagesByPhoneRef = useRef<Record<string, number>>({});
 
   const unreadCountByPhone = Object.fromEntries(
     Object.entries(unreadMessageIdsByPhone).map(([phoneNumber, unreadMessageIds]) => [
@@ -114,7 +163,26 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     ]),
   );
 
-  const addUnreadMessage = (phoneNumber: string, messageId: string) => {
+  const getReadMessagesSnapshot = useCallback(() => {
+    const storedReadMessages = readStoredReadMessages(clinicInfo?.clinicId);
+
+    readMessagesByPhoneRef.current = {
+      ...storedReadMessages,
+      ...readMessagesByPhoneRef.current,
+    };
+
+    return readMessagesByPhoneRef.current;
+  }, [clinicInfo?.clinicId]);
+
+  const addUnreadMessage = (phoneNumber: string, messageId: string, sentAt?: string | number | null) => {
+    const messageSentAt = parseSentAtToMs(sentAt);
+    const readMessagesByPhone = getReadMessagesSnapshot();
+    const lastReadAt = readMessagesByPhone[phoneNumber] ?? 0;
+
+    if (messageSentAt && lastReadAt >= messageSentAt) {
+      return;
+    }
+
     setUnreadMessageIdsByPhone((prev) => {
       const unreadMessageIds = prev[phoneNumber] ?? [];
 
@@ -129,16 +197,56 @@ export function ChatProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const hydrateUnreadCounts = useCallback((countsByPhone: Record<string, number>) => {
+  const markPhoneNumberAsRead = useCallback(
+    (phoneNumber: string, readAt?: string | number | null) => {
+      if (!clinicInfo?.clinicId) return;
+
+      const readAtMs = parseSentAtToMs(readAt) || Date.now();
+      const readMessagesByPhone = getReadMessagesSnapshot();
+      const currentReadAt = readMessagesByPhone[phoneNumber] ?? 0;
+
+      if (currentReadAt >= readAtMs) return;
+
+      readMessagesByPhoneRef.current = {
+        ...readMessagesByPhone,
+        [phoneNumber]: readAtMs,
+      };
+
+      writeStoredReadMessages(clinicInfo.clinicId, readMessagesByPhoneRef.current);
+    },
+    [clinicInfo?.clinicId, getReadMessagesSnapshot],
+  );
+
+  const hydrateUnreadCounts = useCallback((countsByPhone: Record<string, HydrateUnreadCount>) => {
+    const readMessagesByPhone = getReadMessagesSnapshot();
+
     setUnreadMessageIdsByPhone((prev) => {
       const next = { ...prev };
       let hasChanges = false;
 
-      Object.entries(countsByPhone).forEach(([phoneNumber, count]) => {
-        if (selectedPhoneNumberRef.current === phoneNumber) return;
-
-        const unreadCount = Math.max(0, Number(count) || 0);
+      Object.entries(countsByPhone).forEach(([phoneNumber, unreadData]) => {
+        const unreadCount = Math.max(0, Number(unreadData.count) || 0);
+        const lastMessageSentAt = parseSentAtToMs(unreadData.lastMessageSentAt);
+        const lastReadAt = readMessagesByPhone[phoneNumber] ?? 0;
         const currentUnreadMessageIds = next[phoneNumber] ?? [];
+
+        if (selectedPhoneNumberRef.current === phoneNumber) {
+          markPhoneNumberAsRead(phoneNumber, lastMessageSentAt || Date.now());
+
+          if (currentUnreadMessageIds.length) {
+            delete next[phoneNumber];
+            hasChanges = true;
+          }
+          return;
+        }
+
+        if (lastMessageSentAt && lastReadAt >= lastMessageSentAt) {
+          if (currentUnreadMessageIds.length) {
+            delete next[phoneNumber];
+            hasChanges = true;
+          }
+          return;
+        }
 
         if (unreadCount === 0) {
           if (currentUnreadMessageIds.length) {
@@ -165,9 +273,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
 
       return hasChanges ? next : prev;
     });
-  }, []);
+  }, [getReadMessagesSnapshot, markPhoneNumberAsRead]);
 
   const clearUnreadMessages = (phoneNumber: string) => {
+    markPhoneNumberAsRead(phoneNumber);
+
     setUnreadMessageIdsByPhone((prev) => {
       if (!prev[phoneNumber]?.length) return prev;
 
@@ -185,6 +295,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       clearUnreadMessages(contactSelected.phoneNumber);
     }
   }, [contactSelected?.phoneNumber]);
+
+  useEffect(() => {
+    readMessagesByPhoneRef.current = readStoredReadMessages(clinicInfo?.clinicId);
+  }, [clinicInfo?.clinicId]);
 
   const pushIncomingMessage = (message: ChatMessage) => {
     if (!message) return;
@@ -260,8 +374,13 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           if (chatMessage) {
             pushIncomingMessage(chatMessage);
 
+            if (!chatMessage.from_me && selectedPhoneNumberRef.current === chatMessage.phone_number) {
+              markPhoneNumberAsRead(chatMessage.phone_number, chatMessage.sent_at);
+              clearUnreadMessages(chatMessage.phone_number);
+            }
+
             if (!chatMessage.from_me && selectedPhoneNumberRef.current !== chatMessage.phone_number) {
-              addUnreadMessage(chatMessage.phone_number, chatMessage.id ?? chatMessage.sent_at);
+              addUnreadMessage(chatMessage.phone_number, chatMessage.id ?? chatMessage.sent_at, chatMessage.sent_at);
             }
           }
 

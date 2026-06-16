@@ -1,6 +1,7 @@
 'use client';
 
 import { fetchChatOverview } from '@/app/actions/fetchChatOverview';
+import { getWhatsappConversationsList } from '@/app/actions/getWhatsappConversationsList';
 import { useChat } from '@/app/context/chatContext';
 import { useUser } from '@/app/context/userContext';
 import { useWhatsApp } from '@/app/hooks/useWhatsApp';
@@ -11,6 +12,13 @@ import ChatListComponent from './components/ChatListComponent/ChatListComponent'
 import style from './style.module.css';
 
 const LIMIT = 20;
+
+type WhatsappConversationConfig = {
+  id: string;
+  chatId: string;
+  phoneNumber: string;
+  aiEnabled: boolean;
+};
 
 function getInitialUnreadCount(chat: ChatListItem) {
   if (chat.unreadCount && chat.unreadCount > 0) {
@@ -67,28 +75,70 @@ function mergeConversationsByPhoneNumber(
 }
 
 export default function Conversations() {
-  const { whatsAppStatus } = useWhatsApp();
-  const { contactSelected, clinicInfo } = useUser();
+  const { whatsAppStatus, loading: whatsAppLoading } = useWhatsApp();
+  const { contactSelected, clinicInfo, handleSetContactSelected } = useUser();
   const { hydrateUnreadCounts, latestChatMessage } = useChat();
 
   const [page, setPage] = useState(0);
   const [conversations, setConversations] = useState<ChatListItem[]>([]);
+  const [whatsappConversationList, setWhatsappConversationList] = useState<
+    WhatsappConversationConfig[]
+  >([]);
   const [loading, setLoading] = useState({
     firstLoading: true,
     loading: false,
   });
   const [hasMore, setHasMore] = useState(true);
   const isLoadingRef = useRef(false);
+  const isWhatsAppConnected = Boolean(whatsAppStatus?.connected);
 
   const showWhatsAppIsNotConnected =
-    whatsAppStatus?.status !== 'CONNECTED' &&
-    whatsAppStatus?.status !== 'WORKING' &&
+    !whatsAppLoading &&
+    !isWhatsAppConnected &&
     !loading.firstLoading &&
     !loading.loading;
+
+  const fetchWhatsappConversationsList = useCallback(async (clinicId: string) => {
+    try {
+      const response = await getWhatsappConversationsList(clinicId);
+      setWhatsappConversationList(response.conversations ?? response.data ?? []);
+    } catch (error) {
+      console.error('Failed to load WhatsApp conversations config', error);
+      setWhatsappConversationList([]);
+    }
+  }, []);
+
+  const handleWhatsappConversationConfigChange = useCallback(
+    async (conversation: WhatsappConversationConfig) => {
+      setWhatsappConversationList((prev) => {
+        const existingConversationIndex = prev.findIndex(
+          (item) => item.id === conversation.id || item.chatId === conversation.chatId,
+        );
+
+        if (existingConversationIndex === -1) {
+          return [...prev, conversation];
+        }
+
+        const nextConversationList = [...prev];
+        nextConversationList[existingConversationIndex] = {
+          ...nextConversationList[existingConversationIndex],
+          ...conversation,
+        };
+
+        return nextConversationList;
+      });
+
+      if (clinicInfo?.clinicId) {
+        await fetchWhatsappConversationsList(clinicInfo.clinicId);
+      }
+    },
+    [clinicInfo?.clinicId, fetchWhatsappConversationsList],
+  );
 
   const fetchConversations = useCallback(
     async (pageNum: number) => {
       if (!clinicInfo?.clinicId) return;
+      if (!isWhatsAppConnected) return;
       if (isLoadingRef.current) return;
       isLoadingRef.current = true;
       setLoading({ firstLoading: pageNum === 0, loading: pageNum > 0 });
@@ -113,9 +163,14 @@ export default function Conversations() {
           return;
         }
 
-        const unreadCountsByPhone = chatOverview.reduce<Record<string, number>>(
+        const unreadCountsByPhone = chatOverview.reduce<
+          Record<string, { count: number; lastMessageSentAt?: string }>
+        >(
           (accumulator, chat) => {
-            accumulator[chat.phoneNumber] = getInitialUnreadCount(chat);
+            accumulator[chat.phoneNumber] = {
+              count: getInitialUnreadCount(chat),
+              lastMessageSentAt: chat.lastMessage.sentAt,
+            };
             return accumulator;
           },
           {},
@@ -139,12 +194,51 @@ export default function Conversations() {
         setLoading({ firstLoading: false, loading: false });
       }
     },
-    [clinicInfo?.clinicId, hydrateUnreadCounts],
+    [clinicInfo?.clinicId, hydrateUnreadCounts, isWhatsAppConnected],
   );
 
   useEffect(() => {
+    if (!clinicInfo?.clinicId) return;
+
+    if (whatsAppLoading) {
+      setLoading({ firstLoading: true, loading: false });
+      return;
+    }
+
+    if (!isWhatsAppConnected) {
+      isLoadingRef.current = false;
+      setConversations([]);
+      setWhatsappConversationList([]);
+      setHasMore(false);
+      setPage(0);
+      setLoading({ firstLoading: false, loading: false });
+      handleSetContactSelected(null);
+      return;
+    }
+
+    setHasMore(true);
     fetchConversations(0);
-  }, [clinicInfo?.clinicId]);
+    fetchWhatsappConversationsList(clinicInfo?.clinicId || '');
+  }, [
+    clinicInfo?.clinicId,
+    fetchConversations,
+    fetchWhatsappConversationsList,
+    handleSetContactSelected,
+    isWhatsAppConnected,
+    whatsAppLoading,
+  ]);
+
+  useEffect(() => {
+    if (loading.firstLoading || loading.loading) return;
+    if (!showWhatsAppIsNotConnected) return;
+
+    handleSetContactSelected(null);
+  }, [
+    handleSetContactSelected,
+    loading.firstLoading,
+    loading.loading,
+    showWhatsAppIsNotConnected,
+  ]);
 
   useEffect(() => {
     const lastMessage = latestChatMessage;
@@ -203,6 +297,7 @@ export default function Conversations() {
         <ChatListComponent
           chatList={conversations}
           fetchMore={handleFetchMore}
+          whatsappConversationList={whatsappConversationList}
           hasMore={hasMore}
           numberNotConnected={showWhatsAppIsNotConnected}
           loading={loading}
@@ -215,6 +310,7 @@ export default function Conversations() {
           phoneNumber={contactSelected.phoneNumber}
           imageUrl={contactSelected.contactPicture}
           contactId={contactSelected.id}
+          onAiConfigChange={handleWhatsappConversationConfigChange}
         />
       ) : (
         <div className={style.containerText}>
