@@ -190,7 +190,7 @@ export default function ChatListComponent({
                 className={selectedFilter === 'ai' ? style.activeFilterButton : undefined}
                 onClick={() => handleFilterChat('ai')}
               >
-                Atendimento IA
+                Secretária Virtual (IA)
               </button>
             </div>
           </>
