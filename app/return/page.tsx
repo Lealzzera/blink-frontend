@@ -1,12 +1,9 @@
 'use client';
 
-import { useSearchParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
-
-// O Stripe redireciona para /return?session_id=cs_xxx após o pagamento.
-// Neste ponto o webhook já foi (ou será em instantes) disparado para criar
-// a clínica e o usuário. Mostramos uma tela de confirmação e redirecionamos.
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { completeStripeCheckoutSession } from '../actions/completeStripeCheckoutSession';
 
 export default function ReturnPage() {
   const searchParams = useSearchParams();
@@ -15,27 +12,43 @@ export default function ReturnPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
   useEffect(() => {
+    let shouldCancel = false;
+
     if (!sessionId) {
       setStatus('error');
       return;
     }
 
-    // Pequeno delay para dar tempo ao webhook processar antes de redirecionar
-    const timer = setTimeout(() => {
-      setStatus('success');
-    }, 3000);
+    const checkoutSessionId = sessionId;
 
-    return () => clearTimeout(timer);
-  }, [sessionId]);
+    async function completeCheckoutSession() {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        const result = await completeStripeCheckoutSession(checkoutSessionId);
 
-  useEffect(() => {
-    if (status === 'success') {
-      const redirect = setTimeout(() => {
-        router.push('/');
-      }, 3000);
-      return () => clearTimeout(redirect);
+        if (shouldCancel) return;
+
+        if (!result.error) {
+          setStatus('success');
+          setTimeout(() => {
+            router.replace('/settings');
+          }, 3500);
+          return;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+      }
+
+      if (!shouldCancel) {
+        setStatus('error');
+      }
     }
-  }, [status, router]);
+
+    completeCheckoutSession();
+
+    return () => {
+      shouldCancel = true;
+    };
+  }, [router, sessionId]);
 
   return (
     <main
@@ -61,20 +74,20 @@ export default function ReturnPage() {
 
       {status === 'success' && (
         <>
-          <span style={{ fontSize: '64px' }}>🎉</span>
+          <span style={{ fontSize: '64px' }}>OK</span>
           <h2>Cadastro realizado com sucesso!</h2>
           <p style={{ color: '#666' }}>
-            Sua conta foi criada. Você será redirecionado para o login em instantes.
+            Sua conta foi criada. Voce sera redirecionado para configurar o WhatsApp.
           </p>
         </>
       )}
 
       {status === 'error' && (
         <>
-          <span style={{ fontSize: '64px' }}>⚠️</span>
+          <span style={{ fontSize: '64px' }}>!</span>
           <h2>Algo deu errado</h2>
           <p style={{ color: '#666' }}>
-            Não conseguimos confirmar seu pagamento. Entre em contato com o suporte.
+            Nao conseguimos confirmar seu pagamento. Entre em contato com o suporte.
           </p>
         </>
       )}
