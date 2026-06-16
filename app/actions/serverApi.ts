@@ -22,9 +22,7 @@ export async function serverApi(config: AxiosRequestConfig) {
   } catch (err: any) {
     if (err.response?.status !== 401) {
       console.error('Unexpected error:', err);
-      cookieStore.delete('access_token');
-      cookieStore.delete('refresh_token');
-      redirect('/');
+      throw err;
     }
 
     const refreshToken = cookieStore.get('refresh_token')?.value;
