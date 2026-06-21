@@ -1,0 +1,28 @@
+.checkoutSession {
+  width: 100%;
+  max-width: 1120px;
+  min-height: calc(100vh - 4rem);
+  margin: 0 auto;
+  overflow: visible;
+}
+
+.checkout {
+  width: 100%;
+  min-height: calc(100vh - 4rem);
+}
+
+.loadingContainer {
+  width: 100%;
+  min-height: calc(100vh - 4rem);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@media (max-width: 720px) {
+  .checkoutSession,
+  .checkout,
+  .loadingContainer {
+    min-height: calc(100vh - 2rem);
+  }
+}

@@ -1,33 +1,10 @@
-"use server";
+'use server';
 
-import { createClient } from "@/utils/supabase/server";
-import axios from "axios";
+import { serverApi } from './serverApi';
 
 export async function getClinicId() {
-  const supabase = await createClient();
-
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  const accessToken = session?.access_token;
-
-  if (!accessToken) {
-    throw new Error("User is not authenticated");
-  }
-
-  try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/configurations/clinic-id`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    return response.data;
-  } catch (err) {
-    console.error("Error fetching clinic ID:", err);
-  }
+  return await serverApi({
+    method: 'GET',
+    url: '/clinic/me',
+  });
 }

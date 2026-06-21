@@ -5,6 +5,7 @@ import {
   ChartColumnBig,
   Calendar,
   Settings,
+  SlidersVertical,
 } from "lucide-react";
 import Link from "next/link";
 import styles from "./style.module.css";
@@ -30,7 +31,7 @@ export default function SidebarComponent() {
           </Link>
         </li>
 
-        <li className={styles.item}>
+        {/* <li className={styles.item}>
           <Link
             href="/dashboard"
             className={`${styles.link} ${
@@ -40,7 +41,7 @@ export default function SidebarComponent() {
             <ChartColumnBig className={styles.icon} />
             <span className={styles.tooltip}>Dashboard</span>
           </Link>
-        </li>
+        </li> */}
         <li className={styles.item}>
           <Link
             href="/schedules"
@@ -50,6 +51,17 @@ export default function SidebarComponent() {
           >
             <Calendar className={styles.icon} />
             <span className={styles.tooltip}>Agendamentos</span>
+          </Link>
+        </li>
+        <li className={styles.item}>
+          <Link
+            href="/clinic-settings"
+            className={`${styles.link} ${
+              isActive("/clinic-settings") ? styles.active : ""
+            }`}
+          >
+            <SlidersVertical className={styles.icon} />
+            <span className={styles.tooltip}>Configurações da clínica</span>
           </Link>
         </li>
       </ul>

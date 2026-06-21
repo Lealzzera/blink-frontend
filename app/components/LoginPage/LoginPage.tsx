@@ -28,6 +28,15 @@ export function LoginPage() {
 
     router.push("/conversations");
   };
+
+  const handleForgotPassword = () => {
+    router.push("/forgot-password");
+  };
+
+  const handleRedirectToRegisterPage = () => {
+    router.push("/register");
+  };
+
   return (
     <section className={styles.loginSection}>
       <div className={styles.loginContainer}>
@@ -71,10 +80,11 @@ export function LoginPage() {
               />
             </div>
           </form>
-
-          {/* TODO: IMPLEMENT FORGOT PASSWORD FUNCTIONALITY */}
           <div className={styles.forgotPassword}>
-            <p>Esqueci minha senha</p>
+            <p onClick={handleForgotPassword}>Esqueci minha senha</p>
+          </div>
+          <div className={styles.registerLink}>
+            <p>Não possui conta? <span onClick={handleRedirectToRegisterPage}>Cadastre-se</span></p>
           </div>
         </div>
       </div>

@@ -1,75 +1,79 @@
-"use client";
+'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-} from "react";
-import { getClinicId } from "../actions/getClinicId";
-import axios from "axios";
+import { usePathname } from 'next/navigation';
+import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
+import { getClinicId } from '../actions/getClinicId';
+import { ClinicInfoType } from '../types/types';
 
 type User = { id: string; email: string };
+export type ContactSelected = {
+  ai_answer: boolean;
+  contactName: string;
+  id: string;
+  phoneNumber: string;
+  contactPicture: string;
+  lastMessage: {
+    hasMedia: boolean;
+    message: string;
+    sentAt: string;
+  };
+};
 
 type UserContextType = {
   user: User | null;
-  clinicId: number | null;
-  numberSelected: string | null;
+  clinicInfo: ClinicInfoType | null;
+  contactSelected: ContactSelected | null;
   handleSetUser: (data: User) => void;
   handleClearUser: () => void;
-  handleSetNumberSelected: (number: string) => void;
+  handleSetContactSelected: (contactSelected: ContactSelected | null) => void;
 };
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [userInfo, setUserInfo] = useState<User | null>(null);
-  const [clinicId, setClinicId] = useState<number | null>(null);
-  const [numberSelected, setNumberSelected] = useState<string | null>(null);
+  const [clinicInfo, setClinicInfo] = useState<ClinicInfoType | null>(null);
+  const [contactSelected, setContactSelected] = useState<ContactSelected | null>(null);
 
-  function handleSetUser(data: User) {
+  const handleSetUser = useCallback((data: User) => {
     setUserInfo(data);
-  }
+  }, []);
 
-  function handleClearUser() {
+  const handleClearUser = useCallback(() => {
     setUserInfo(null);
-  }
+  }, []);
 
-  function handleSetNumberSelected(number: string) {
-    setNumberSelected(number);
-  }
+  const handleSetContactSelected = useCallback((contactSelected: ContactSelected | null) => {
+    setContactSelected(contactSelected);
+  }, []);
+
+  const pathname = usePathname();
 
   useEffect(() => {
+    if (pathname === '/' || pathname === '/reset-password' || pathname === '/forgot-password')
+      return;
     const loadUser = async () => {
-      try {
-        const res = await axios.get("/api/me", {
-          headers: {
-            "Content-Type": "application/json",
-            "Cache-Control": "no-store",
-          },
-        });
-        if (res.status === 200) {
-          handleSetUser({ id: res.data.user.id, email: res.data.user.email });
-          const clinic = await getClinicId();
-          if (clinic) setClinicId(clinic);
-        } else handleClearUser();
-      } catch {
-        handleClearUser();
-      }
+      const response = await getClinicId();
+      setClinicInfo({
+        clinicId: response.clinicId,
+        userRole: response.role,
+        clinicType: response.clinic.type,
+        clinicSlug: response.clinic.slug,
+        clinicStatus: response.clinic.status,
+      });
     };
-    loadUser();
-  }, []);
+    if (typeof window !== 'undefined') loadUser();
+  }, [pathname]);
 
   return (
     <UserContext.Provider
       value={{
         user: userInfo,
-        clinicId,
+        clinicInfo,
         handleSetUser,
         handleClearUser,
-        numberSelected,
-        handleSetNumberSelected,
+        contactSelected,
+        handleSetContactSelected,
       }}
     >
       {children}
@@ -79,6 +83,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
 export function useUser() {
   const ctx = useContext(UserContext);
-  if (!ctx) throw new Error("useUser must be used within a UserProvider");
+  if (!ctx) throw new Error('useUser must be used within a UserProvider');
   return ctx;
 }

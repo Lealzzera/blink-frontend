@@ -1,0 +1,42 @@
+.forgotPage {
+  background-color: var(--gray-700);
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.forgotContainer {
+  background-color: var(--gray-600);
+  border-radius: 6px;
+  width: 400px;
+  padding: 1rem;
+}
+
+.forgotContainer h1 {
+  font-size: 2rem;
+}
+
+.forgotContainer p {
+  font-size: 1rem;
+  margin-top: 0.5rem;
+}
+
+.containerInputButton {
+  margin-top: 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.backButton p {
+  cursor: pointer;
+  font-weight: 500;
+}

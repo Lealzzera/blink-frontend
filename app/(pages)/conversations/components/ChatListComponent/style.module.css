@@ -31,6 +31,11 @@
   display: flex;
   flex-direction: column;
 }
+
+.searchInputContainer {
+  margin-bottom: 1rem;
+}
+
 .skeletonCard {
   width: 100%;
   background-color: var(--gray-600);
@@ -43,7 +48,7 @@
 }
 
 .skeletonCard::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: -150px;
@@ -56,6 +61,57 @@
     transparent 100%
   );
   animation: shimmer 1.5s infinite;
+}
+
+.filterButtonsSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding-bottom: 1rem;
+  gap: 0.5rem;
+}
+
+.filterButtonsSection button {
+  border: none;
+  background-color: var(--gray-600);
+  color: var(--gray-100);
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  font-size: 12px;
+  border-radius: 4px;
+  position: relative;
+}
+
+.filterButtonsSection button:hover {
+  background-color: var(--gray-700);
+}
+
+.filterButtonsSection .activeFilterButton {
+  background-color: var(--green-400);
+  color: var(--white);
+}
+
+.filterButtonsSection .activeFilterButton:hover {
+  background-color: var(--green-400);
+}
+
+.filterUnreadBadge {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background-color: var(--green-400);
+  color: var(--white);
+  border: 2px solid var(--gray-900);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 @keyframes shimmer {

@@ -3,8 +3,46 @@
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  padding: 10px;
   box-sizing: border-box;
+}
+
+.contactInfo {
+  background-color: var(--gray-700);
+  height: 70px;
+  margin-top: 0px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1rem;
+}
+
+.contactInfoContainer {
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+}
+
+.contactInfoText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.imageContact {
+  border-radius: 50%;
+}
+
+.switchContainer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.switchContainer p {
+  color: var(--gray-100);
+  font-size: 0.875rem;
 }
 
 .chatUl {
@@ -14,6 +52,7 @@
   flex-direction: column;
   gap: 0.5rem;
   padding-bottom: 1rem;
+  padding: 3rem;
 }
 
 .fromMe {
@@ -24,7 +63,7 @@
 }
 
 .chatUl::-webkit-scrollbar {
-  width: 0px;
+  width: 6px;
 }
 .chatUl::-webkit-scrollbar-track {
   background: transparent;
@@ -43,6 +82,7 @@
   padding-top: 8px;
   display: flex;
   position: relative;
+  margin: 1rem;
 }
 
 .textArea {

@@ -1,0 +1,21 @@
+.selectContainer {
+    width: 100%;
+}
+
+.selectContainer label {
+    display: block;
+}
+
+.required::after {
+    content: " *";
+    color: var(--red-300);
+}
+
+.selectContainer select {
+    width: 100%;
+    padding: 10px;
+    margin-top: 0.5rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+

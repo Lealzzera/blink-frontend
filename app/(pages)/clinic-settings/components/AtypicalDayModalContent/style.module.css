@@ -1,0 +1,58 @@
+.modalContainer {
+  padding: 1.5rem;
+}
+
+.modalContainer h2 {
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.inputContainer {
+  width: 140px;
+}
+
+.containerSwitchInput {
+  display: flex;
+  justify-content: space-between;
+}
+
+.switchContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  gap: 0.5rem;
+}
+
+.workTimeContainer {
+  margin-top: 2rem;
+}
+
+.workTimeContainer p {
+  margin-bottom: 1rem;
+  color: var(--gray-300);
+  font-weight: bold;
+}
+
+.workTimeInputs {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.containerButtons {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.5rem;
+  width: 300px;
+  align-self: center;
+  justify-self: center;
+}
+
+.containerButtons p {
+  font-weight: bold;
+  color: var(--red-300);
+  cursor: pointer;
+}

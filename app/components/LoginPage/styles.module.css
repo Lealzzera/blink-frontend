@@ -46,6 +46,16 @@
   color: var(--red-300);
 }
 
+.registerLink {
+  font-size: 14px;
+  margin-top: 1rem;
+}
+
+.registerLink span {
+  cursor: pointer;
+  text-decoration: underline;
+}
+
 @media (min-width: 768px) {
   .loginContainer {
     width: 400px;

@@ -1,16 +1,16 @@
-import { HTMLInputTypeAttribute } from "react";
-import styles from "./styles.module.css";
+import { HTMLInputTypeAttribute } from 'react';
+import styles from './styles.module.css';
 
 type InputComponentProps = React.InputHTMLAttributes<HTMLInputElement> & {
   type?: HTMLInputTypeAttribute;
   label?: string;
-  value: string | number;
+  value?: string | number;
   handleChangeInput: (e: React.ChangeEvent<HTMLInputElement>) => void;
   error?: boolean;
 };
 
 export default function InputComponent({
-  type = "text",
+  type = 'text',
   placeholder,
   label,
   value,
@@ -20,10 +20,10 @@ export default function InputComponent({
   ...props
 }: InputComponentProps) {
   return (
-    <div>
+    <div style={{ width: '100%' }}>
       {label && (
         <label
-          className={`${styles.inputLabel} ${required ? styles.required : ""}`}
+          className={`${styles.inputLabel} ${required ? styles.required : ''}`}
           htmlFor="input-element"
         >
           {label}
@@ -32,8 +32,8 @@ export default function InputComponent({
 
       <input
         {...props}
-        id="input-element"
-        className={`${styles.inputField} ${error ? styles.error : ""}`}
+        id={props.id || 'input-element'}
+        className={`${styles.inputField} ${error ? styles.error : ''} `}
         type={type}
         placeholder={placeholder}
         value={value}

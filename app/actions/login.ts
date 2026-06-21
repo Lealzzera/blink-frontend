@@ -1,5 +1,7 @@
-"use server";
-import { createClient } from "@/utils/supabase/server";
+'use server';
+
+import axios from 'axios';
+import { cookies } from 'next/headers';
 
 type LoginData = {
   email: string;
@@ -7,38 +9,41 @@ type LoginData = {
 };
 
 export async function login({ email, password }: LoginData) {
-  const supabase = await createClient();
+  try {
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/login`, {
+      email,
+      password,
+    });
 
-  const data = {
-    email,
-    password,
-  };
+    const { access_token } = response.data;
 
-  const { error } = await supabase.auth.signInWithPassword(data);
+    const cookieStore = await cookies();
 
-  if (error) {
-    return { error: error.message, user: null };
+    cookieStore.set('access_token', access_token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 60 * 60 * 24 * 14,
+      path: '/',
+      sameSite: 'lax',
+    });
+
+    const cookieHeader = response.headers['set-cookie'];
+
+    if (cookieHeader?.length) {
+      const refreshTokenCookie = cookieHeader[0];
+      const refreshTokenValue = refreshTokenCookie.split(';')[0].split('=')[1];
+
+      cookieStore.set('refresh_token', refreshTokenValue, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 60 * 24 * 14,
+        path: '/',
+        sameSite: 'lax',
+      });
+    }
+
+    return { error: null };
+  } catch {
+    return { error: 'Email ou senha incorretos', user: null };
   }
-
-  return { error: null, data };
 }
-
-// TODO: IMPLEMENT SIGNUP FUNCTION LATER
-
-// export async function signup(formData: FormData) {
-//   const supabase = await createClient();
-
-//   const data = {
-//     email: formData.get("email") as string,
-//     password: formData.get("password") as string,
-//   };
-
-//   const { error } = await supabase.auth.signUp(data);
-
-//   if (error) {
-//     redirect("/error");
-//   }
-
-//   revalidatePath("/", "layout");
-//   redirect("/");
-// }

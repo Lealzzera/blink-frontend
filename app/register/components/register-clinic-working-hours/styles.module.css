@@ -1,0 +1,147 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 860px;
+  margin: 0 auto;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.section::-webkit-scrollbar {
+  display: none;
+}
+
+.section h2 {
+  font-weight: 700;
+  color: var(--gray-100);
+  margin: 0 auto;
+}
+
+.subtitle {
+  margin: 0 auto;
+  margin-top: 0.25rem;
+  margin-bottom: 1.25rem;
+  color: var(--gray-300);
+  text-align: center;
+}
+
+.tableWrapper {
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 6px;
+  padding: 1rem;
+  overflow: auto;
+  max-height: min(58vh, 620px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.clinicInfoSection::-webkit-scrollbar {
+  display: none;
+}
+
+.legend {
+  display: grid;
+  grid-template-columns: 2fr 1fr 3fr;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-300);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  margin-bottom: 0.5rem;
+}
+
+.daysList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: 2fr 1fr 3fr;
+  align-items: flex-start;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.dayRow:last-child {
+  border-bottom: none;
+}
+
+.dayLabel {
+  font-size: 0.875rem;
+  color: var(--gray-100);
+  display: flex;
+  align-items: center;
+  padding-top: 0.6rem;
+}
+
+.switchCell {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 0.5rem;
+}
+
+.periodsCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.periodRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.timeInput {
+  width: 72px;
+}
+
+.timeSeparator {
+  font-size: 0.75rem;
+  color: var(--gray-300);
+  flex-shrink: 0;
+}
+
+.removePeriodBtn {
+  background: none;
+  border: none;
+  color: var(--red-300);
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0 0.25rem;
+  line-height: 1;
+  transition: opacity 0.15s;
+}
+
+.removePeriodBtn:hover {
+  opacity: 0.7;
+}
+
+.addPeriodBtn {
+  background: none;
+  border: none;
+  color: var(--blue-400);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0;
+  text-align: left;
+  transition: opacity 0.15s;
+  margin-top: 0.1rem;
+}
+
+.addPeriodBtn:hover {
+  opacity: 0.75;
+}
+
+.closedLabel {
+  font-size: 0.8rem;
+  color: var(--gray-300);
+  padding-top: 0.6rem;
+  font-style: italic;
+}

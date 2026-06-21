@@ -1,0 +1,85 @@
+.checkboxContainer {
+  position: relative;
+  display: inline-flex;
+  width: 42px;
+  height: 26px;
+}
+
+.checkbox {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.switch {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  background-color: var(--gray-100);
+  border-radius: 13px;
+  transition: background-color 200ms ease;
+}
+
+.switch::before {
+  content: "";
+  position: absolute;
+  height: 20px;
+  width: 20px;
+  left: 3px;
+  top: 3px;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.2), 0px 1px 5px rgba(0, 0, 0, 0.14),
+    0px 3px 1px rgba(0, 0, 0, 0.12);
+  transition: transform 200ms ease;
+  transform: translateX(0);
+}
+
+.checkbox:checked + .switch {
+  background-color: #22c55e;
+}
+
+.checkbox:checked + .switch::before {
+  transform: translateX(16px);
+}
+
+.checkbox:focus + .switch::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 999px;
+  background-color: rgba(34, 197, 94, 0.12);
+}
+
+.checkbox:disabled + .switch {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tooltip {
+  position: absolute;
+  bottom: 0px;
+  left: -100%;
+  transform: translateX(-50%) translateY(-0px);
+  background: rgba(0, 0, 0, 0.15);
+  color: #fff;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 150ms ease, transform 150ms ease;
+  z-index: 30;
+}
+
+.checkboxContainer:hover .tooltip,
+.checkbox:focus + .switch + .tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}

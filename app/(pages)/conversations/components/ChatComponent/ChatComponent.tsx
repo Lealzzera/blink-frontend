@@ -1,32 +1,84 @@
-"use client";
+'use client';
 
-import { getConversationMessages } from "@/app/actions/getConversationMessages";
-import { useCallback, useEffect, useRef, useState } from "react";
-import MessageComponent from "../MessageComponent/MessageComponent";
-import style from "./style.module.css";
-import { Send } from "lucide-react";
-import { postMessage } from "@/app/actions/postMessage";
+import { getConversationMessages } from '@/app/actions/getConversationMessages';
+import { getWhatsappConversation } from '@/app/actions/getWhatsappConversation';
+import { patchWhatsappConversation } from '@/app/actions/patchWhatsappConversation';
+import { postMessage } from '@/app/actions/postMessage';
+import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { useChat } from '@/app/context/chatContext';
+import { useUser } from '@/app/context/userContext';
+import { Send } from 'lucide-react';
+import Image from 'next/image';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import MessageComponent from '../MessageComponent/MessageComponent';
+import style from './style.module.css';
 
 type ChatComponentProps = {
-  phoneNumber: string | null;
-  clinicId: number | null;
+  phoneNumber: string;
+  contactName?: string;
+  imageUrl?: string;
+  contactId: string;
+  onAiConfigChange?: (conversation: {
+    id: string;
+    chatId: string;
+    phoneNumber: string;
+    aiEnabled: boolean;
+  }) => void | Promise<void>;
 };
+
+function getMessageText(message: any) {
+  return message.message ?? message.message_text ?? '';
+}
+
+function isSameMessage(currentMessage: any, nextMessage: any) {
+  if (currentMessage.id && nextMessage.id && !String(currentMessage.id).startsWith('local:')) {
+    return currentMessage.id === nextMessage.id;
+  }
+
+  const hasSameText = getMessageText(currentMessage) === getMessageText(nextMessage);
+  const hasSameDirection = currentMessage.from_me === nextMessage.from_me;
+  const sentAtDifferenceInMs = Math.abs(
+    new Date(currentMessage.sent_at).getTime() - new Date(nextMessage.sent_at).getTime(),
+  );
+
+  if (currentMessage.from_me && nextMessage.from_me) {
+    return hasSameText && sentAtDifferenceInMs <= 10000;
+  }
+
+  return currentMessage.sent_at === nextMessage.sent_at && hasSameText && hasSameDirection;
+}
+
+function getPendingMessageKey(phoneNumber: string, text: string) {
+  return `${phoneNumber}:${text.trim()}`;
+}
+
+const WHATSAPP_SESSION_NAME = 'default';
 
 export default function ChatComponent({
   phoneNumber,
-  clinicId,
+  contactName,
+  imageUrl,
+  contactId,
+  onAiConfigChange,
 }: ChatComponentProps) {
+  const { clinicInfo } = useUser();
+
   const [loading, setLoading] = useState(false);
   const [messageList, setMessageList] = useState<any[]>([]);
   const [hasMore, setHasMore] = useState(true);
-  const [message, setMessage] = useState("");
+  const [message, setMessage] = useState('');
   const [pageNumber, setPageNumber] = useState(0);
+  const [isSwitchOn, setIsSwitchOn] = useState<boolean | null>(null);
+  const [isAiSwitchLoading, setIsAiSwitchLoading] = useState(false);
+  const { lastMessageByPhone } = useChat();
 
   const chatRef = useRef<HTMLDivElement | null>(null);
   const ulRef = useRef<HTMLUListElement | null>(null);
 
   const prevScrollTopRef = useRef(0);
   const prevScrollHeightRef = useRef(0);
+  const shouldScrollToBottomAfterNewMessageRef = useRef(false);
+  const pendingLocalMessagesRef = useRef<Record<string, string>>({});
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const observer = useRef<IntersectionObserver | null>(null);
@@ -52,25 +104,17 @@ export default function ChatComponent({
         {
           threshold: 0,
           root: chatRef.current,
-        }
+        },
       );
 
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore]
+    [loading, hasMore],
   );
-
-  const withStableId = (msg: any) => ({
-    ...msg,
-    _id: `${msg.sent_at}-${msg.from_me ? "me" : "them"}-${
-      msg.body ?? msg.text ?? ""
-    }`,
-  });
 
   const fetchMessageList = useCallback(
     async (page: number) => {
-      if (!clinicId || !phoneNumber || loading) return;
-
+      if (!phoneNumber || loading) return;
       if (page > 0 && ulRef.current) {
         prevScrollHeightRef.current = ulRef.current.scrollHeight;
         prevScrollTopRef.current = ulRef.current.scrollTop;
@@ -79,7 +123,6 @@ export default function ChatComponent({
       setLoading(true);
       try {
         const response = await getConversationMessages({
-          clinicId,
           phoneNumber,
           page,
         });
@@ -90,8 +133,7 @@ export default function ChatComponent({
         }
 
         const sortedResponse = [...response].sort(
-          (a, b) =>
-            new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+          (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
         );
 
         if (page === 0) {
@@ -103,64 +145,105 @@ export default function ChatComponent({
             const merged = [...sortedResponse, ...prev];
 
             const unique = merged.filter(
-              (msg, index, arr) =>
-                arr.findIndex((m) => m.sent_at === msg.sent_at) === index
+              (msg, index, arr) => arr.findIndex((m) => m.sent_at === msg.sent_at) === index,
             );
 
             return unique.sort(
-              (a, b) =>
-                new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime()
+              (a, b) => new Date(a.sent_at).getTime() - new Date(b.sent_at).getTime(),
             );
           });
         }
 
         setPageNumber(page);
       } catch (err) {
-        console.error("Error fetching messages:", err);
+        console.error('Error fetching messages:', err);
       } finally {
         setLoading(false);
       }
     },
-    [clinicId, phoneNumber, loading]
+    [phoneNumber, loading],
   );
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
     const textarea = textareaRef.current;
-    const value = e.target.value;
+    const value = event.target.value;
     setMessage(value);
     if (!textarea) return;
-    textarea.style.height = "auto";
+    textarea.style.height = 'auto';
     const newHeight = Math.min(textarea.scrollHeight, maxHeight);
     textarea.style.height = `${newHeight}px`;
   };
   const handleSendMessage = async () => {
-    if (!phoneNumber || message.length === 0) return;
+    if (!contactId || message.length === 0) return;
+    if (!clinicInfo) return;
     if (!message.trim()) return;
 
-    setMessage("");
-    await postMessage({ clinicId, message, phoneNumber });
+    setMessage('');
 
+    const localMessageId = `local:${Date.now()}`;
     const newMessage = {
+      id: localMessageId,
+      message,
       message_text: message,
       from_me: true,
       sent_at: new Date().toISOString(),
+      is_local: true,
     };
 
+    pendingLocalMessagesRef.current[getPendingMessageKey(phoneNumber, message)] = localMessageId;
+    shouldScrollToBottomAfterNewMessageRef.current = true;
     setMessageList((prev) => [...prev, newMessage]);
 
-    if (ulRef.current) {
-      ulRef.current.scrollTop = ulRef.current.scrollHeight;
-    }
+    // TODO: IMPLEMENT IT WHEN WAHA IS READY
+    // await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
+    await postMessage({ chatId: contactId, text: message, session: WHATSAPP_SESSION_NAME });
 
     if (textareaRef.current) {
-      textareaRef.current.style.height = "40px";
+      textareaRef.current.style.height = '40px';
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && e.shiftKey) return;
-    if (e.key === "Enter") {
-      e.preventDefault();
+  const handleToggleSwitch = useCallback(async () => {
+    if (!clinicInfo?.clinicId || !contactId) return;
+    if (isAiSwitchLoading) return;
+
+    const previousSwitchState = Boolean(isSwitchOn);
+    const nextSwitchState = !previousSwitchState;
+    setIsSwitchOn(nextSwitchState);
+    setIsAiSwitchLoading(true);
+
+    try {
+      const conversation = await patchWhatsappConversation({
+        clinicId: clinicInfo.clinicId,
+        chatId: contactId,
+        aiEnabled: nextSwitchState,
+        session: WHATSAPP_SESSION_NAME,
+        phoneNumber,
+      });
+
+      setIsSwitchOn(conversation?.aiEnabled ?? nextSwitchState);
+      if (conversation) {
+        await onAiConfigChange?.(conversation);
+      }
+    } catch (error) {
+      console.error('Failed to update WhatsApp conversation AI config', error);
+      setIsSwitchOn(previousSwitchState);
+    } finally {
+      setIsAiSwitchLoading(false);
+    }
+  }, [
+    clinicInfo?.clinicId,
+    contactId,
+    isAiSwitchLoading,
+    isSwitchOn,
+    onAiConfigChange,
+    phoneNumber,
+  ]);
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && event.shiftKey) return;
+    if (event.key === 'Enter') {
+      event.preventDefault();
       handleSendMessage();
     }
   };
@@ -172,6 +255,42 @@ export default function ChatComponent({
     setHasMore(true);
     fetchMessageList(0);
   }, [phoneNumber]);
+
+  useEffect(() => {
+    if (!clinicInfo?.clinicId) return;
+    if (!contactId) return;
+    const clinicId = clinicInfo.clinicId;
+    let shouldIgnoreResponse = false;
+
+    setIsSwitchOn(null);
+    setIsAiSwitchLoading(true);
+
+    async function loadWhatsappConversation() {
+      try {
+        const conversation = await getWhatsappConversation({
+          clinicId,
+          chatId: contactId,
+        });
+
+        if (shouldIgnoreResponse) return;
+        setIsSwitchOn(conversation?.aiEnabled ?? true);
+      } catch (error) {
+        if (shouldIgnoreResponse) return;
+        console.error('Failed to load WhatsApp conversation AI config', error);
+        setIsSwitchOn(true);
+      } finally {
+        if (!shouldIgnoreResponse) {
+          setIsAiSwitchLoading(false);
+        }
+      }
+    }
+
+    loadWhatsappConversation();
+
+    return () => {
+      shouldIgnoreResponse = true;
+    };
+  }, [clinicInfo?.clinicId, contactId]);
 
   useEffect(() => {
     const container = ulRef.current;
@@ -196,8 +315,78 @@ export default function ChatComponent({
     }
   }, [messageList, pageNumber]);
 
+  useEffect(() => {
+    const latestMessage = lastMessageByPhone[phoneNumber];
+    if (!latestMessage) return;
+
+    setMessageList((prev) => {
+      const alreadyExists = prev.some((message) => isSameMessage(message, latestMessage));
+
+      if (alreadyExists) return prev;
+
+      if (latestMessage.from_me) {
+        const pendingMessageKey = getPendingMessageKey(phoneNumber, latestMessage.message);
+        const pendingLocalMessageId = pendingLocalMessagesRef.current[pendingMessageKey];
+
+        if (pendingLocalMessageId) {
+          const nextMessageList = prev.map((message) =>
+            message.id === pendingLocalMessageId
+              ? {
+                  ...latestMessage,
+                  message_text: latestMessage.message,
+                }
+              : message,
+          );
+
+          delete pendingLocalMessagesRef.current[pendingMessageKey];
+          shouldScrollToBottomAfterNewMessageRef.current = true;
+          return nextMessageList;
+        }
+      }
+
+      shouldScrollToBottomAfterNewMessageRef.current = true;
+      return [...prev, latestMessage];
+    });
+  }, [lastMessageByPhone, phoneNumber]);
+
+  useEffect(() => {
+    if (!shouldScrollToBottomAfterNewMessageRef.current) return;
+
+    const container = ulRef.current;
+    if (!container) return;
+
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: 'smooth',
+    });
+
+    shouldScrollToBottomAfterNewMessageRef.current = false;
+  }, [messageList]);
+
   return (
     <div ref={chatRef} className={style.chatContainer}>
+      <div className={style.contactInfo}>
+        <div className={style.contactInfoContainer}>
+          <div className={style.contactInfoText}>
+            <p>{contactName}</p>
+            {contactName ? <span>{phoneNumber}</span> : ''}
+          </div>
+          <Image
+            alt="Imagem de perfil do contato"
+            src={imageUrl ? imageUrl : '/images/avatar.png'}
+            width={50}
+            height={50}
+            className={style.imageContact}
+          />
+        </div>
+        <div className={style.switchContainer}>
+          <p>{isSwitchOn ? 'Desligar Secretária Virtual' : 'Ligar Secretária Virtual'}</p>
+          <SwitchComponent
+            isOn={isSwitchOn || false}
+            handleToggle={isAiSwitchLoading ? () => {} : handleToggleSwitch}
+          />
+        </div>
+      </div>
       {loading && pageNumber > 0 && (
         <div className={style.dots}>
           <span></span>
@@ -207,6 +396,7 @@ export default function ChatComponent({
       )}
       <ul ref={ulRef} className={style.chatUl}>
         {messageList.map((message, index) => {
+          console.log(message);
           const isFirst = index === 0;
           return (
             <li
