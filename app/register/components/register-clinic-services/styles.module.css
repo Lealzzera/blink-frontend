@@ -1,0 +1,226 @@
+.section {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  height: 100%;
+  align-items: stretch;
+}
+
+.title {
+  font-weight: 700;
+  margin: 0 auto;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  margin: 0 auto;
+  margin-bottom: 1.5rem;
+  color: var(--gray-300);
+}
+
+.evaluationBox {
+  width: 100%;
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.evaluationHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.evaluationLabel {
+  font-weight: 600;
+}
+
+.evaluationInput {
+  margin-top: 1rem;
+}
+
+.optional {
+  font-style: italic;
+}
+
+.inputRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.6rem;
+  width: 100%;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-100);
+  margin-bottom: 0.35rem;
+  white-space: nowrap;
+}
+
+.input {
+  width: 100%;
+  padding: 9px 10px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  background-color: #fff;
+  color: #111;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.input:focus {
+  border-color: var(--blue-400);
+}
+
+/* ─── botão + ─── */
+.addBtn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  background-color: var(--blue-400);
+  color: var(--white);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background-color 0.15s,
+    transform 0.1s;
+  /* alinha com a base dos inputs */
+  margin-bottom: 0;
+  align-self: flex-end;
+}
+
+.addBtn:hover:not(:disabled) {
+  background-color: var(--blue-500);
+  transform: scale(1.08);
+}
+
+.addBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ─── área de chips ─── */
+.chipsArea {
+  margin-top: 1.25rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-content: flex-start;
+  min-height: 40px;
+  max-height: 100px;
+  overflow: auto;
+}
+
+.chipsArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chipsArea::-webkit-scrollbar-thumb {
+  background-color: var(--gray-600);
+  border-radius: 3px;
+}
+
+.moreInformationArea {
+  margin-top: 1.25rem;
+}
+
+.moreInformationArea p {
+  color: var(--gray-300);
+}
+
+.textAreaContainer {
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.empty {
+  font-size: 0.8rem;
+  font-style: italic;
+  color: var(--gray-300);
+  align-self: center;
+  width: 100%;
+  text-align: center;
+}
+
+/* ─── chip individual ─── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background-color: var(--blue-500);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+  padding: 0.3rem 0.5rem 0.3rem 0.85rem;
+  max-width: 100%;
+  transition: border-color 0.15s;
+}
+
+.chip:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.chipName {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--white);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.chipBadge {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.75);
+  background-color: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.chipRemove {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.6);
+  cursor: pointer;
+  font-size: 0.65rem;
+  border-radius: 50%;
+  line-height: 1;
+  transition:
+    color 0.15s,
+    background-color 0.15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.chipRemove:hover {
+  color: var(--white);
+  background-color: rgba(255, 255, 255, 0.15);
+}

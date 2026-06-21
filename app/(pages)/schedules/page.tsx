@@ -1,221 +1,312 @@
-"use client";
-import ptBr from "@fullcalendar/core/locales/pt-br";
-import React, { useEffect, useState, useCallback } from "react";
-import styles from "./style.module.css";
-import Calendar from "@fullcalendar/react";
-import { EventInput } from "@fullcalendar/core";
-import dayGridPlugin from "@fullcalendar/daygrid";
-import ButtonComponent from "@/app/components/ButtonComponent/ButtonComponent";
-import InputComponent from "@/app/components/InputComponent/InputComponent";
-import EventDetailsComponent from "@/app/components/EventDetailsComponent/EventDetailsComponent";
-import { useUser } from "@/app/context/userContext";
-import { getAppointments } from "@/app/actions/getAppointments";
-import { putAppointmentStatus } from "@/app/actions/putAppointmentStatus";
-import { postAppointment } from "@/app/actions/postAppointment";
-import { toast, ToastContainer } from "react-toastify";
+'use client';
+import { deleteAppointment } from '@/app/actions/deleteAppointment';
+import { getAppointments } from '@/app/actions/getAppointments';
+import { patchAppointment } from '@/app/actions/patchAppointment';
+import { postAppointment } from '@/app/actions/postAppointment';
+import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
+import EventDetailsComponent from '@/app/components/EventDetailsComponent/EventDetailsComponent';
+import InputComponent from '@/app/components/InputComponent/InputComponent';
+import { useUser } from '@/app/context/userContext';
+import { translateAppointmentError } from '@/utils/translateAppointmentError';
+import { EventInput } from '@fullcalendar/core';
+import ptBr from '@fullcalendar/core/locales/pt-br';
+import dayGridPlugin from '@fullcalendar/daygrid';
+import Calendar from '@fullcalendar/react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import styles from './style.module.css';
+
+type AppointmentStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'CANCELED_BY_PATIENT'
+  | 'COMPLETED'
+  | 'CANCELED_BY_CLINIC'
+  | 'NOT_ATTENDED';
+
+type BackendAppointment = {
+  id: string;
+  clinic_id: string;
+  service_id: string | null;
+  customer_phone_number: string;
+  customer_name: string;
+  appointment_date: string;
+  status: AppointmentStatus;
+  notes: string | null;
+};
+
+const APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS: Record<AppointmentStatus, string> = {
+  PENDING: 'status_AGENDADO',
+  CONFIRMED: 'status_CONFIRMADO',
+  COMPLETED: 'status_COMPARECEU',
+  CANCELED_BY_PATIENT: 'status_CANCELADO_PELO_PACIENTE',
+  CANCELED_BY_CLINIC: 'status_CANCELADO_PELA_CLINICA',
+  NOT_ATTENDED: 'status_NAO_COMPARECEU',
+};
+
 export default function Schedules() {
+  const { clinicInfo } = useUser();
   const [events, setEvents] = useState<EventInput[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [formTelephone, setFormTelephone] = useState<string>("");
-  const [formPatientName, setFormPatientName] = useState<string>("");
-  const [formDate, setFormDate] = useState<string>("");
-  const [formTime, setFormTime] = useState<string>("");
-  const [formDescription, setFormDescription] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [formTelephone, setFormTelephone] = useState<string>('');
+  const [formPatientName, setFormPatientName] = useState<string>('');
+  const [formDate, setFormDate] = useState<string>('');
+  const [formTime, setFormTime] = useState<string>('');
+  const [formDescription, setFormDescription] = useState<string>('');
   const [selectedEvent, setSelectedEvent] = useState<EventInput | null>(null);
   const [dataRange, setDateRange] = useState<{ start: string; end: string }>({
-    start: "",
-    end: "",
+    start: '',
+    end: '',
   });
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string>('');
+
   const handleOpenModal = () => {
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
-    setFormDate("");
-    setFormTime("");
-    setFormDescription("");
-    setError("");
-    setFormPatientName("");
-    setFormTelephone("");
+    setFormDate('');
+    setFormTime('');
+    setFormDescription('');
+    setError('');
+    setFormPatientName('');
+    setFormTelephone('');
   };
 
   const handleCreate = async () => {
     if (!formTelephone || !formDate || !formTime || !formPatientName) {
-      setError("Por favor, preencha todos os campos obrigatórios.");
+      setError('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
-    const formattedTelephone = formTelephone.replace(/\D/g, "");
-    const [day, month, year] = formDate.split("/");
-    const isoDate = `${year}-${month}-${day}T${formTime}:00Z`;
-    const dateObj = new Date(isoDate);
-    if (isNaN(dateObj.getTime())) {
-      setError("Data ou horário inválido.");
-      return;
-    }
-    const isoString = dateObj.toISOString();
-    setError("");
-    const response: any = await postAppointment({
-      notes: formDescription,
-      patientNumber: formattedTelephone,
-      scheduledTime: isoString,
-      patientName: formPatientName,
-    });
 
-    if (response.status === 201) {
-      toast("Agendamento criado com sucesso.", {
-        theme: "colored",
-        type: "success",
+    if (!clinicInfo?.clinicId) {
+      setError('Não foi possível identificar a clínica. Recarregue a página e tente novamente.');
+      return;
+    }
+
+    const sanitizedPhoneNumber = formTelephone.replace(/\D/g, '');
+    const [day, month, year] = formDate.split('/');
+
+    if (!day || !month || !year || year.length !== 4) {
+      setError('Data inválida. Use o formato DD/MM/AAAA.');
+      return;
+    }
+
+    const appointmentDateInIsoFormat = `${year}-${month}-${day}`;
+    const parsedAppointmentDateTime = new Date(`${appointmentDateInIsoFormat}T${formTime}:00`);
+
+    if (isNaN(parsedAppointmentDateTime.getTime())) {
+      setError('Data ou horário inválido.');
+      return;
+    }
+
+    setError('');
+    setIsSubmitting(true);
+
+    try {
+      await postAppointment({
+        clinicId: clinicInfo.clinicId,
+        customerName: formPatientName,
+        customerPhoneNumber: sanitizedPhoneNumber,
+        appointmentDate: appointmentDateInIsoFormat,
+        time: formTime,
+        notes: formDescription || undefined,
+      });
+
+      toast('Agendamento criado com sucesso.', {
+        theme: 'colored',
+        type: 'success',
       });
 
       handleCloseModal();
       await fetchAppointments();
-      return;
+    } catch (requestError: any) {
+      const rawBackendMessage = requestError?.response?.data?.message;
+      const userFacingMessage = translateAppointmentError(
+        rawBackendMessage,
+        'Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.',
+      );
+
+      toast(userFacingMessage, {
+        theme: 'colored',
+        type: 'error',
+      });
+
+      setError(userFacingMessage);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast(
-      "Ocorreu um erro ao criar o agendamento. Tente novamente mais tarde.",
-      {
-        theme: "colored",
-        type: "error",
-      },
-    );
-
-    setError("Ocorreu um erro ao criar o agendamento.");
   };
 
-  const handleChangeTelephone = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    const digits = input.replace(/\D/g, "");
+  const handleChangeTelephone = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+    const digits = inputValue.replace(/\D/g, '');
 
-    let formatted = "";
+    let formatted = '';
 
     if (digits.length > 0) {
-      formatted += "(" + digits.substring(0, 2);
+      formatted += '(' + digits.substring(0, 2);
     }
     if (digits.length >= 3) {
-      formatted += ")" + digits.substring(2, 7);
+      formatted += ')' + digits.substring(2, 7);
     }
     if (digits.length >= 8) {
-      formatted += "-" + digits.substring(7, 11);
+      formatted += '-' + digits.substring(7, 11);
     }
 
     setFormTelephone(formatted);
   };
 
-  const handleChangePatientName = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormPatientName(e.target.value);
+  const handleChangePatientName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setFormPatientName(event.target.value);
   };
 
-  const handleChangeDate = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    const digits = input.replace(/\D/g, "");
+  const handleChangeDate = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+    const digits = inputValue.replace(/\D/g, '');
 
-    let formatted = "";
+    let formatted = '';
 
     if (digits.length > 0) {
       formatted += digits.substring(0, 2);
     }
     if (digits.length >= 3) {
-      formatted += "/" + digits.substring(2, 4);
+      formatted += '/' + digits.substring(2, 4);
     }
     if (digits.length >= 5) {
-      formatted += "/" + digits.substring(4, 8);
+      formatted += '/' + digits.substring(4, 8);
     }
 
     setFormDate(formatted);
   };
 
-  const handleChangeTime = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const input = e.target.value;
-    const digits = input.replace(/\D/g, "");
+  const handleChangeTime = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const inputValue = event.target.value;
+    const digits = inputValue.replace(/\D/g, '');
 
-    let formatted = "";
+    let formatted = '';
 
     if (digits.length > 0) {
       formatted += digits.substring(0, 2);
     }
     if (digits.length >= 3) {
-      formatted += ":" + digits.substring(2, 4);
+      formatted += ':' + digits.substring(2, 4);
     }
 
     setFormTime(formatted);
   };
 
   const handleFormatDateSet = (dateInfo: any) => {
-    const startDateIso = new Date(dateInfo.startStr)
-      .toISOString()
-      .split("T")[0];
-    const endDateIso = new Date(dateInfo.endStr).toISOString().split("T")[0];
+    const startDateIso = new Date(dateInfo.startStr).toISOString().split('T')[0];
+    const endDateIso = new Date(dateInfo.endStr).toISOString().split('T')[0];
     setDateRange({ start: startDateIso, end: endDateIso });
   };
 
-  const handlePresenterAppointmentsList = (appointmentsData: any[]) => {
-    return appointmentsData.flatMap((appointment: any) => {
-      const date = appointment.date;
-      return (appointment.appointments || []).map((appt: any) => {
-        const time = appt.time || "00:00";
-        const isoTime = `${date}T${time}`;
-
-        return {
-          id: String(appt.id),
-          title: appt.patient_name,
-          start: new Date(isoTime).toISOString(),
-          extendedProps: {
-            phone: appt.patient_phone,
-            duration: appt.duration,
-            status: appt.status,
-            notes: appt.notes,
-            dayInfo: {
-              open: appointment.open,
-              close: appointment.close,
-              break_start: appointment.break_start,
-              break_end: appointment.break_end,
-            },
-          },
-        };
-      });
-    });
+  const handlePresenterAppointmentsList = (
+    appointmentsFromBackend: BackendAppointment[],
+  ): EventInput[] => {
+    return appointmentsFromBackend.map((appointment) => ({
+      id: appointment.id,
+      title: appointment.customer_name,
+      start: appointment.appointment_date,
+      extendedProps: {
+        phone: appointment.customer_phone_number,
+        status: appointment.status,
+        notes: appointment.notes,
+      },
+    }));
   };
 
   const fetchAppointments = useCallback(async () => {
     if (!dataRange.start) return;
+    if (!clinicInfo?.clinicId) return;
+
     try {
-      const appointments = await getAppointments({
+      const response = await getAppointments({
+        clinicId: clinicInfo.clinicId,
         startDate: dataRange.start,
         endDate: dataRange.end,
       });
 
-      if (!appointments || !Array.isArray(appointments)) {
-        console.error("Appointments inválido ou não é um array:", appointments);
+      const appointmentsFromBackend = response?.appointments;
+
+      if (!appointmentsFromBackend || !Array.isArray(appointmentsFromBackend)) {
+        console.error('Appointments inválido ou não é um array:', response);
         return;
       }
 
-      const appointmentsFormatted =
-        handlePresenterAppointmentsList(appointments);
+      const appointmentsFormatted = handlePresenterAppointmentsList(appointmentsFromBackend);
 
       setEvents(appointmentsFormatted);
-    } catch (err) {
-      console.error("Erro ao buscar appointments:", err);
+    } catch (fetchError) {
+      console.error('Erro ao buscar appointments:', fetchError);
     }
-  }, [dataRange]);
+  }, [dataRange, clinicInfo?.clinicId]);
 
   useEffect(() => {
     fetchAppointments();
   }, [fetchAppointments]);
 
-  const handleUpdateStatus = useCallback(
-    async (payload: { id?: string; status: string }) => {
+  const handleUpdateAppointment = useCallback(
+    async (payload: {
+      appointmentId: string;
+      status: AppointmentStatus;
+      notes: string | null;
+    }) => {
       setSelectedEvent(null);
-      await putAppointmentStatus({
-        appointmentId: String(payload.id),
-        status: payload.status,
-      });
-      await fetchAppointments();
+      try {
+        await patchAppointment({
+          appointmentId: payload.appointmentId,
+          status: payload.status,
+          notes: payload.notes,
+        });
+
+        toast('Agendamento atualizado com sucesso.', {
+          theme: 'colored',
+          type: 'success',
+        });
+
+        await fetchAppointments();
+      } catch (updateError: any) {
+        const rawBackendMessage = updateError?.response?.data?.message;
+        const userFacingMessage = translateAppointmentError(
+          rawBackendMessage,
+          'Não foi possível atualizar o agendamento. Tente novamente.',
+        );
+
+        toast(userFacingMessage, { theme: 'colored', type: 'error' });
+      }
     },
     [fetchAppointments],
   );
+
+  const handleDeleteAppointment = useCallback(
+    async (appointmentId: string) => {
+      setSelectedEvent(null);
+      try {
+        await deleteAppointment({ appointmentId });
+
+        toast('Agendamento excluído com sucesso.', {
+          theme: 'colored',
+          type: 'success',
+        });
+
+        await fetchAppointments();
+      } catch (deleteError: any) {
+        const rawBackendMessage = deleteError?.response?.data?.message;
+        const userFacingMessage = translateAppointmentError(
+          rawBackendMessage,
+          'Não foi possível excluir o agendamento. Tente novamente.',
+        );
+
+        toast(userFacingMessage, { theme: 'colored', type: 'error' });
+      }
+    },
+    [fetchAppointments],
+  );
+
   return (
     <div className={styles.schedulesContainer}>
       <ToastContainer />
@@ -225,30 +316,43 @@ export default function Schedules() {
           Novo agendamento
         </button>
         <div className={styles.legend}>
-          <div>
-            <div className={styles.scheduled}></div>
-            <span>Agendado</span>
+          <div className={styles.legendContent}>
+            <div>
+              <div className={styles.scheduled}></div>
+              <span>Agendado</span>
+            </div>
+            <div>
+              <div className={styles.confirmed}></div>
+              <span>Confirmado</span>
+            </div>
+            <div>
+              <div className={styles.showedUp}></div>
+              <span>Compareceu</span>
+            </div>
           </div>
-          <div>
-            <div className={styles.confirmed}></div>
-            <span>Confirmado</span>
-          </div>
-          <div>
-            <div className={styles.showedUp}></div>
-            <span>Compareceu</span>
-          </div>
-          <div>
-            <div className={styles.notShowedUp}></div>
-            <span>Não compareceu</span>
+          <div className={styles.legendContent}>
+            <div>
+              <div className={styles.canceledByPatient}></div>
+              <span>Cancelado pelo paciente</span>
+            </div>
+            <div>
+              <div className={styles.canceledByClinic}></div>
+              <span>Cancelado pela clínica</span>
+            </div>
+            <div>
+              <div className={styles.notShowedUp}></div>
+              <span>Não compareceu</span>
+            </div>
           </div>
         </div>
       </div>
       <div className={styles.calendarContainer}>
         {selectedEvent && (
           <EventDetailsComponent
-            handleUpdateStatus={(event) => handleUpdateStatus(event)}
             event={selectedEvent}
             onClose={() => setSelectedEvent(null)}
+            handleUpdateAppointment={handleUpdateAppointment}
+            handleDeleteAppointment={handleDeleteAppointment}
           />
         )}
         <Calendar
@@ -259,34 +363,34 @@ export default function Schedules() {
             const ev: EventInput = {
               id: info.event.id,
               title: info.event.title,
-              start: info.event.start
-                ? info.event.start.toISOString()
-                : info.event.startStr,
+              start: info.event.start ? info.event.start.toISOString() : info.event.startStr,
               extendedProps: (info.event as any).extendedProps,
             };
             setSelectedEvent(ev);
           }}
           eventTimeFormat={{
-            hour: "2-digit",
-            minute: "2-digit",
+            hour: '2-digit',
+            minute: '2-digit',
             hour12: false,
           }}
           plugins={[dayGridPlugin]}
           locale={ptBr}
           initialView="dayGridWeek"
           headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridWeek,dayGridMonth",
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridWeek,dayGridMonth',
           }}
           events={events}
           eventClassNames={(arg) => {
-            const status = (arg.event.extendedProps as any)?.status;
-            const key = `status_${String(status || "").toUpperCase()}`;
-            const statusClass = (styles as any)[key];
-            return [styles.scheduleItem, statusClass].filter(
-              Boolean,
-            ) as string[];
+            const appointmentStatus = (arg.event.extendedProps as any)?.status as
+              | AppointmentStatus
+              | undefined;
+            const cssClassName = appointmentStatus
+              ? APPOINTMENT_STATUS_CSS_CLASS_BY_STATUS[appointmentStatus]
+              : undefined;
+            const statusClass = cssClassName ? (styles as any)[cssClassName] : undefined;
+            return [styles.scheduleItem, statusClass].filter(Boolean) as string[];
           }}
           dayCellClassNames={(arg) => {
             if (arg.isToday) {
@@ -294,8 +398,8 @@ export default function Schedules() {
             }
             return [];
           }}
-          buttonText={{ month: "Mês", week: "Semana" }}
-          height={"100%"}
+          buttonText={{ month: 'Mês', week: 'Semana' }}
+          height={'100%'}
         />
       </div>
       {isModalOpen && (
@@ -329,7 +433,7 @@ export default function Schedules() {
             <InputComponent
               type="text"
               value={formDescription}
-              handleChangeInput={(e) => setFormDescription(e.target.value)}
+              handleChangeInput={(event) => setFormDescription(event.target.value)}
               placeholder="Descrição do agendamento"
             />
             {error && <p className={styles.errorText}>{error}</p>}
@@ -338,12 +442,15 @@ export default function Schedules() {
                 text="Cancelar"
                 handleClickButton={handleCloseModal}
                 style={{
-                  background: "transparent",
-                  color: "var(--red-300)",
-                  border: "2px solid var(--red-300)",
+                  background: 'transparent',
+                  color: 'var(--red-300)',
+                  border: '2px solid var(--red-300)',
                 }}
               />
-              <ButtonComponent text="Criar" handleClickButton={handleCreate} />
+              <ButtonComponent
+                text={isSubmitting ? 'Criando...' : 'Criar'}
+                handleClickButton={handleCreate}
+              />
             </div>
           </div>
         </div>

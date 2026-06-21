@@ -1,11 +1,16 @@
-import { createClient } from "@/utils/supabase/client";
+'use server';
+
+import axios from 'axios';
 
 export async function forgotPassword(email: string) {
-  const supabase = createClient();
+  try {
+    await axios.post(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/forgot-password`, {
+      email,
+    });
 
-  const { error, data } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password`,
-  });
-
-  return { error, data };
+    return { error: null };
+  } catch (error) {
+    console.error('Error requesting password reset:', error);
+    return { error: 'Nao foi possivel enviar as instrucoes de redefinicao.' };
+  }
 }

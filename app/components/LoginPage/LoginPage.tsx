@@ -33,6 +33,10 @@ export function LoginPage() {
     router.push("/forgot-password");
   };
 
+  const handleRedirectToRegisterPage = () => {
+    router.push("/register");
+  };
+
   return (
     <section className={styles.loginSection}>
       <div className={styles.loginContainer}>
@@ -78,6 +82,9 @@ export function LoginPage() {
           </form>
           <div className={styles.forgotPassword}>
             <p onClick={handleForgotPassword}>Esqueci minha senha</p>
+          </div>
+          <div className={styles.registerLink}>
+            <p>Não possui conta? <span onClick={handleRedirectToRegisterPage}>Cadastre-se</span></p>
           </div>
         </div>
       </div>

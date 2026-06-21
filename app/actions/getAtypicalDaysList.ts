@@ -1,32 +1,10 @@
-import { createClient } from "@/utils/supabase/client";
-import axios from "axios";
+'use server';
 
-export async function getAtypicalDaysList() {
-  const supabase = createClient();
+import { serverApi } from './serverApi';
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const accessToken = session?.access_token;
-
-  if (!accessToken) {
-    throw new Error("User is not authenticated");
-  }
-
-  try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/configuration/availability/atypical`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      },
-    );
-
-    return response.data;
-  } catch (err) {
-    console.error("Error fetching clinic atypical days list:", err);
-  }
+export async function getAtypicalDaysList(clinicId: string) {
+  return await serverApi({
+    method: 'GET',
+    url: `/clinic-special-date/list/${clinicId}`,
+  });
 }

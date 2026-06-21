@@ -1,0 +1,38 @@
+.textAreaContainer {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.textArea {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  min-height: 120px;
+  box-sizing: border-box;
+  padding: 0.75rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #111;
+  background-color: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  outline: none;
+}
+
+.textArea:focus {
+  border-color: var(--blue-400);
+}
+
+.textArea::-webkit-scrollbar {
+  width: 6px;
+}
+
+.textArea::-webkit-scrollbar-thumb {
+  background-color: var(--gray-600);
+  border-radius: 3px;
+}
+
+.blockResize {
+  resize: none;
+}

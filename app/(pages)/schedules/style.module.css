@@ -18,7 +18,7 @@
   gap: 1rem;
 }
 
-.legend div {
+.legendContent div {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -27,7 +27,9 @@
 .scheduled,
 .confirmed,
 .showedUp,
-.notShowedUp {
+.notShowedUp,
+.canceledByPatient,
+.canceledByClinic {
   height: 10px;
   width: 10px;
   border-radius: 50%;
@@ -49,10 +51,19 @@
   background-color: var(--red-300);
 }
 
+.canceledByPatient {
+  background-color: var(--orange-400);
+}
+
+.canceledByClinic {
+  background-color: var(--purple-500);
+}
+
 .buttonContainer {
   margin-top: 2rem;
   display: flex;
   justify-content: space-between;
+  align-items: end;
 }
 
 .calendarContainer {
@@ -81,6 +92,26 @@
 
 .status_COMPARECEU {
   background: var(--blue-400);
+  color: var(--white);
+}
+
+.status_CANCELADO_PELO_PACIENTE {
+  background: var(--orange-400);
+  color: var(--white);
+}
+
+.status_CANCELADO_PELA_CLINICA {
+  background: var(--purple-500);
+  color: var(--white);
+}
+
+.status_CANCELADO_PELO_PACIENTE:hover {
+  background: var(--orange-400);
+  color: var(--white);
+}
+
+.status_CANCELADO_PELA_CLINICA:hover {
+  background: var(--purple-500);
   color: var(--white);
 }
 

@@ -1,5 +1,6 @@
-import { createClient } from "@/utils/supabase/client";
-import axios from "axios";
+'use server';
+
+import { serverApi } from './serverApi';
 
 type GetConversationMessagesType = {
   clinicId?: number | null;
@@ -7,36 +8,41 @@ type GetConversationMessagesType = {
   phoneNumber: string;
 };
 
+const PAGE_SIZE = 20;
+function phoneToChatId(phoneNumber: string): string {
+  const digits = phoneNumber.replace(/\D/g, '');
+  return `${digits}@c.us`;
+}
+
 export async function getConversationMessages({
-  clinicId,
   page = 0,
   phoneNumber,
 }: GetConversationMessagesType) {
-  const supabase = createClient();
+  const chatId = phoneToChatId(phoneNumber);
+  const data = await serverApi({
+    method: 'GET',
+    url: `/whatsapp/chats/default/${encodeURIComponent(chatId)}/messages`,
+    params: {
+      limit: PAGE_SIZE,
+      offset: page * PAGE_SIZE,
+      sortBy: 'messageTimestamp',
+      sortOrder: 'desc',
+      downloadMedia: false,
+    },
+  });
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  //TODO: REMOVE THIS AND IMPLEMENT THIS LOGIC INTO THE BACKEND INSTEAD
 
-  const accessToken = session?.access_token;
-
-  if (!accessToken) {
-    throw new Error("User is not authenticated");
-  }
-
-  try {
-    const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/whats-app/chat/${phoneNumber}?page=${page}`,
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    return response.data;
-  } catch (err) {
-    console.error("Error fetching conversation messages:", err);
-  }
+  return data.messages.map((m: any) => {
+    const text = m.hasMedia ? (m.message ?? 'Mensagem com arquivo de mídia') : (m.message ?? '');
+    return {
+      id: m.id,
+      message: text,
+      message_text: text,
+      sent_at: m.timestamp ? new Date(m.timestamp * 1000).toISOString() : '',
+      from_me: m.fromMe,
+      has_media: m.hasMedia,
+      ack: m.ack,
+    };
+  });
 }

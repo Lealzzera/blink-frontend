@@ -1,30 +1,28 @@
-import { createClient } from "@/utils/supabase/client";
-import axios from "axios";
+'use server';
 
-export async function deleteWhatsappConnection() {
-  const supabase = createClient();
+import axios from 'axios';
+import { cookies } from 'next/headers';
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  const accessToken = session?.access_token;
+export async function deleteWhatsappConnection(sessionName: string) {
+  const cookieStore = await cookies();
+  const accessToken = cookieStore.get('access_token')?.value;
 
   if (!accessToken) {
-    throw new Error("User is not authenticated");
+    throw new Error('User is not authenticated');
   }
 
   try {
     const response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v1/chat/whats-app/disconnect`,
+      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/whatsapp/disconnect/${sessionName}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,
         },
-      }
+      },
     );
     return response.data;
   } catch (err) {
-    console.error("Error to disconnect whatsapp number:", err);
+    console.error('Error disconnecting WhatsApp:', err);
+    return null;
   }
 }

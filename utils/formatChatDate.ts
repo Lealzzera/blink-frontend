@@ -1,11 +1,7 @@
-export default function formatChatDate(dateString: string): string {
-  const date = new Date(dateString);
+export default function formatChatDate(dateString: number): string {
+  const date = new Date(dateString * 1000);
   const now = new Date();
-  const startOfToday = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate()
-  );
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const diffTime =
     startOfToday.getTime() -
     new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
@@ -15,22 +11,22 @@ export default function formatChatDate(dateString: string): string {
   const isThisWeek = diffDays > 0 && diffDays < 7;
 
   if (isToday) {
-    return date.toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
+    return date.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit',
       hour12: false,
     });
   }
 
   if (isThisWeek) {
-    return date.toLocaleDateString("pt-BR", {
-      weekday: "long",
+    return date.toLocaleDateString('pt-BR', {
+      weekday: 'long',
     });
   }
 
-  return date.toLocaleDateString("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
+  return date.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
   });
 }
