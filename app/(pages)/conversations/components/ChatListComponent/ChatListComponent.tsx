@@ -21,6 +21,7 @@ type ChatListComponentProps = {
 };
 
 type ConversationFilter = 'all' | 'human' | 'ai';
+const MIN_SEARCH_LENGTH = 3;
 
 function normalizePhoneNumber(value?: string | null) {
   return String(value ?? '').replace(/\D/g, '');
@@ -69,15 +70,18 @@ export default function ChatListComponent({
   const applyFilters = useCallback(
     (nextSearchValue: string, nextSelectedFilter: ConversationFilter) => {
       const searchValue = nextSearchValue.trim().toLowerCase();
+      const shouldSearch = searchValue.length >= MIN_SEARCH_LENGTH;
+      const normalizedSearchValue = normalizePhoneNumber(nextSearchValue);
+      const shouldSearchPhoneNumber = normalizedSearchValue.length >= MIN_SEARCH_LENGTH;
 
       const nextFilteredList = originalListRef.current.filter((chat) => {
         const matchesSelectedFilter =
           nextSelectedFilter === 'all' ||
           (nextSelectedFilter === 'human' && getConversationAiEnabled(chat) === false) ||
-          (nextSelectedFilter === 'ai' && getConversationAiEnabled(chat) === true);
+          (nextSelectedFilter === 'ai' && getConversationAiEnabled(chat) !== false);
 
         if (!matchesSelectedFilter) return false;
-        if (!searchValue) return true;
+        if (!shouldSearch) return true;
 
         const name = chat.contactName || '';
         const last = chat.lastMessage.message || '';
@@ -86,7 +90,7 @@ export default function ChatListComponent({
         return (
           name.toLowerCase().includes(searchValue) ||
           last.toLowerCase().includes(searchValue) ||
-          normalizePhoneNumber(phoneNumber).includes(normalizePhoneNumber(nextSearchValue))
+          (shouldSearchPhoneNumber && normalizePhoneNumber(phoneNumber).includes(normalizedSearchValue))
         );
       });
 
@@ -136,7 +140,7 @@ export default function ChatListComponent({
     clearUnreadMessages(value.phoneNumber);
   };
 
-  const handleSearchChat = (event: any) => {
+  const handleSearchChat = (event: React.ChangeEvent<HTMLInputElement>) => {
     const contactName = event.target.value;
     setSearchInputValue(contactName);
     applyFilters(contactName, selectedFilter);
@@ -227,7 +231,7 @@ export default function ChatListComponent({
               );
             })}
             {
-              filteredList.length === 0 && (
+              filteredList.length === 0 && !numberNotConnected && (
                 <li style={{ textAlign: 'center', padding: '20px' }}>
                   <p>Nenhum chat encontrado</p>
                 </li>

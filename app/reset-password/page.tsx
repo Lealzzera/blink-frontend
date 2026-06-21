@@ -1,100 +1,85 @@
 "use client";
 
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
-import styles from "./styles.module.css";
-import InputComponent from "../components/InputComponent/InputComponent";
+import { resetPassword } from "../actions/resetPassword";
 import ButtonComponent from "../components/ButtonComponent/ButtonComponent";
+import InputComponent from "../components/InputComponent/InputComponent";
+import styles from "./styles.module.css";
 
 export default function ResetPassword() {
-  const supabase = createClient();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
 
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
 
-  const handleChangePassword = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setPassword(event.target.value);
-  };
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    if (!token) {
+      toast.error("Link de redefinicao invalido.", { theme: "colored" });
+      return;
+    }
 
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres", {
+    if (password.length < 8) {
+      toast.error("A senha deve ter pelo menos 8 caracteres.", {
         theme: "colored",
-        type: "error",
       });
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error("As senhas nao conferem.", { theme: "colored" });
       return;
     }
 
     setSubmitting(true);
 
-    const { error } = await supabase.auth.updateUser({
-      password,
-    });
+    const response = await resetPassword({ token, password });
 
-    if (error) {
-      toast.error("Erro ao redefinir senha. Tente novamente.", {
-        theme: "colored",
-        type: "error",
-      });
+    if (response.error) {
+      toast.error(response.error, { theme: "colored" });
       setSubmitting(false);
       return;
     }
 
-    await supabase.auth.signOut();
-
-    toast.success("Senha redefinida com sucesso!", {
-      theme: "colored",
-      type: "success",
-    });
+    toast.success("Senha redefinida com sucesso!", { theme: "colored" });
 
     setTimeout(() => {
       router.replace("/");
     }, 1500);
   };
 
-  useEffect(() => {
-    const checkRecoverySession = async () => {
-      const { data } = await supabase.auth.getSession();
-
-      if (!data.session) {
-        router.replace("/");
-        return;
-      }
-
-      setLoading(false);
-    };
-
-    checkRecoverySession();
-  }, []);
-
-  if (loading) {
-    return <p>Validando link de recuperação...</p>;
-  }
-
   return (
     <div className={styles.resetPage}>
       <ToastContainer />
       <div className={styles.resetContainer}>
-        <h1>Recuperação de senha</h1>
-        <p>Digite sua nova senha abaixo para redefinir sua senha de acesso</p>
+        <h1>Recuperacao de senha</h1>
+        <p>Digite sua nova senha abaixo para redefinir seu acesso.</p>
 
         <form className={styles.containerInputButton} onSubmit={handleSubmit}>
           <InputComponent
-            handleChangeInput={handleChangePassword}
+            handleChangeInput={(event) => setPassword(event.target.value)}
             value={password}
-            label="Nova Senha"
+            label="Nova senha"
+            type="password"
+            required
+          />
+
+          <InputComponent
+            handleChangeInput={(event) => setConfirmPassword(event.target.value)}
+            value={confirmPassword}
+            label="Confirmar nova senha"
             type="password"
             required
           />
 
           <ButtonComponent
-            disabled={submitting}
+            disabled={submitting || !token}
             text={submitting ? "Enviando..." : "Enviar"}
           />
         </form>
