@@ -2,10 +2,10 @@
 
 import CircularProgress from '@mui/material/CircularProgress';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { completeStripeCheckoutSession } from '../actions/completeStripeCheckoutSession';
 
-export default function ReturnPage() {
+function ReturnPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const sessionId = searchParams.get('session_id');
@@ -92,5 +92,13 @@ export default function ReturnPage() {
         </>
       )}
     </main>
+  );
+}
+
+export default function ReturnPage() {
+  return (
+    <Suspense>
+      <ReturnPageContent />
+    </Suspense>
   );
 }

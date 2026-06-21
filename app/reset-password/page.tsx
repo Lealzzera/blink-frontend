@@ -1,14 +1,15 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import { resetPassword } from "../actions/resetPassword";
 import ButtonComponent from "../components/ButtonComponent/ButtonComponent";
 import InputComponent from "../components/InputComponent/InputComponent";
 import styles from "./styles.module.css";
 
-export default function ResetPassword() {
+
+function ResetPasswordContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -85,5 +86,13 @@ export default function ResetPassword() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={<div>Carregando...</div>}>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }
