@@ -226,6 +226,13 @@ export default function ChatListComponent({
                 </li>
               );
             })}
+            {
+              filteredList.length === 0 && (
+                <li style={{ textAlign: 'center', padding: '20px' }}>
+                  <p>Nenhum chat encontrado</p>
+                </li>
+              )
+            }
       </ul>
 
       {loading.loading && (
