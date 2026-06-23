@@ -1,12 +1,17 @@
 'use client';
 
+import { changePassword } from '@/app/actions/changePassword';
 import { deleteWhatsappConnection } from '@/app/actions/deleteWhatsappConnection';
 import { logout } from '@/app/actions/logout';
+import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalComponent';
+import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
+import InputComponent from '@/app/components/InputComponent/InputComponent';
 import { useUser } from '@/app/context/userContext';
 import { useWhatsApp } from '@/app/hooks/useWhatsApp';
-import { LogOut, MessageCircleOff } from 'lucide-react';
+import { LockKeyhole, LogOut, MessageCircleOff } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import { FormEvent, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import style from './style.module.css';
 
@@ -14,6 +19,11 @@ export default function Settings() {
   const router = useRouter();
   const { clinicInfo, handleSetContactSelected } = useUser();
   const { whatsAppStatus, qrCode, loading, error, refresh } = useWhatsApp();
+  const [isChangePasswordModalOpen, setIsChangePasswordModalOpen] = useState(false);
+  const [isSubmittingPassword, setIsSubmittingPassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
 
   const showQrCode = () => {
     return qrCode && !loading && !error;
@@ -48,6 +58,56 @@ export default function Settings() {
   const handleLogout = async () => {
     await logout();
     router.push('/');
+  };
+
+  const closeChangePasswordModal = () => {
+    setIsChangePasswordModalOpen(false);
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmNewPassword('');
+  };
+
+  const handleChangePassword = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (newPassword.length < 8) {
+      toast('A nova senha precisa ter pelo menos 8 caracteres.', {
+        type: 'error',
+        theme: 'colored',
+      });
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      toast('As novas senhas nao conferem.', {
+        type: 'error',
+        theme: 'colored',
+      });
+      return;
+    }
+
+    setIsSubmittingPassword(true);
+
+    const response = await changePassword({
+      currentPassword,
+      newPassword,
+    });
+
+    setIsSubmittingPassword(false);
+
+    if (response.error) {
+      toast(response.error, {
+        type: 'error',
+        theme: 'colored',
+      });
+      return;
+    }
+
+    toast('Senha redefinida com sucesso.', {
+      type: 'success',
+      theme: 'colored',
+    });
+    closeChangePasswordModal();
   };
 
   return (
@@ -91,12 +151,75 @@ export default function Settings() {
           </div>
         </li>
         <li>
+          <div
+            onClick={() => setIsChangePasswordModalOpen(true)}
+            className={style.changePasswordOption}
+          >
+            <LockKeyhole />
+            <p>Redefinir senha</p>
+          </div>
+        </li>
+        <li>
           <div onClick={handleLogout} className={style.logoutOption}>
             <LogOut className={style.logoutIcon} />
             <p>Sair</p>
           </div>
         </li>
       </ul>
+
+      {isChangePasswordModalOpen && (
+        <BaseModalComponent handleCloseModal={closeChangePasswordModal}>
+          <form className={style.changePasswordModal} onSubmit={handleChangePassword}>
+            <div className={style.changePasswordHeader}>
+              <LockKeyhole />
+              <div>
+                <h2>Redefinir senha</h2>
+                <p>Informe sua senha atual e escolha uma nova senha de acesso.</p>
+              </div>
+            </div>
+
+            <div className={style.changePasswordFields}>
+              <InputComponent
+                label="Senha atual"
+                type="password"
+                value={currentPassword}
+                handleChangeInput={(event) => setCurrentPassword(event.target.value)}
+                required
+              />
+              <InputComponent
+                label="Nova senha"
+                type="password"
+                value={newPassword}
+                handleChangeInput={(event) => setNewPassword(event.target.value)}
+                required
+              />
+              <InputComponent
+                label="Confirmar nova senha"
+                type="password"
+                value={confirmNewPassword}
+                handleChangeInput={(event) => setConfirmNewPassword(event.target.value)}
+                required
+              />
+            </div>
+
+            <div className={style.changePasswordActions}>
+              <button type="button" onClick={closeChangePasswordModal}>
+                Cancelar
+              </button>
+              <ButtonComponent
+                type="submit"
+                text={isSubmittingPassword ? 'Salvando...' : 'Salvar senha'}
+                disabled={
+                  isSubmittingPassword ||
+                  !currentPassword ||
+                  !newPassword ||
+                  !confirmNewPassword
+                }
+              />
+            </div>
+          </form>
+        </BaseModalComponent>
+      )}
     </div>
   );
 }

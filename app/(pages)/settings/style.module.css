@@ -100,9 +100,74 @@
   cursor: pointer;
 }
 
+.changePasswordOption {
+  width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 .logoutOption:hover,
-.disconnectOption:hover {
+.disconnectOption:hover,
+.changePasswordOption:hover {
   background-color: var(--gray-600);
+}
+
+.changePasswordModal {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 28px;
+}
+
+.changePasswordHeader {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.changePasswordHeader svg {
+  width: 28px;
+  height: 28px;
+  color: var(--blue-300);
+  flex-shrink: 0;
+}
+
+.changePasswordHeader h2 {
+  margin-bottom: 6px;
+}
+
+.changePasswordHeader p {
+  color: var(--gray-200);
+  line-height: 1.4;
+}
+
+.changePasswordFields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.changePasswordActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 16px;
+}
+
+.changePasswordActions > button {
+  border: none;
+  background: transparent;
+  color: var(--gray-100);
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.changePasswordActions > div {
+  width: 180px;
 }
 
 .logoutOption:hover .logoutIcon,
