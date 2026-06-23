@@ -8,7 +8,7 @@ import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import { useUser } from '@/app/context/userContext';
 import { useWhatsApp } from '@/app/hooks/useWhatsApp';
-import { LockKeyhole, LogOut, MessageCircleOff } from 'lucide-react';
+import { Headset, LockKeyhole, LogOut, MessageCircleOff } from 'lucide-react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { FormEvent, useState } from 'react';
@@ -58,6 +58,14 @@ export default function Settings() {
   const handleLogout = async () => {
     await logout();
     router.push('/');
+  };
+
+  const handleOpenSupport = () => {
+    const message = encodeURIComponent(
+      'Ola, sou usuario do sistema de agendamento da Blink e gostaria de ajuda.',
+    );
+
+    window.open(`https://wa.me/5511982006666?text=${message}`, '_blank', 'noopener,noreferrer');
   };
 
   const closeChangePasswordModal = () => {
@@ -157,6 +165,12 @@ export default function Settings() {
           >
             <LockKeyhole />
             <p>Redefinir senha</p>
+          </div>
+        </li>
+        <li>
+          <div onClick={handleOpenSupport} className={style.supportOption}>
+            <Headset />
+            <p>Suporte / Cancelar conta</p>
           </div>
         </li>
         <li>

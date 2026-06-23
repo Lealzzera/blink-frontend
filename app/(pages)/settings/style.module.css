@@ -110,9 +110,20 @@
   cursor: pointer;
 }
 
+.supportOption {
+  width: 320px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
 .logoutOption:hover,
 .disconnectOption:hover,
-.changePasswordOption:hover {
+.changePasswordOption:hover,
+.supportOption:hover {
   background-color: var(--gray-600);
 }
 
