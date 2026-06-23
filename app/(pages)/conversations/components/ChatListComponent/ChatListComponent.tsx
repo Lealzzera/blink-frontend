@@ -17,6 +17,7 @@ type ChatListComponentProps = {
   hasMore: boolean;
   loading: { firstLoading: boolean; loading: boolean };
   numberNotConnected: boolean;
+  checkingConnection: boolean;
   whatsappConversationList?: any[];
 };
 
@@ -37,6 +38,7 @@ export default function ChatListComponent({
   hasMore,
   loading,
   numberNotConnected,
+  checkingConnection,
   whatsappConversationList,
 }: ChatListComponentProps) {
   const { contactSelected, handleSetContactSelected } = useUser();
@@ -157,7 +159,7 @@ export default function ChatListComponent({
 
   return (
     <div className={style.chatListContainer}>
-      {numberNotConnected && !loading.firstLoading && !loading.loading && (
+      {numberNotConnected && !checkingConnection && !loading.firstLoading && !loading.loading && (
         <div className={style.notConnected}>
           <p>Você não possui um WhatsApp conectado. Conecte-se acessando a aba de configurações</p>
           <ButtonComponent
@@ -167,7 +169,7 @@ export default function ChatListComponent({
         </div>
       )}
       <ul className={style.chatListUl}>
-        {!loading.firstLoading && !numberNotConnected && (
+        {!checkingConnection && !loading.firstLoading && !numberNotConnected && (
           <>
             <div className={style.searchInputContainer}>
               <InputComponent
@@ -199,7 +201,7 @@ export default function ChatListComponent({
             </div>
           </>
         )}
-        {loading.firstLoading
+        {loading.firstLoading || checkingConnection
           ? Array.from({ length: 20 }).map((_, i) => (
               <li key={`skeleton-${i}`} className={style.skeletonCard}></li>
             ))
@@ -231,7 +233,10 @@ export default function ChatListComponent({
               );
             })}
             {
-              filteredList.length === 0 && !numberNotConnected && (
+              filteredList.length === 0 &&
+                !checkingConnection &&
+                !loading.firstLoading &&
+                !numberNotConnected && (
                 <li style={{ textAlign: 'center', padding: '20px' }}>
                   <p>Nenhum chat encontrado</p>
                 </li>

@@ -92,9 +92,10 @@ export default function Conversations() {
   const isLoadingRef = useRef(false);
   const hasLoadedConversationsRef = useRef(false);
   const isWhatsAppConnected = Boolean(whatsAppStatus?.connected);
+  const isCheckingWhatsAppConnection = whatsAppLoading || !clinicInfo?.clinicId;
 
   const showWhatsAppIsNotConnected =
-    !whatsAppLoading &&
+    !isCheckingWhatsAppConnection &&
     !isWhatsAppConnected &&
     !loading.firstLoading &&
     !loading.loading;
@@ -305,6 +306,7 @@ export default function Conversations() {
           whatsappConversationList={whatsappConversationList}
           hasMore={hasMore}
           numberNotConnected={showWhatsAppIsNotConnected}
+          checkingConnection={isCheckingWhatsAppConnection}
           loading={loading}
         />
       }

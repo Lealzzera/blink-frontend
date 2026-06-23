@@ -24,6 +24,9 @@ export function useWhatsApp() {
     setLoading(true);
     setError(false);
     if (!clinicInfo?.clinicId) {
+      setWhatsAppStatus(null);
+      setQrCode(null);
+      setLoading(false);
       return;
     }
 
