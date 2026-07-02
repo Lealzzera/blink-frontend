@@ -170,7 +170,7 @@ export default function Settings() {
         <li>
           <div onClick={handleOpenSupport} className={style.supportOption}>
             <Headset />
-            <p>Suporte / Cancelar conta</p>
+            <p>Suporte</p>
           </div>
         </li>
         <li>

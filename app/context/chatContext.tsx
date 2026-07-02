@@ -41,6 +41,18 @@ type WahaMessageAckPayload = {
   phoneChatId?: string | null;
 };
 
+export type AiHandoffPayload = {
+  clinicId?: string;
+  session?: string;
+  chatId?: string;
+  phoneChatId?: string | null;
+  customerPhoneNumber?: string;
+  aiEnabled?: boolean;
+  handoffReason?: string;
+  unreadEventId?: string;
+  sentAt?: string;
+};
+
 type ChatContextType = {
   messagesByPhone: Record<string, ChatMessage[]>;
   lastMessageByPhone: Record<string, ChatMessage>;
@@ -79,6 +91,14 @@ function isWahaMessageAckPayload(payload: unknown): payload is WahaMessageAckPay
   const value = payload as WahaMessageAckPayload;
 
   return typeof value.phoneChatId === 'string' && typeof value.ack === 'number';
+}
+
+function isAiHandoffPayload(payload: unknown): payload is AiHandoffPayload {
+  if (!payload || typeof payload !== 'object') return false;
+
+  const value = payload as AiHandoffPayload;
+
+  return typeof value.chatId === 'string' || typeof value.phoneChatId === 'string';
 }
 
 function mapWahaMessageAnyToChatMessage(
@@ -183,6 +203,21 @@ export function ChatProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    setUnreadMessageIdsByPhone((prev) => {
+      const unreadMessageIds = prev[phoneNumber] ?? [];
+
+      if (unreadMessageIds.includes(messageId)) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [phoneNumber]: [...unreadMessageIds, messageId],
+      };
+    });
+  };
+
+  const forceUnreadMessage = (phoneNumber: string, messageId: string) => {
     setUnreadMessageIdsByPhone((prev) => {
       const unreadMessageIds = prev[phoneNumber] ?? [];
 
@@ -408,6 +443,24 @@ export function ChatProvider({ children }: { children: ReactNode }) {
           if (message.payload.ack === 3) {
             clearUnreadMessages(phoneNumber);
           }
+
+          return;
+        }
+
+        if (message.event === 'ai_handoff') {
+          setLastWahaEvent(message);
+          setWahaEvents((prev) => [...prev.slice(-49), message]);
+
+          if (!isAiHandoffPayload(message.payload)) return;
+
+          const phoneChatId = message.payload.phoneChatId ?? message.payload.chatId;
+          if (!phoneChatId) return;
+
+          const phoneNumber = formatChatIdToPhoneNumber(phoneChatId);
+          const unreadEventId =
+            message.payload.unreadEventId ?? `ai_handoff:${phoneNumber}:${message.payload.sentAt ?? Date.now()}`;
+
+          forceUnreadMessage(phoneNumber, unreadEventId);
         }
       };
 

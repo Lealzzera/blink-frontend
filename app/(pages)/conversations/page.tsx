@@ -77,7 +77,7 @@ function mergeConversationsByPhoneNumber(
 export default function Conversations() {
   const { whatsAppStatus, loading: whatsAppLoading } = useWhatsApp();
   const { contactSelected, clinicInfo, handleSetContactSelected } = useUser();
-  const { hydrateUnreadCounts, latestChatMessage } = useChat();
+  const { hydrateUnreadCounts, latestChatMessage, lastWahaEvent } = useChat();
 
   const [page, setPage] = useState(0);
   const [conversations, setConversations] = useState<ChatListItem[]>([]);
@@ -291,6 +291,49 @@ export default function Conversations() {
       ];
     });
   }, [latestChatMessage]);
+
+  useEffect(() => {
+    if (lastWahaEvent?.event !== 'ai_handoff') return;
+    if (!lastWahaEvent.payload || typeof lastWahaEvent.payload !== 'object') return;
+
+    const payload = lastWahaEvent.payload as {
+      chatId?: string;
+      phoneChatId?: string | null;
+      customerPhoneNumber?: string;
+      session?: string;
+      aiEnabled?: boolean;
+    };
+
+    const chatId = payload.phoneChatId ?? payload.chatId;
+
+    if (!chatId) return;
+
+    setWhatsappConversationList((prev) => {
+      const existingConversationIndex = prev.findIndex(
+        (conversation) => conversation.chatId === chatId,
+      );
+
+      if (existingConversationIndex === -1) {
+        return [
+          ...prev,
+          {
+            id: chatId,
+            chatId,
+            phoneNumber: payload.customerPhoneNumber ?? chatId,
+            aiEnabled: false,
+          },
+        ];
+      }
+
+      const nextConversationList = [...prev];
+      nextConversationList[existingConversationIndex] = {
+        ...nextConversationList[existingConversationIndex],
+        aiEnabled: false,
+      };
+
+      return nextConversationList;
+    });
+  }, [lastWahaEvent]);
 
   const handleFetchMore = useCallback(() => {
     if (!hasMore || isLoadingRef.current) return;
