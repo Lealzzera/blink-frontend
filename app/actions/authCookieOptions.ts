@@ -5,7 +5,8 @@ import { headers } from 'next/headers';
 export async function shouldUseSecureCookies() {
   const requestHeaders = await headers();
   const forwardedProto = requestHeaders.get('x-forwarded-proto');
-  const publicBaseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+  const forwardedSsl = requestHeaders.get('x-forwarded-ssl');
+  const forwardedProtocol = requestHeaders.get('x-forwarded-protocol');
 
-  return publicBaseUrl?.startsWith('https://') || forwardedProto === 'https';
+  return forwardedProto === 'https' || forwardedProtocol === 'https' || forwardedSsl === 'on';
 }
