@@ -5,15 +5,12 @@ import InputComponent from "../InputComponent/InputComponent";
 import styles from "./styles.module.css";
 import ButtonComponent from "../ButtonComponent/ButtonComponent";
 import { login } from "@/app/actions/login";
-import { useRouter } from "next/navigation";
 
 export function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const router = useRouter();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,15 +23,15 @@ export function LoginPage() {
       return;
     }
 
-    router.push("/conversations");
+    window.location.assign("/conversations");
   };
 
   const handleForgotPassword = () => {
-    router.push("/forgot-password");
+    window.location.assign("/forgot-password");
   };
 
   const handleRedirectToRegisterPage = () => {
-    router.push("/register");
+    window.location.assign("/register");
   };
 
   return (

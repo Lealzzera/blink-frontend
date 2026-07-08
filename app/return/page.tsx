@@ -1,13 +1,12 @@
 'use client';
 
 import CircularProgress from '@mui/material/CircularProgress';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { Suspense, useEffect, useState } from 'react';
 import { completeStripeCheckoutSession } from '../actions/completeStripeCheckoutSession';
 
 function ReturnPageContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const sessionId = searchParams.get('session_id');
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
 
@@ -30,7 +29,7 @@ function ReturnPageContent() {
         if (!result.error) {
           setStatus('success');
           setTimeout(() => {
-            router.replace('/settings');
+            window.location.replace('/settings');
           }, 3500);
           return;
         }
@@ -48,7 +47,7 @@ function ReturnPageContent() {
     return () => {
       shouldCancel = true;
     };
-  }, [router, sessionId]);
+  }, [sessionId]);
 
   return (
     <main

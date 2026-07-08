@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { shouldUseSecureCookies } from './authCookieOptions';
 
 type CompleteStripeCheckoutSessionResponse = {
   error: string | null;
@@ -19,10 +20,11 @@ export async function completeStripeCheckoutSession(
 
     const cookieStore = await cookies();
     const { access_token: accessToken } = response.data;
+    const useSecureCookies = await shouldUseSecureCookies();
 
     cookieStore.set('access_token', accessToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: useSecureCookies,
       maxAge: 60 * 60 * 24 * 14,
       path: '/',
       sameSite: 'lax',
@@ -39,7 +41,7 @@ export async function completeStripeCheckoutSession(
       if (refreshTokenValue) {
         cookieStore.set('refresh_token', refreshTokenValue, {
           httpOnly: true,
-          secure: process.env.NODE_ENV === 'production',
+          secure: useSecureCookies,
           maxAge: 60 * 60 * 24 * 14,
           path: '/',
           sameSite: 'lax',

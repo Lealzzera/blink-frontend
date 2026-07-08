@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { shouldUseSecureCookies } from './authCookieOptions';
 
 type LoginData = {
   email: string;
@@ -18,10 +19,11 @@ export async function login({ email, password }: LoginData) {
     const { access_token } = response.data;
 
     const cookieStore = await cookies();
+    const useSecureCookies = await shouldUseSecureCookies();
 
     cookieStore.set('access_token', access_token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
+      secure: useSecureCookies,
       maxAge: 60 * 60 * 24 * 14,
       path: '/',
       sameSite: 'lax',
@@ -35,7 +37,7 @@ export async function login({ email, password }: LoginData) {
 
       cookieStore.set('refresh_token', refreshTokenValue, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
+        secure: useSecureCookies,
         maxAge: 60 * 60 * 24 * 14,
         path: '/',
         sameSite: 'lax',
