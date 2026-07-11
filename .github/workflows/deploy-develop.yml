@@ -10,7 +10,7 @@ permissions:
   packages: write
 
 env:
-  IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/blink-frontend
+  IMAGE_NAME: ghcr.io/lealzzera/blink-frontend
 
 jobs:
   build-and-deploy:
