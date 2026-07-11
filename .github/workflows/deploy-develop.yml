@@ -13,7 +13,7 @@ env:
   IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/blink-frontend
 
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
 
     steps:
@@ -54,4 +54,7 @@ jobs:
             -o IdentitiesOnly=yes \
             -i ~/.ssh/hetzner \
             "${{ secrets.HETZNER_USER }}@${{ secrets.HETZNER_HOST }}" \
-            'cd /opt/blinki && docker compose pull frontend && docker compose up -d frontend'
+            'cd /opt/blinki && \
+             docker compose pull frontend && \
+             docker compose up -d --no-deps frontend && \
+             docker image prune -f'
