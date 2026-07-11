@@ -36,7 +36,7 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:develop
             ${{ env.IMAGE_NAME }}:${{ github.sha }}
 
       - name: Configurar SSH
