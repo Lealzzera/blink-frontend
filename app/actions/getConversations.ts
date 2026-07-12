@@ -2,7 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import axios from "axios";
-import { serverApiBaseUrl } from "./env";
+import { getServerApiBaseUrl } from "./env";
 
 type GetConversationsType = {
   clinicId?: number | null;
@@ -26,6 +26,7 @@ export async function getConversations({
   }
 
   try {
+    const serverApiBaseUrl = getServerApiBaseUrl();
     const response = await axios.get(
       `${serverApiBaseUrl}/chat/${clinicId}/overview?page=${page}`,
       {
