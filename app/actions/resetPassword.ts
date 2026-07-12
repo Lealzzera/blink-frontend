@@ -1,7 +1,7 @@
 'use server';
 
 import axios from 'axios';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 type ResetPasswordParams = {
   token: string;
@@ -9,6 +9,7 @@ type ResetPasswordParams = {
 };
 
 export async function resetPassword({ token, password }: ResetPasswordParams) {
+  const serverApiBaseUrl = getServerApiBaseUrl();
   try {
     await axios.post(`${serverApiBaseUrl}/auth/reset-password`, {
       token,

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 import { SignupDraftData } from '../types/types';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 type PostSignupDraftType = {
   fullName: string;
@@ -20,6 +20,7 @@ export async function postSignupDraft({
   selectedPlanId,
 }: PostSignupDraftType): Promise<{ draftId: string } | null> {
   try {
+    const serverApiBaseUrl = getServerApiBaseUrl();
     const response = await axios.post(
       `${serverApiBaseUrl}/signup-draft/register`,
       { email, password, fullName, selectedPlanId, data },

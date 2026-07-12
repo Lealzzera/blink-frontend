@@ -2,11 +2,12 @@
 
 import { cookies } from 'next/headers';
 import axios from 'axios';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 export async function getWhatsAppStatus(clinicId: string, refresh = false) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
+  const serverApiBaseUrl = getServerApiBaseUrl();
 
   if (!accessToken) {
     throw new Error('User is not authenticated');

@@ -1,7 +1,7 @@
 'use server';
 
 import axios from 'axios';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 type PostStripeCheckoutSessionType = {
   stripePriceId: string;
@@ -13,6 +13,7 @@ export async function postStripeCheckoutSession({
   draftId,
 }: PostStripeCheckoutSessionType): Promise<{ clientSecret: string } | null> {
   try {
+    const serverApiBaseUrl = getServerApiBaseUrl();
     const response = await axios.post(
       `${serverApiBaseUrl}/stripe/create-checkout-session`,
       {

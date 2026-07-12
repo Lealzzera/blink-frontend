@@ -1,9 +1,10 @@
 'use server';
 
 import axios from 'axios';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 export async function forgotPassword(email: string) {
+  const serverApiBaseUrl = getServerApiBaseUrl();
   try {
     await axios.post(`${serverApiBaseUrl}/auth/forgot-password`, {
       email,

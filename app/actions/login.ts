@@ -3,7 +3,7 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 import { shouldUseSecureCookies } from './authCookieOptions';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 type LoginData = {
   email: string;
@@ -12,6 +12,8 @@ type LoginData = {
 
 export async function login({ email, password }: LoginData) {
   try {
+    const serverApiBaseUrl = getServerApiBaseUrl();
+    console.log('[login] baseURL:', serverApiBaseUrl);
     const response = await axios.post(`${serverApiBaseUrl}/auth/login`, {
       email,
       password,

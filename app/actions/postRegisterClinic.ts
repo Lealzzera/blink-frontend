@@ -2,7 +2,7 @@ import axios from 'axios';
 import { ServiceType } from '../register/components/register-clinic-services/RegisterClinicServices';
 import { WorkingHour } from '../register/components/register-clinic-working-hours/RegisterClinicWorkingHours';
 import { SettingsObject } from '../types/types';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 type PostAppointmentType = {
   userFullName: string;
@@ -36,6 +36,8 @@ export async function postRegisterClinic({
   settings,
 }: PostAppointmentType) {
   try {
+    const serverApiBaseUrl = getServerApiBaseUrl();
+    console.log('[postRegisterClinic] baseURL:', serverApiBaseUrl);
     const response = await axios.post(
       `${serverApiBaseUrl}/clinic/register`,
       {

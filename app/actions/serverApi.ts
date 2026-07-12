@@ -3,12 +3,14 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { serverApiBaseUrl } from './env';
+import { getServerApiBaseUrl } from './env';
 
 export async function serverApi(config: AxiosRequestConfig) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
-  
+  const serverApiBaseUrl = getServerApiBaseUrl();
+
+  console.log('[serverApi] baseURL:', serverApiBaseUrl);
 
   try {
     const response = await axios({
