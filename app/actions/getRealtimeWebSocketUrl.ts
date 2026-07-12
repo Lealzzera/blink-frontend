@@ -1,6 +1,7 @@
 'use server';
 
 import { cookies } from 'next/headers';
+import { websocketUrl } from './env';
 
 export async function getRealtimeWebSocketUrl(clinicId: string) {
   const cookieStore = await cookies();
@@ -10,7 +11,6 @@ export async function getRealtimeWebSocketUrl(clinicId: string) {
     return null;
   }
 
-  const websocketUrl = process.env.NEXT_PUBLIC_BLINK_BE_PUBLIC_WS_URL;
 
   const token = encodeURIComponent(accessToken);
 

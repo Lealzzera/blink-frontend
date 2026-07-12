@@ -2,6 +2,7 @@ import axios from 'axios';
 import { ServiceType } from '../register/components/register-clinic-services/RegisterClinicServices';
 import { WorkingHour } from '../register/components/register-clinic-working-hours/RegisterClinicWorkingHours';
 import { SettingsObject } from '../types/types';
+import { serverApiBaseUrl } from './env';
 
 type PostAppointmentType = {
   userFullName: string;
@@ -36,7 +37,7 @@ export async function postRegisterClinic({
 }: PostAppointmentType) {
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/clinic/register`,
+      `${serverApiBaseUrl}/clinic/register`,
       {
         userFullName,
         userEmail,

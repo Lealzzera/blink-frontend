@@ -3,15 +3,17 @@
 import axios, { AxiosRequestConfig } from 'axios';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { serverApiBaseUrl } from './env';
 
 export async function serverApi(config: AxiosRequestConfig) {
   const cookieStore = await cookies();
   const accessToken = cookieStore.get('access_token')?.value;
+  
 
   try {
     const response = await axios({
       ...config,
-      baseURL: process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL,
+      baseURL: serverApiBaseUrl,
       headers: {
         ...config.headers,
         Authorization: `Bearer ${accessToken}`,
@@ -36,7 +38,7 @@ export async function serverApi(config: AxiosRequestConfig) {
 
     const refreshResponse = await axios
       .post(
-        `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/refresh`,
+        `${serverApiBaseUrl}/auth/refresh`,
         {},
         {
           headers: {
@@ -81,7 +83,7 @@ export async function serverApi(config: AxiosRequestConfig) {
 
     const retryResponse = await axios({
       ...config,
-      baseURL: process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL,
+      baseURL: serverApiBaseUrl,
       headers: {
         ...config.headers,
         Authorization: `Bearer ${newAccessToken}`,

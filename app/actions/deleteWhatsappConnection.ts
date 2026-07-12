@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { cookies } from 'next/headers';
+import { serverApiBaseUrl } from './env';
 
 export async function deleteWhatsappConnection(sessionName: string) {
   const cookieStore = await cookies();
@@ -13,7 +14,7 @@ export async function deleteWhatsappConnection(sessionName: string) {
 
   try {
     const response = await axios.delete(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/whatsapp/disconnect/${sessionName}`,
+      `${serverApiBaseUrl}/whatsapp/disconnect/${sessionName}`,
       {
         headers: {
           Authorization: `Bearer ${accessToken}`,

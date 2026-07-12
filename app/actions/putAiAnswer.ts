@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers';
 
 import axios from "axios";
+import { serverApiBaseUrl } from './env';
 
 export async function putAiAnswer(phoneNumber: string): Promise<boolean> {
   const cookieStore = await cookies();
@@ -14,7 +15,7 @@ export async function putAiAnswer(phoneNumber: string): Promise<boolean> {
 
   try {
     const response = await axios.put(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/v2/whats-app/chat/ai-answer/${phoneNumber}`,
+      `${serverApiBaseUrl}/v2/whats-app/chat/ai-answer/${phoneNumber}`,
       null,
       {
         headers: {

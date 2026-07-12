@@ -2,6 +2,7 @@
 
 import { createClient } from "@/utils/supabase/server";
 import axios from "axios";
+import { serverApiBaseUrl } from "./env";
 
 type GetConversationsType = {
   clinicId?: number | null;
@@ -26,7 +27,7 @@ export async function getConversations({
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/chat/${clinicId}/overview?page=${page}`,
+      `${serverApiBaseUrl}/chat/${clinicId}/overview?page=${page}`,
       {
         headers: {
           "Content-Type": "application/json",

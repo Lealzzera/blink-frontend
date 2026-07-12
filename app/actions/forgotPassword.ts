@@ -1,10 +1,11 @@
 'use server';
 
 import axios from 'axios';
+import { serverApiBaseUrl } from './env';
 
 export async function forgotPassword(email: string) {
   try {
-    await axios.post(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/forgot-password`, {
+    await axios.post(`${serverApiBaseUrl}/auth/forgot-password`, {
       email,
     });
 

@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 import { shouldUseSecureCookies } from './authCookieOptions';
+import { serverApiBaseUrl } from './env';
 
 type LoginData = {
   email: string;
@@ -11,7 +12,7 @@ type LoginData = {
 
 export async function login({ email, password }: LoginData) {
   try {
-    const response = await axios.post(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/login`, {
+    const response = await axios.post(`${serverApiBaseUrl}/auth/login`, {
       email,
       password,
     });

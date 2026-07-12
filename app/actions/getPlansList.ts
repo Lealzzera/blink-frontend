@@ -1,10 +1,11 @@
 'use server';
 
 import axios from 'axios';
+import { serverApiBaseUrl } from './env';
 
 export async function getPlansList() {
   try {
-    const response = await axios.get(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/plans/list`, {
+    const response = await axios.get(`${serverApiBaseUrl}/plans/list`, {
       headers: {
         'Content-Type': 'application/json',
       },

@@ -3,6 +3,7 @@
 import axios from 'axios';
 import { cookies } from 'next/headers';
 import { shouldUseSecureCookies } from './authCookieOptions';
+import { serverApiBaseUrl } from './env';
 
 type CompleteStripeCheckoutSessionResponse = {
   error: string | null;
@@ -13,7 +14,7 @@ export async function completeStripeCheckoutSession(
 ): Promise<CompleteStripeCheckoutSessionResponse> {
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/stripe/complete-checkout-session`,
+      `${serverApiBaseUrl}/stripe/complete-checkout-session`,
       { sessionId },
       { headers: { 'Content-Type': 'application/json' } },
     );

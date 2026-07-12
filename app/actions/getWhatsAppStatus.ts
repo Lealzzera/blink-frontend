@@ -2,6 +2,7 @@
 
 import { cookies } from 'next/headers';
 import axios from 'axios';
+import { serverApiBaseUrl } from './env';
 
 export async function getWhatsAppStatus(clinicId: string, refresh = false) {
   const cookieStore = await cookies();
@@ -13,7 +14,7 @@ export async function getWhatsAppStatus(clinicId: string, refresh = false) {
 
   try {
     const response = await axios.get(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/whatsapp/clinics/${clinicId}/status`,
+      `${serverApiBaseUrl}/whatsapp/clinics/${clinicId}/status`,
       {
         params: { refresh },
         headers: {

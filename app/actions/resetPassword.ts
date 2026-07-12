@@ -1,6 +1,7 @@
 'use server';
 
 import axios from 'axios';
+import { serverApiBaseUrl } from './env';
 
 type ResetPasswordParams = {
   token: string;
@@ -9,7 +10,7 @@ type ResetPasswordParams = {
 
 export async function resetPassword({ token, password }: ResetPasswordParams) {
   try {
-    await axios.post(`${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/auth/reset-password`, {
+    await axios.post(`${serverApiBaseUrl}/auth/reset-password`, {
       token,
       password,
     });

@@ -2,6 +2,7 @@
 
 import axios from 'axios';
 import { SignupDraftData } from '../types/types';
+import { serverApiBaseUrl } from './env';
 
 type PostSignupDraftType = {
   fullName: string;
@@ -20,7 +21,7 @@ export async function postSignupDraft({
 }: PostSignupDraftType): Promise<{ draftId: string } | null> {
   try {
     const response = await axios.post(
-      `${process.env.NEXT_PUBLIC_BLINK_BE_BASE_URL}/signup-draft/register`,
+      `${serverApiBaseUrl}/signup-draft/register`,
       { email, password, fullName, selectedPlanId, data },
       { headers: { 'Content-Type': 'application/json' } },
     );
