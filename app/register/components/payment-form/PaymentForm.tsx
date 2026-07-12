@@ -34,7 +34,8 @@ type PaymentFormProps = {
   };
 };
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY!);
+const stripeEnvKey = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;
+const stripePromise = loadStripe(stripeEnvKey || '');
 
 export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
   const [clientSecret, setClientSecret] = useState('');
