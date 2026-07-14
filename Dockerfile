@@ -42,6 +42,9 @@ ENV NEXT_PUBLIC_STRIPE_PUBLIC_KEY=$NEXT_PUBLIC_STRIPE_PUBLIC_KEY
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
+RUN test -n "$NEXT_PUBLIC_STRIPE_PUBLIC_KEY" \
+  || (echo "NEXT_PUBLIC_STRIPE_PUBLIC_KEY está vazia" && exit 1)
+
 RUN npm run build
 
 # Production image, copy all the files and run next
