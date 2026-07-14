@@ -35,7 +35,8 @@ type PaymentFormProps = {
 };
 
 const stripeEnvKey = process.env.NEXT_PUBLIC_STRIPE_PUBLIC_KEY || process.env.STRIPE_PUBLIC_KEY;
-const stripePromise = loadStripe(stripeEnvKey || '');
+if (!stripeEnvKey) throw new Error('Stripe public key is not defined in environment variables.');
+const stripePromise = loadStripe(stripeEnvKey);
 
 export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
   const [clientSecret, setClientSecret] = useState('');
