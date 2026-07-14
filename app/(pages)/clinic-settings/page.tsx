@@ -2,11 +2,13 @@
 
 import { deleteAtypicalDay } from '@/app/actions/deleteAtypicalDay';
 import { getAtypicalDaysList } from '@/app/actions/getAtypicalDaysList';
+import { getClinicAiPrompt } from '@/app/actions/getClinicAiPrompt';
 import { getClinicConfiguration } from '@/app/actions/getClinicConfiguration';
 import { getClinicServices } from '@/app/actions/getClinicServices';
 import { getClinicWorkingHours } from '@/app/actions/getClinicWorkingHours';
 import postAtypicalDayAvailability from '@/app/actions/postAtypicalDayAvailability';
 import { putClinicAvailability } from '@/app/actions/putClinicAvailability';
+import { putClinicAiPrompt } from '@/app/actions/putClinicAiPrompt';
 import { putClinicConfiguration } from '@/app/actions/putClinicConfiguration';
 import { putClinicServices } from '@/app/actions/putClinicServices';
 import putUpdateAtypicalDay from '@/app/actions/putUpdateAtypicalDay';
@@ -14,6 +16,7 @@ import BaseModalComponent from '@/app/components/BaseModalComponent/BaseModalCom
 import ButtonComponent from '@/app/components/ButtonComponent/ButtonComponent';
 import InputComponent from '@/app/components/InputComponent/InputComponent';
 import SwitchComponent from '@/app/components/SwitchComponent/SwitchComponent';
+import { TextAreaComponent } from '@/app/components/TextAreaComponent/TextAreaComponent';
 import { useUser } from '@/app/context/userContext';
 import { useEffect, useState } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
@@ -176,9 +179,12 @@ export default function ClinicSettingsPage() {
   const [clinicState, setClinicState] = useState('');
   const [chargesEvaluation, setChargesEvaluation] = useState(false);
   const [evaluationPriceCents, setEvaluationPriceCents] = useState(0);
-  const [activeTab, setActiveTab] = useState<'dados' | 'servicos' | 'horarios' | 'dias-atipicos'>(
-    'dados',
-  );
+  const [activeTab, setActiveTab] = useState<
+    'dados' | 'servicos' | 'horarios' | 'dias-atipicos' | 'prompt'
+  >('dados');
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isPromptLoading, setIsPromptLoading] = useState(false);
+  const [isPromptSaving, setIsPromptSaving] = useState(false);
   const [isAtypicalFormOpen, setIsAtypicalFormOpen] = useState(false);
   const [atypicalDayConfig, setAtypicalDayConfig] =
     useState<AtypicalDayForm>(EMPTY_ATYPICAL_DAY_FORM);
@@ -282,6 +288,24 @@ export default function ClinicSettingsPage() {
         type: 'error',
         theme: 'colored',
       });
+    }
+  };
+
+  const fetchClinicAiPrompt = async () => {
+    if (!clinicInfo?.clinicId) return;
+
+    setIsPromptLoading(true);
+
+    try {
+      const response = await getClinicAiPrompt(clinicInfo.clinicId);
+      setAiPrompt(response?.prompt ?? '');
+    } catch {
+      toast('Erro ao carregar o prompt da IA.', {
+        type: 'error',
+        theme: 'colored',
+      });
+    } finally {
+      setIsPromptLoading(false);
     }
   };
 
@@ -444,6 +468,35 @@ export default function ClinicSettingsPage() {
         successMessage: 'Serviços salvos com sucesso.',
         errorMessage: 'Houve um erro ao salvar os serviços.',
       });
+    }
+  };
+
+  const handleSaveClinicAiPrompt = async () => {
+    if (!clinicInfo?.clinicId) return;
+
+    setIsPromptSaving(true);
+
+    try {
+      const response = await putClinicAiPrompt({
+        clinicId: clinicInfo.clinicId,
+        prompt: aiPrompt,
+      });
+
+      setAiPrompt(response?.prompt ?? aiPrompt);
+
+      showToastMessage({
+        success: true,
+        successMessage: 'Prompt da IA salvo com sucesso.',
+        errorMessage: 'Houve um erro ao salvar o prompt da IA.',
+      });
+    } catch {
+      showToastMessage({
+        success: false,
+        successMessage: 'Prompt da IA salvo com sucesso.',
+        errorMessage: 'Houve um erro ao salvar o prompt da IA.',
+      });
+    } finally {
+      setIsPromptSaving(false);
     }
   };
 
@@ -644,6 +697,7 @@ export default function ClinicSettingsPage() {
     fetchClinicAvailability();
     fetchClinicServices();
     fetchAtypicalDaysList();
+    fetchClinicAiPrompt();
   }, [clinicInfo?.clinicId]);
 
   return (
@@ -680,6 +734,12 @@ export default function ClinicSettingsPage() {
           onClick={() => setActiveTab('dias-atipicos')}
         >
           Dias atipicos
+        </button>
+        <button
+          className={`${styles.tabButton} ${activeTab === 'prompt' ? styles.tabButtonActive : ''}`}
+          onClick={() => setActiveTab('prompt')}
+        >
+          Prompt
         </button>
       </div>
 
@@ -927,6 +987,50 @@ export default function ClinicSettingsPage() {
                 </div>
               )}
             </ul>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'prompt' && (
+        <div className={styles.containerWrapped}>
+          <div className={styles.promptCard}>
+            <div className={styles.promptHeader}>
+              <h2>Prompt da IA</h2>
+              <p className={styles.subtitle}>
+                Edite somente as instruções personalizadas da sua clínica. As regras de segurança,
+                ferramentas, agendamento e atendimento humano continuam protegidas pelo sistema.
+              </p>
+            </div>
+
+            {isPromptLoading ? (
+              <div className={styles.promptSkeleton}></div>
+            ) : (
+              <>
+                <TextAreaComponent
+                  id="clinic-ai-prompt"
+                  name="clinicAiPrompt"
+                  value={aiPrompt}
+                  onChange={setAiPrompt}
+                  rows={14}
+                  resize
+                  placeholder="Descreva como a IA deve orientar o atendimento da sua clínica..."
+                />
+                <div className={styles.promptHint}>
+                  <p>
+                    Este texto não substitui as regras fixas da IA. Evite colocar preços de
+                    serviços, promessas de resultado, diagnósticos ou instruções para alterar o uso
+                    das ferramentas.
+                  </p>
+                </div>
+                <div className={styles.containerButton}>
+                  <ButtonComponent
+                    text={isPromptSaving ? 'Salvando...' : 'Salvar prompt'}
+                    disabled={isPromptSaving}
+                    handleClickButton={handleSaveClinicAiPrompt}
+                  />
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

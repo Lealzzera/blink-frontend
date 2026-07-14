@@ -16,6 +16,7 @@ export type ClinicConfigurationResponse = {
   allowRescheduling: boolean;
   allowCancellation: boolean;
   aiAgentName: string | null;
+  aiCustomPrompt: string | null;
   additionalInformation: string | null;
 };
 
