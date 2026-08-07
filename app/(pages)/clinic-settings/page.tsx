@@ -179,9 +179,9 @@ export default function ClinicSettingsPage() {
   const [clinicState, setClinicState] = useState('');
   const [chargesEvaluation, setChargesEvaluation] = useState(false);
   const [evaluationPriceCents, setEvaluationPriceCents] = useState(0);
-  const [activeTab, setActiveTab] = useState<
-    'dados' | 'servicos' | 'horarios' | 'dias-atipicos' | 'prompt'
-  >('dados');
+  const [activeTab, setActiveTab] = useState<'dados' | 'horarios' | 'dias-atipicos' | 'prompt'>(
+    'dados',
+  );
   const [aiPrompt, setAiPrompt] = useState('');
   const [isPromptLoading, setIsPromptLoading] = useState(false);
   const [isPromptSaving, setIsPromptSaving] = useState(false);
@@ -717,12 +717,12 @@ export default function ClinicSettingsPage() {
         >
           Dados da clínica
         </button>
-        <button
+        {/* <button
           className={`${styles.tabButton} ${activeTab === 'servicos' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('servicos')}
         >
           Serviços
-        </button>
+        </button> */}
         <button
           className={`${styles.tabButton} ${activeTab === 'horarios' ? styles.tabButtonActive : ''}`}
           onClick={() => setActiveTab('horarios')}
@@ -782,7 +782,7 @@ export default function ClinicSettingsPage() {
         />
       )}
 
-      {activeTab === 'servicos' && (
+      {/* {activeTab === 'servicos' && (
         <div className={styles.containerWrapped}>
           <ClinicServicesSectionComponent
             services={clinicServices}
@@ -790,7 +790,7 @@ export default function ClinicSettingsPage() {
             handleSaveServices={handleSaveServices}
           />
         </div>
-      )}
+      )} */}
 
       {activeTab === 'horarios' && loading && (
         <div className={styles.containerWrapped}>
