@@ -1,7 +1,5 @@
 .registerSection {
-  background:
-    linear-gradient(135deg, rgba(4, 75, 127, 0.18), transparent 34%),
-    var(--gray-700);
+  background: linear-gradient(135deg, rgba(4, 75, 127, 0.18), transparent 34%), var(--gray-700);
   color: var(--white);
   width: 100%;
   min-height: 100vh;

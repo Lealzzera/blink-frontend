@@ -2,15 +2,14 @@
   display: flex;
   flex-direction: column;
   width: 100%;
-  max-width: 720px;
+  max-width: 860px;
   margin: 0 auto;
   height: 100%;
-  align-items: stretch;
 }
 
 .title {
   font-weight: 700;
-  margin: 0 auto;
+  margin: 5rem auto 0px auto;
   margin-bottom: 0.25rem;
 }
 
@@ -142,7 +141,7 @@
 }
 
 .moreInformationArea {
-  margin-top: 1.25rem;
+  margin-top: 4.25rem;
 }
 
 .moreInformationArea p {

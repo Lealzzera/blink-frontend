@@ -4,10 +4,18 @@ import styles from './styles.module.css';
 type PlanSectionProps = {
   plansList: Plan[];
   setSelectedPlan: ({ planId, stripePriceId }: { planId: string; stripePriceId: string }) => void;
+  setTermsAndConditions: (event: boolean) => void;
   selectedPlan: string;
+  termsAndConditions: boolean;
 };
 
-export function PlansSection({ plansList, setSelectedPlan, selectedPlan }: PlanSectionProps) {
+export function PlansSection({
+  plansList,
+  setSelectedPlan,
+  selectedPlan,
+  setTermsAndConditions,
+  termsAndConditions,
+}: PlanSectionProps) {
   return (
     <section className={styles.planSection}>
       <div className={styles.planSectionHeader}>
@@ -71,6 +79,20 @@ export function PlansSection({ plansList, setSelectedPlan, selectedPlan }: PlanS
             );
           })}
         </ul>
+      </div>
+      <div className={styles.termsSection}>
+        <input
+          type="checkbox"
+          onChange={(event) => setTermsAndConditions(event.target.checked)}
+          checked={termsAndConditions}
+        />
+        <p>
+          Aceito e concordo com os{' '}
+          <a href="/terms-and-conditions.pdf" target="_blank" rel="noopener noreferrer">
+            termos e condições
+          </a>{' '}
+          desse serviço.
+        </p>
       </div>
     </section>
   );

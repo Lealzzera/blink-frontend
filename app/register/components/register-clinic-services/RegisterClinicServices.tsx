@@ -63,51 +63,50 @@ export default function RegisterClinicServices({
 
   const canAdd = serviceName.trim().length > 0;
 
-  const handlePriceChange = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setPrice: (value: string) => void,
-  ) => {
-    const digits = e.target.value.replace(/\D/g, '');
-    if (!digits) {
-      setPrice('');
-      return;
-    }
-    const cents = parseInt(digits, 10);
-    setPrice(
-      (cents / 100).toLocaleString('pt-BR', {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    );
-  };
-
-  const handleAddService = () => {
-    if (!canAdd) return;
-    setServices([
-      ...services,
-      {
-        name: serviceName.trim(),
-        durationMinutes: duration || 0,
-        priceCents: parsePriceToCents(priceDisplay),
-      },
-    ]);
-    setServiceName('');
-    setDuration(0);
-    setPriceDisplay('');
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleAddService();
-    }
-  };
+  //TODO: Comment this until we deceide to use or not
+  // const handlePriceChange = (
+  //   e: React.ChangeEvent<HTMLInputElement>,
+  //   setPrice: (value: string) => void,
+  // ) => {
+  //   const digits = e.target.value.replace(/\D/g, '');
+  //   if (!digits) {
+  //     setPrice('');
+  //     return;
+  //   }
+  //   const cents = parseInt(digits, 10);
+  //   setPrice(
+  //     (cents / 100).toLocaleString('pt-BR', {
+  //       minimumFractionDigits: 2,
+  //       maximumFractionDigits: 2,
+  //     }),
+  //   );
+  // };
+  // const handleAddService = () => {
+  //   if (!canAdd) return;
+  //   setServices([
+  //     ...services,
+  //     {
+  //       name: serviceName.trim(),
+  //       durationMinutes: duration || 0,
+  //       priceCents: parsePriceToCents(priceDisplay),
+  //     },
+  //   ]);
+  //   setServiceName('');
+  //   setDuration(0);
+  //   setPriceDisplay('');
+  // };
+  // const handleKeyDown = (e: React.KeyboardEvent) => {
+  //   if (e.key === 'Enter') {
+  //     e.preventDefault();
+  //     handleAddService();
+  //   }
+  // };
 
   return (
     <section className={styles.section}>
-      <h2 className={styles.title}>Serviços</h2>
+      <h2 className={styles.title}>Informações</h2>
       <p className={styles.subtitle}>
-        Agora preencha abaixo os serviços realizados pela sua clínica
+        Agora preencha abaixo informações essencias sobre o seu estabelecimento
       </p>
       {showEvaluationSection && (
         <div className={styles.evaluationBox}>
@@ -135,8 +134,8 @@ export default function RegisterClinicServices({
           )}
         </div>
       )}
-      <div style={{ marginTop: '1rem' }} className={styles.inputRow}>
-        <div className={styles.field} style={{ flex: 3 }}>
+      {/*<div style={{ marginTop: '1rem' }} className={styles.inputRow}>
+       <div className={styles.field} style={{ flex: 3 }}>
           <label className={styles.label}>Serviço</label>
           <input
             className={styles.input}
@@ -147,7 +146,7 @@ export default function RegisterClinicServices({
             onKeyDown={handleKeyDown}
           />
         </div>
-        {/*
+        
         <div className={styles.field} style={{ flex: 1 }}>
           <label className={styles.label}>Duração (min)</label>
           <input
@@ -160,7 +159,7 @@ export default function RegisterClinicServices({
           />
         </div> */}
 
-        {/* <div className={styles.field} style={{ flex: 2 }}>
+      {/* <div className={styles.field} style={{ flex: 2 }}>
           <label className={styles.label}>Preço</label>
           <input
             className={styles.input}
@@ -170,7 +169,7 @@ export default function RegisterClinicServices({
             onChange={(e) => handlePriceChange(e, setPriceDisplay)}
             onKeyDown={handleKeyDown}
           />
-        </div> */}
+        </div> 
 
         <button
           type="button"
@@ -191,7 +190,7 @@ export default function RegisterClinicServices({
               <span className={styles.chipName}>{service.name}</span>
               {/* {service.durationMinutes !== 0 && (
                 <span className={styles.chipBadge}>{service.durationMinutes} min</span>
-              )} */}
+              )} 
               {service.priceCents > 0 && (
                 <span className={styles.chipBadge}>{formatPriceCents(service.priceCents)}</span>
               )}
@@ -206,7 +205,7 @@ export default function RegisterClinicServices({
             </div>
           ))
         )}
-      </div>
+      </div>*/}
       {showAdditionalInformation && (
         <div className={styles.moreInformationArea}>
           <h3>Informações adicionais</h3>

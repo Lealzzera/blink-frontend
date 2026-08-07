@@ -31,6 +31,7 @@ type PaymentFormProps = {
       chargesEvaluation: boolean;
       evaluationPriceCents: number;
     };
+    acceptedTerms: boolean;
   };
 };
 
@@ -72,6 +73,7 @@ export function PaymentForm({ stripePriceId, clinicData }: PaymentFormProps) {
         password: clinicData.password,
         selectedPlanId: clinicData.planId,
         data: draftData,
+        acceptedTerms: clinicData.acceptedTerms,
       });
 
       if (!draft?.draftId) {

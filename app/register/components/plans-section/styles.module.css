@@ -41,6 +41,24 @@
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
+.termsSection {
+  margin-top: 3rem;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.termsSection a {
+  color: var(--blue-200);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.termsSection input {
+  margin-right: 0.5rem;
+}
+
 @media (max-width: 720px) {
   .basicCard,
   .plusCard {

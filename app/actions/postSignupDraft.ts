@@ -10,6 +10,7 @@ type PostSignupDraftType = {
   password: string;
   selectedPlanId: string;
   data: SignupDraftData;
+  acceptedTerms: boolean;
 };
 
 export async function postSignupDraft({
@@ -18,12 +19,13 @@ export async function postSignupDraft({
   password,
   fullName,
   selectedPlanId,
+  acceptedTerms,
 }: PostSignupDraftType): Promise<{ draftId: string } | null> {
   try {
     const serverApiBaseUrl = getServerApiBaseUrl();
     const response = await axios.post(
       `${serverApiBaseUrl}/signup-draft/register`,
-      { email, password, fullName, selectedPlanId, data },
+      { email, password, fullName, selectedPlanId, data, acceptedTerms },
       { headers: { 'Content-Type': 'application/json' } },
     );
     return response.data; // { draftId: string }

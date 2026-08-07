@@ -79,6 +79,7 @@ export default function RegisterPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [registerObject, setRegisterObject] =
     useState<RegisterClinicObject>(INITIAL_REGISTER_OBJECT);
+  const [termsAndConditions, setTermsAndConditions] = useState(true);
 
   const clinicTypeOptions = [
     { value: 'DENTAL', label: 'Clínica Odontológica' },
@@ -108,7 +109,8 @@ export default function RegisterPage() {
     (currentStep === 4 &&
       registerObject.settings.chargesEvaluation &&
       registerObject.settings.evaluationPriceCents <= 0) ||
-    (currentStep === 5 && !registerObject.selectedPlan.planId);
+    (currentStep === 5 && !registerObject.selectedPlan.planId) ||
+    (currentStep === 5 && !termsAndConditions);
 
   const handleChangeObjectValue = <K extends keyof RegisterClinicObject>(
     key: K,
@@ -140,7 +142,10 @@ export default function RegisterPage() {
         return;
       }
     }
-    if (currentStep === 5 && !registerObject.selectedPlan.planId) {
+    if (
+      (currentStep === 5 && !registerObject.selectedPlan.planId) ||
+      (currentStep === 5 && !termsAndConditions)
+    ) {
       return;
     }
     setShowErrorMessage('');
@@ -170,8 +175,13 @@ export default function RegisterPage() {
           ? 0
           : registerObject.settings.evaluationPriceCents,
       },
+      acceptedTerms: termsAndConditions,
     };
     return clinicData;
+  };
+
+  const handleClickTermsAndConditions = (value: boolean) => {
+    setTermsAndConditions((prev) => !prev);
   };
 
   useEffect(() => {
@@ -264,7 +274,9 @@ export default function RegisterPage() {
                   clinicAddress={registerObject.address}
                   setClinicAddress={(value) => handleChangeObjectValue('address', value)}
                   clinicAddressNumber={registerObject.addressNumber}
-                  setClinicAddressNumber={(value) => handleChangeObjectValue('addressNumber', value)}
+                  setClinicAddressNumber={(value) =>
+                    handleChangeObjectValue('addressNumber', value)
+                  }
                   clinicCity={registerObject.city}
                   setClinicCity={(value) => handleChangeObjectValue('city', value)}
                   clinicState={registerObject.state}
@@ -300,6 +312,8 @@ export default function RegisterPage() {
                   plansList={plansList}
                   setSelectedPlan={(value) => handleChangeObjectValue('selectedPlan', value)}
                   selectedPlan={registerObject.selectedPlan.planId}
+                  setTermsAndConditions={handleClickTermsAndConditions}
+                  termsAndConditions={termsAndConditions}
                 />
               )}
             </div>
