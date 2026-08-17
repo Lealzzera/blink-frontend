@@ -146,6 +146,7 @@
 
 .moreInformationArea p {
   color: var(--gray-300);
+  font-size: 12px;
 }
 
 .textAreaContainer {

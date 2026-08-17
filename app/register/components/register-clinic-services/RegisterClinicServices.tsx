@@ -51,8 +51,8 @@ export default function RegisterClinicServices({
   showAdditionalInformation = true,
 }: RegisterClinicServicesProps) {
   const [serviceName, setServiceName] = useState('');
-  const [duration, setDuration] = useState(0);
-  const [priceDisplay, setPriceDisplay] = useState('');
+  // const [duration, setDuration] = useState(0);
+  // const [priceDisplay, setPriceDisplay] = useState('');
   const evaluationPriceDisplay =
     evaluationPrice > 0
       ? (evaluationPrice / 100).toLocaleString('pt-BR', {
@@ -209,7 +209,12 @@ export default function RegisterClinicServices({
       {showAdditionalInformation && (
         <div className={styles.moreInformationArea}>
           <h3>Informações adicionais</h3>
-          <p>Adicione informações importantes a respeito da sua clínica.</p>
+          <p>
+            Adicione detalhes sobre a clínica para orientar o atendimento da IA. Ex.: Aceitamos Pix,
+            dinheiro e cartão de crédito em até 12x. Não atendemos convênios. Temos estacionamento
+            gratuito no local. Atendemos adultos e crianças. A avaliação dura aproximadamente 30
+            minutos. Pedimos que o paciente chegue 10 minutos antes e traga um documento com foto.
+          </p>
           <div className={styles.textAreaContainer}>
             <TextAreaComponent
               value={textAreaValue}
