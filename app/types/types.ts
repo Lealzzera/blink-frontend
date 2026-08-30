@@ -123,6 +123,7 @@ export type ClinicInfoType = {
   clinicType: string;
   clinicSlug: string;
   clinicStatus: string;
+  userGlobalRole: string;
 };
 
 export type AppointmentStatus =

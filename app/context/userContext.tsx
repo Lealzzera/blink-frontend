@@ -60,6 +60,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         clinicType: response.clinic.type,
         clinicSlug: response.clinic.slug,
         clinicStatus: response.clinic.status,
+        userGlobalRole: response.globalUserRole,
       });
     };
     if (typeof window !== 'undefined') loadUser();

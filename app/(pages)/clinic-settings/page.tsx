@@ -735,12 +735,14 @@ export default function ClinicSettingsPage() {
         >
           Dias atipicos
         </button>
-        <button
-          className={`${styles.tabButton} ${activeTab === 'prompt' ? styles.tabButtonActive : ''}`}
-          onClick={() => setActiveTab('prompt')}
-        >
-          Prompt
-        </button>
+        {clinicInfo?.userGlobalRole === 'ADMIN' && (
+          <button
+            className={`${styles.tabButton} ${activeTab === 'prompt' ? styles.tabButtonActive : ''}`}
+            onClick={() => setActiveTab('prompt')}
+          >
+            Prompt
+          </button>
+        )}
       </div>
 
       {activeTab === 'dados' && (
@@ -991,7 +993,7 @@ export default function ClinicSettingsPage() {
         </div>
       )}
 
-      {activeTab === 'prompt' && (
+      {activeTab === 'prompt' && clinicInfo?.userGlobalRole === 'ADMIN' && (
         <div className={styles.containerWrapped}>
           <div className={styles.promptCard}>
             <div className={styles.promptHeader}>
