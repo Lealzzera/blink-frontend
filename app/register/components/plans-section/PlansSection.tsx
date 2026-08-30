@@ -43,7 +43,9 @@ export function PlansSection({
                     <span className={styles.priceValue}>{value}</span>
                     <span className={styles.pricePeriod}>,{cents}&nbsp;/&nbsp;mês</span>
                   </div>
-                  <span className={styles.trialBadge}>{plan.trialDays} dias grátis</span>
+                  <span className={styles.trialBadge}>
+                    {plan.trialDays} dias grátis direto no seu WhatsApp
+                  </span>
                   <div className={styles.divider} />
                   <ul className={styles.featureList}>
                     <li className={styles.featureItem}>
@@ -71,7 +73,7 @@ export function PlansSection({
                       }
                       type="button"
                     >
-                      Começar agora
+                      Escolher Plano
                     </button>
                   </div>
                 </div>
