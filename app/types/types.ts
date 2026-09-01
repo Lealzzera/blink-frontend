@@ -123,6 +123,9 @@ export type ClinicInfoType = {
   clinicType: string;
   clinicSlug: string;
   clinicStatus: string;
+  hasSubscriptionAccess: boolean;
+  subscriptionStatus: string | null;
+  trialEndsAt: string | null;
   userGlobalRole: string;
 };
 

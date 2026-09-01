@@ -60,6 +60,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
         clinicType: response.clinic.type,
         clinicSlug: response.clinic.slug,
         clinicStatus: response.clinic.status,
+        hasSubscriptionAccess: response.hasSubscriptionAccess,
+        subscriptionStatus: response.subscription?.status ?? null,
+        trialEndsAt: response.subscription?.trial_ends_at ?? null,
         userGlobalRole: response.globalUserRole,
       });
     };

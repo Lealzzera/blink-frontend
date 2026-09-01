@@ -167,16 +167,13 @@ export default function Conversations() {
 
         const unreadCountsByPhone = chatOverview.reduce<
           Record<string, { count: number; lastMessageSentAt?: string }>
-        >(
-          (accumulator, chat) => {
-            accumulator[chat.phoneNumber] = {
-              count: getInitialUnreadCount(chat),
-              lastMessageSentAt: chat.lastMessage.sentAt,
-            };
-            return accumulator;
-          },
-          {},
-        );
+        >((accumulator, chat) => {
+          accumulator[chat.phoneNumber] = {
+            count: getInitialUnreadCount(chat),
+            lastMessageSentAt: chat.lastMessage.sentAt,
+          };
+          return accumulator;
+        }, {});
 
         hydrateUnreadCounts(unreadCountsByPhone);
 
@@ -239,12 +236,7 @@ export default function Conversations() {
     if (!showWhatsAppIsNotConnected) return;
 
     handleSetContactSelected(null);
-  }, [
-    handleSetContactSelected,
-    loading.firstLoading,
-    loading.loading,
-    showWhatsAppIsNotConnected,
-  ]);
+  }, [handleSetContactSelected, loading.firstLoading, loading.loading, showWhatsAppIsNotConnected]);
 
   useEffect(() => {
     const lastMessage = latestChatMessage;
@@ -342,30 +334,44 @@ export default function Conversations() {
 
   return (
     <section className={style.conversationPageContainer}>
-      {
-        <ChatListComponent
-          chatList={conversations}
-          fetchMore={handleFetchMore}
-          whatsappConversationList={whatsappConversationList}
-          hasMore={hasMore}
-          numberNotConnected={showWhatsAppIsNotConnected}
-          checkingConnection={isCheckingWhatsAppConnection}
-          loading={loading}
-        />
-      }
-
-      {contactSelected?.id ? (
-        <ChatComponent
-          contactName={contactSelected.contactName}
-          phoneNumber={contactSelected.phoneNumber}
-          imageUrl={contactSelected.contactPicture}
-          contactId={contactSelected.id}
-          onAiConfigChange={handleWhatsappConversationConfigChange}
-        />
-      ) : (
+      {clinicInfo && !clinicInfo.hasSubscriptionAccess ? (
         <div className={style.containerText}>
-          <p>Crie uma conversa e começe a enviar e receber mensagens agora mesmo!</p>
+          <div>
+            <h2>Assinatura pendente</h2>
+            <p>
+              Sua assinatura está inativa. Regularize o pagamento para voltar a usar as conversas e
+              as respostas automáticas.
+            </p>
+          </div>
         </div>
+      ) : (
+        <>
+          {
+            <ChatListComponent
+              chatList={conversations}
+              fetchMore={handleFetchMore}
+              whatsappConversationList={whatsappConversationList}
+              hasMore={hasMore}
+              numberNotConnected={showWhatsAppIsNotConnected}
+              checkingConnection={isCheckingWhatsAppConnection}
+              loading={loading}
+            />
+          }
+
+          {contactSelected?.id ? (
+            <ChatComponent
+              contactName={contactSelected.contactName}
+              phoneNumber={contactSelected.phoneNumber}
+              imageUrl={contactSelected.contactPicture}
+              contactId={contactSelected.id}
+              onAiConfigChange={handleWhatsappConversationConfigChange}
+            />
+          ) : (
+            <div className={style.containerText}>
+              <p>Crie uma conversa e começe a enviar e receber mensagens agora mesmo!</p>
+            </div>
+          )}
+        </>
       )}
     </section>
   );
