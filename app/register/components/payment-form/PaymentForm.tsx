@@ -30,6 +30,7 @@ type PaymentFormProps = {
     settings: {
       chargesEvaluation: boolean;
       evaluationPriceCents: number;
+      timezone: string;
     };
     acceptedTerms: boolean;
   };

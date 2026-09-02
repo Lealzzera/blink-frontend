@@ -39,6 +39,7 @@ const INITIAL_REGISTER_OBJECT: RegisterClinicObject = {
   settings: {
     chargesEvaluation: false,
     evaluationPriceCents: 0,
+    timezone: 'America/Sao_Paulo',
   },
 };
 
@@ -186,6 +187,7 @@ export default function RegisterPage() {
 
   useEffect(() => {
     const saved = readRegisterCookie();
+    const detectedTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
     if (saved) {
       setRegisterObject((prev) => ({
         ...prev,
@@ -193,7 +195,13 @@ export default function RegisterPage() {
         settings: {
           ...prev.settings,
           ...(saved.settings ?? {}),
+          timezone: detectedTimezone || saved.settings?.timezone || prev.settings.timezone,
         },
+      }));
+    } else if (detectedTimezone) {
+      setRegisterObject((prev) => ({
+        ...prev,
+        settings: { ...prev.settings, timezone: detectedTimezone },
       }));
     }
     setHydrated(true);

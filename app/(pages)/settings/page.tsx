@@ -38,7 +38,8 @@ export default function Settings() {
   };
 
   const handleDisconnectWhatsapp = async () => {
-    const response = await deleteWhatsappConnection('default');
+    if (!clinicInfo?.clinicId) return;
+    const response = await deleteWhatsappConnection(clinicInfo.clinicId);
     if (response?.status === 'STOPPED' || response?.status === 'DISCONNECTED') {
       handleSetContactSelected(null);
       toast('WhatsApp desconectado com sucesso.', {

@@ -28,6 +28,7 @@ export type RegisterPayload = {
     maxAppointmentsPerSlot: number;
     appointmentDurationMinutes: number;
     aiAgentName: string;
+    timezone: string;
   };
 };
 
@@ -65,6 +66,7 @@ export function buildRegisterPayload(obj: RegisterClinicObject): RegisterPayload
       maxAppointmentsPerSlot: 1,
       appointmentDurationMinutes: 60,
       aiAgentName: 'Blink',
+      timezone: obj.settings.timezone,
     },
   };
 }

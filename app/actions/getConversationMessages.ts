@@ -3,9 +3,9 @@
 import { serverApi } from './serverApi';
 
 type GetConversationMessagesType = {
-  clinicId?: number | null;
   page?: number;
   phoneNumber: string;
+  sessionName: string;
 };
 
 const PAGE_SIZE = 20;
@@ -17,11 +17,12 @@ function phoneToChatId(phoneNumber: string): string {
 export async function getConversationMessages({
   page = 0,
   phoneNumber,
+  sessionName,
 }: GetConversationMessagesType) {
   const chatId = phoneToChatId(phoneNumber);
   const data = await serverApi({
     method: 'GET',
-    url: `/whatsapp/chats/default/${encodeURIComponent(chatId)}/messages`,
+    url: `/whatsapp/chats/${sessionName}/${encodeURIComponent(chatId)}/messages`,
     params: {
       limit: PAGE_SIZE,
       offset: page * PAGE_SIZE,

@@ -145,14 +145,8 @@ export default function Conversations() {
       isLoadingRef.current = true;
       setLoading({ firstLoading: pageNum === 0, loading: pageNum > 0 });
       try {
-        //TODO: IMPLEMENT THIS METHOD WHEN WAHA IS READY
-        // const response = await fetchChatOverview({
-        //   sessionName: clinicInfo?.clinicId,
-        //   pagination: { limit: LIMIT, offset: pageNum * LIMIT },
-        // });
-
         const response = await fetchChatOverview({
-          sessionName: 'default',
+          sessionName: clinicInfo.clinicId,
           pagination: { limit: LIMIT, offset: pageNum * LIMIT },
         });
 

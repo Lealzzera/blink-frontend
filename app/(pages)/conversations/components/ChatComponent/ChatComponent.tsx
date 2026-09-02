@@ -52,8 +52,6 @@ function getPendingMessageKey(phoneNumber: string, text: string) {
   return `${phoneNumber}:${text.trim()}`;
 }
 
-const WHATSAPP_SESSION_NAME = 'default';
-
 export default function ChatComponent({
   phoneNumber,
   contactName,
@@ -114,7 +112,7 @@ export default function ChatComponent({
 
   const fetchMessageList = useCallback(
     async (page: number) => {
-      if (!phoneNumber || loading) return;
+      if (!phoneNumber || !clinicInfo?.clinicId || loading) return;
       if (page > 0 && ulRef.current) {
         prevScrollHeightRef.current = ulRef.current.scrollHeight;
         prevScrollTopRef.current = ulRef.current.scrollTop;
@@ -125,6 +123,7 @@ export default function ChatComponent({
         const response = await getConversationMessages({
           phoneNumber,
           page,
+          sessionName: clinicInfo.clinicId,
         });
 
         if (!response || response.length === 0) {
@@ -161,7 +160,7 @@ export default function ChatComponent({
         setLoading(false);
       }
     },
-    [phoneNumber, loading],
+    [phoneNumber, clinicInfo?.clinicId, loading],
   );
 
   const handleChange = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -194,9 +193,7 @@ export default function ChatComponent({
     shouldScrollToBottomAfterNewMessageRef.current = true;
     setMessageList((prev) => [...prev, newMessage]);
 
-    // TODO: IMPLEMENT IT WHEN WAHA IS READY
-    // await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
-    await postMessage({ chatId: contactId, text: message, session: WHATSAPP_SESSION_NAME });
+    await postMessage({ chatId: contactId, text: message, session: clinicInfo.clinicId });
 
     if (textareaRef.current) {
       textareaRef.current.style.height = '40px';
@@ -217,7 +214,7 @@ export default function ChatComponent({
         clinicId: clinicInfo.clinicId,
         chatId: contactId,
         aiEnabled: nextSwitchState,
-        session: WHATSAPP_SESSION_NAME,
+        session: clinicInfo.clinicId,
         phoneNumber,
       });
 

@@ -31,9 +31,7 @@ export function useWhatsApp() {
     }
 
     try {
-      //TODO: AFTER WAHA PAYMENT IMPLEMENT THIS LOGIC BELOW
-      // const response = await getQrCode(clinicInfo.clinicId);
-      const response = await getQrCode('default', clinicInfo.clinicId);
+      const response = await getQrCode(clinicInfo.clinicId);
       if (!response) {
         setError(true);
         return;

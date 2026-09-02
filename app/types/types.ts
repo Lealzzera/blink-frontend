@@ -66,6 +66,7 @@ export type ServiceType = {
 export type SettingsObject = {
   chargesEvaluation: boolean;
   evaluationPriceCents: number;
+  timezone: string;
 };
 
 export type IWorkingHourInput = {
@@ -83,6 +84,7 @@ export type IServiceInput = {
 export type ISettingsInput = {
   chargesEvaluation?: boolean;
   evaluationPriceCents?: number;
+  timezone?: string;
 };
 
 export type SignupDraftData = {

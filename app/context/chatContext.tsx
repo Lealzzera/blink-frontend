@@ -2,6 +2,7 @@
 
 import { createContext, ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { getRealtimeWebSocketUrl } from '../actions/getRealtimeWebSocketUrl';
+import { logout } from '../actions/logout';
 import { useUser } from './userContext';
 
 export type ChatMessage = {
@@ -366,12 +367,34 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!clinicInfo) return;
     let mounted = true;
+    let isLoggingOut = false;
     let reconnectTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    const endExpiredSession = async () => {
+      if (isLoggingOut) return;
+      isLoggingOut = true;
+      mounted = false;
+
+      if (reconnectTimeout) {
+        clearTimeout(reconnectTimeout);
+        reconnectTimeout = null;
+      }
+
+      try {
+        await logout();
+      } finally {
+        window.location.replace('/');
+      }
+    };
 
     const connect = async () => {
       const wsUrl = await getRealtimeWebSocketUrl(clinicInfo.clinicId);
 
-      if (!wsUrl || !mounted) return;
+      if (!mounted) return;
+      if (!wsUrl) {
+        await endExpiredSession();
+        return;
+      }
 
       const socket = new WebSocket(wsUrl);
       socketRef.current = socket;
@@ -468,10 +491,15 @@ export function ChatProvider({ children }: { children: ReactNode }) {
         console.error('Realtime websocket error:', event);
       };
 
-      socket.onclose = () => {
+      socket.onclose = (event) => {
         socketRef.current = null;
 
         if (!mounted) return;
+
+        if (event.code === 1008 && event.reason === 'Invalid or expired token') {
+          void endExpiredSession();
+          return;
+        }
 
         reconnectTimeout = setTimeout(connect, 3000);
       };
