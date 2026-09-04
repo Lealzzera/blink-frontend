@@ -292,12 +292,12 @@ export default function ClinicSettingsPage() {
   };
 
   const fetchClinicAiPrompt = async () => {
-    if (!clinicInfo?.clinicId) return;
+    if (!clinicInfo?.clinicId || clinicInfo.userGlobalRole !== 'ADMIN') return;
 
     setIsPromptLoading(true);
 
     try {
-      const response = await getClinicAiPrompt(clinicInfo.clinicId);
+      const response = await getClinicAiPrompt();
       setAiPrompt(response?.prompt ?? '');
     } catch {
       toast('Erro ao carregar o prompt da IA.', {
@@ -478,7 +478,6 @@ export default function ClinicSettingsPage() {
 
     try {
       const response = await putClinicAiPrompt({
-        clinicId: clinicInfo.clinicId,
         prompt: aiPrompt,
       });
 
@@ -999,8 +998,8 @@ export default function ClinicSettingsPage() {
             <div className={styles.promptHeader}>
               <h2>Prompt da IA</h2>
               <p className={styles.subtitle}>
-                Edite somente as instruções personalizadas da sua clínica. As regras de segurança,
-                ferramentas, agendamento e atendimento humano continuam protegidas pelo sistema.
+                Este é o prompt global usado pela IA em todas as clínicas. Apenas administradores
+                podem alterá-lo.
               </p>
             </div>
 
@@ -1019,9 +1018,7 @@ export default function ClinicSettingsPage() {
                 />
                 <div className={styles.promptHint}>
                   <p>
-                    Este texto não substitui as regras fixas da IA. Evite colocar preços de
-                    serviços, promessas de resultado, diagnósticos ou instruções para alterar o uso
-                    das ferramentas.
+                    Alterações salvas aqui passam a valer para todas as clínicas.
                   </p>
                 </div>
                 <div className={styles.containerButton}>
